@@ -178,10 +178,10 @@ public class MainActivity extends AppCompatActivity {
 
         Configuration config=getResources().getConfiguration();
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.activity_main);
+            //setContentView(R.layout.activity_main);
         }
         else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setContentView(R.layout.activity_main);
+            //setContentView(R.layout.activity_main);
         }
 
         configChanged = true;
