@@ -15,6 +15,7 @@ import java.util.Random;
 public class MediaController {
     protected static MediaPlayer player = null;
     protected AudioManager manager;
+    protected AudioManager.OnAudioFocusChangeListener focusChangeListener;
     protected SQLiteCursor cursor;
     protected MediaDAO dao;
     private Context context;
@@ -26,6 +27,10 @@ public class MediaController {
         dao = new MediaDAO(context);
         this.context = context;
         isPaused = false;
+    }
+
+    public void setFocusChangeListener(AudioManager.OnAudioFocusChangeListener fChangeListener) {
+        focusChangeListener = fChangeListener;
     }
 
     public boolean selectTrack() {
@@ -50,24 +55,21 @@ public class MediaController {
             if (player != null) {
                 player.release();
             }
-            manager.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
-                @Override
-                public void onAudioFocusChange(int focusChange) {
-                    if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                        player = MediaPlayer.create(context, Uri.parse(path));
-                        //player.seekTo(player.getDuration() - 10000);
-                        player.start();
+            int result = manager.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                player = MediaPlayer.create(context, Uri.parse(path));
+                //player.seekTo(player.getDuration() - 10000);
+                player.start();
 
-                        // On traite lorsque la lecture est complétée
-                        player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            public void onCompletion(MediaPlayer mp) {
-                                updateState("read");
-                                selectTrack();
-                            }
-                        });
+                // On traite lorsque la lecture est complétée
+                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    public void onCompletion(MediaPlayer mp) {
+                        updateState("read");
+                        manager.abandonAudioFocus(focusChangeListener);
+                        selectTrack();
                     }
-                }
-            }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                });
+            }
 
         }
         catch (Exception e) {
@@ -87,6 +89,11 @@ public class MediaController {
         catch (Exception e) {
 
         }
+    }
+
+    public void forward() {
+        manager.abandonAudioFocus(focusChangeListener);
+        selectTrack();
     }
 
     public void resume() {

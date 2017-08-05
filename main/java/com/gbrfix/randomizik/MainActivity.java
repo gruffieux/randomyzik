@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -117,6 +118,25 @@ public class MainActivity extends AppCompatActivity {
         // On instancie le contrôleur
         controller = new MediaController(context);
 
+        AudioManager.OnAudioFocusChangeListener fChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+            public void onAudioFocusChange(int focusChange) {
+                if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+                    // Permanent loss of audio focus
+                }
+                else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+                    // Pause playback
+                }
+                else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
+                    // Lower the volume, keep playing
+                }
+                else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                    // Your app has been granted audio focus again
+                    // Raise volume to normal, restart playback if necessary
+                }
+            }
+        };
+        controller.setFocusChangeListener(fChangeListener);
+
         // On créé un layout avec les boutons de contrôle
         LinearLayout controlLayout = new LinearLayout(context);
         controlLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -151,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         // On traite le changement d'état du bouton en avant
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                controller.selectTrack();
+                controller.forward();
             }
         });
 
