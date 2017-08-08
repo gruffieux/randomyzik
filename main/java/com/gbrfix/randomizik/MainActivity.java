@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
-import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,7 +20,8 @@ import java.io.File;
 
 /*
 TODO V1:
-- Notifier les vue lors du changement de piste
+- Notifier le bouton play lors du changement de focus audio
+- Notifier la liste lors du changement de piste
 - Demande permission sotckage interactive
 
 TODO V2
@@ -115,28 +115,6 @@ public class MainActivity extends AppCompatActivity {
         listView.addView(listLayout);
         mainLayout.addView(listView);
 
-        // On instancie le contrôleur
-        controller = new MediaController(context);
-
-        AudioManager.OnAudioFocusChangeListener fChangeListener = new AudioManager.OnAudioFocusChangeListener() {
-            public void onAudioFocusChange(int focusChange) {
-                if (focusChange == AudioManager.AUDIOFOCUS_LOSS) {
-                    // Permanent loss of audio focus
-                }
-                else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
-                    // Pause playback
-                }
-                else if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
-                    // Lower the volume, keep playing
-                }
-                else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
-                    // Your app has been granted audio focus again
-                    // Raise volume to normal, restart playback if necessary
-                }
-            }
-        };
-        controller.setFocusChangeListener(fChangeListener);
-
         // On créé un layout avec les boutons de contrôle
         LinearLayout controlLayout = new LinearLayout(context);
         controlLayout.setOrientation(LinearLayout.HORIZONTAL);
@@ -144,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         ToggleButton playBtn = new ToggleButton(context);
         playBtn.setTextOff("Play");
         playBtn.setTextOn("Pause");
-        playBtn.setChecked(controller.isPlaying());
+        playBtn.setChecked(false);
         Button rewBtn = new Button(context);
         rewBtn.setText("<");
         Button fwdBtn = new Button(context);
@@ -153,6 +131,9 @@ public class MainActivity extends AppCompatActivity {
         controlLayout.addView(playBtn);
         controlLayout.addView(fwdBtn);
         mainLayout.addView(controlLayout);
+
+        // On instancie le contrôleur
+        controller = new MediaController(context);
 
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -181,15 +162,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-
-       //controller.resume2();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        //controller.resume2();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package com.gbrfix.randomizik;
 
 import android.database.sqlite.SQLiteCursor;
-import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -12,25 +11,18 @@ import java.util.Random;
 /**
  * Created by gab on 16.07.2017.
  */
-public class MediaController {
+public class MediaController implements AudioManager.OnAudioFocusChangeListener {
     protected static MediaPlayer player = null;
     protected AudioManager manager;
-    protected AudioManager.OnAudioFocusChangeListener focusChangeListener;
     protected SQLiteCursor cursor;
     protected MediaDAO dao;
     private Context context;
-    private boolean isPaused;
 
     public MediaController(Context context) {
         manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         cursor = null;
         dao = new MediaDAO(context);
         this.context = context;
-        isPaused = false;
-    }
-
-    public void setFocusChangeListener(AudioManager.OnAudioFocusChangeListener fChangeListener) {
-        focusChangeListener = fChangeListener;
     }
 
     public boolean selectTrack() {
@@ -55,17 +47,19 @@ public class MediaController {
             if (player != null) {
                 player.release();
             }
-            int result = manager.requestAudioFocus(focusChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 player = MediaPlayer.create(context, Uri.parse(path));
                 //player.seekTo(player.getDuration() - 10000);
                 player.start();
 
+                final AudioManager.OnAudioFocusChangeListener afListener = this;
+
                 // On traite lorsque la lecture est complétée
                 player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                     public void onCompletion(MediaPlayer mp) {
                         updateState("read");
-                        manager.abandonAudioFocus(focusChangeListener);
+                        manager.abandonAudioFocus(afListener);
                         selectTrack();
                     }
                 });
@@ -92,7 +86,7 @@ public class MediaController {
     }
 
     public void forward() {
-        manager.abandonAudioFocus(focusChangeListener);
+        manager.abandonAudioFocus(this);
         selectTrack();
     }
 
@@ -109,17 +103,6 @@ public class MediaController {
         }
     }
 
-    public void resume2() {
-        if (isPaused) {
-            player.start();
-            isPaused = false;
-        }
-        else if (isPlaying()) {
-            player.pause();
-            isPaused = true;
-        }
-    }
-
     public void updateState(String flag) {
         dao.open();
 
@@ -132,13 +115,48 @@ public class MediaController {
     }
 
     public void destroy() {
+        manager.abandonAudioFocus(this);
+
         if (player != null) {
             player.release();
             player = null;
         }
     }
 
-    public boolean isPlaying() {
-        return player != null && player.isPlaying();
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_GAIN:
+                // Your app has been granted audio focus again
+                // Raise volume to normal, restart playback if necessary
+                selectTrack();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+                player.start();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
+                player.start();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                player.setVolume(1f, 1f);
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+                // Permanent loss of audio focus
+                if (player != null) {
+                    player.stop();
+                    player.release();
+                    player = null;
+                }
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                // Pause playback
+                player.pause();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                // Lower the volume, keep playing
+                player.setVolume(0.5f, 0.5f);
+                break;
+            case AudioManager.AUDIOFOCUS_NONE:
+                break;
+        }
     }
 }
