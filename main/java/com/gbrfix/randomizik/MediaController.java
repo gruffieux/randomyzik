@@ -128,11 +128,15 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
             case AudioManager.AUDIOFOCUS_GAIN:
                 // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
-                selectTrack();
+                if (player == null) {
+                    selectTrack();
+                }
+                else {
+                    player.setVolume(1f, 1f);
+                    player.start();
+                }
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-                player.start();
-                break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
                 player.start();
                 break;
@@ -141,12 +145,6 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
                 // Permanent loss of audio focus
-                if (player != null) {
-                    player.stop();
-                    player.release();
-                    player = null;
-                }
-                break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
                 player.pause();
