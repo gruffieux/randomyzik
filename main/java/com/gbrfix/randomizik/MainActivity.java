@@ -20,8 +20,6 @@ import java.io.File;
 
 /*
 TODO V1:
-- Notifier le bouton play lors du changement de focus audio
-- Notifier la liste lors du changement de piste
 - Demande permission sotckage interactive
 
 TODO V2
@@ -43,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
         File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         final File[] files = file.listFiles();
         String[] flags = new String[files.length];
+        final long[] ids = new long[files.length];
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
@@ -54,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             if (!dao.getDb().isReadOnly()) {
                 if (cursor.getCount() == 0) {
                     for (int i = 0; i < files.length; i++) {
-                        dao.add(files[i].getPath(), "unread");
+                        ids[i] = dao.insert(files[i].getPath(), "unread");
                         flags[i] = "unread";
                     }
                 } else {
@@ -73,11 +72,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else {
                             flags[i] = flag;
+                            ids[i] = id;
                         }
                     }
                     for (int i = 0; i < files.length; i++) {
                         if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
-                            dao.add(files[i].getPath(), "unread");
+                            ids[i] = dao.insert(files[i].getPath(), "unread");
                             flags[i] = "unread";
                         }
                     }
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
         // Layout pour la liste des chansons
-        LinearLayout listLayout = new LinearLayout(context);
+        final LinearLayout listLayout = new LinearLayout(context);
         listLayout.setOrientation(LinearLayout.VERTICAL);
 
         // On créé une vue pour chaque fichier
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout controlLayout = new LinearLayout(context);
         controlLayout.setOrientation(LinearLayout.HORIZONTAL);
         controlLayout.setHorizontalGravity(1);
-        ToggleButton playBtn = new ToggleButton(context);
+        final ToggleButton playBtn = new ToggleButton(context);
         playBtn.setTextOff("Play");
         playBtn.setTextOn("Pause");
         playBtn.setChecked(false);
@@ -153,6 +153,26 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 controller.forward();
+            }
+        });
+
+        // On met à jour la liste
+        controller.setUpdateSignalListener(new UpdateSignal() {
+
+            @Override
+            public void onTrackReaden(int id) {
+                for (int i = 0; i < files.length; i++) {
+                    if (ids[i] == id) {
+                        TextView songView = (TextView)listLayout.getChildAt(i);
+                        songView.setTextColor(Color.RED);
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void onTrackResume(boolean start) {
+                playBtn.setChecked(start);
             }
         });
 

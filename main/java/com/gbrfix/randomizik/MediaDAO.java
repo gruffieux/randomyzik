@@ -1,5 +1,6 @@
 package com.gbrfix.randomizik;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
 
@@ -15,8 +16,16 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias`;", null);
     }
 
-    public void add(String path, String flag) {
+   /* public void add(String path, String flag) {
         this.db.execSQL("INSERT INTO `medias` (`path`, `flag`) VALUES (\"" + path + "\", \"" + flag + "\");");
+    }*/
+
+    public long insert(String path, String flag) {
+        ContentValues values = new ContentValues();
+        values.put("path", path);
+        values.put("flag", flag);
+
+        return this.db.insert("medias", null, values);
     }
 
     public void remove(int id) {
