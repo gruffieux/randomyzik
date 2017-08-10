@@ -1,9 +1,13 @@
 package com.gbrfix.randomizik;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -19,17 +23,34 @@ import android.util.Log;
 import java.io.File;
 
 /*
-TODO V1:
-- Demande permission sotckage interactive
-
-TODO V2
+TODO
 - ListView avec ListAdapter pour affichier les titres, artistes, albums
 - Morceau en cours de lecture avec barre de progression
 */
 
 public class MainActivity extends AppCompatActivity {
+    public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     public boolean configChanged = false;
     public MediaController controller = null;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERSMISSIONS_REQUEST_STORAGE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission was granted, app can run
+                    init(this);
+                }
+                else {
+                    // Permission denied, display info
+                    TextView infoMsg = new TextView(this);
+                    infoMsg.setText("Sorry, application needs read/write storage permissions to run.");
+                    infoMsg.setTextColor(Color.RED);
+                    setContentView(infoMsg);
+                }
+                return;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +58,15 @@ public class MainActivity extends AppCompatActivity {
 
         final Context context = this;
 
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERSMISSIONS_REQUEST_STORAGE);
+            return;
+        }
+
+        init(context);
+    }
+
+    protected void init(Context context) {
         // On récupère les fichiers musicaux
         File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         final File[] files = file.listFiles();
@@ -123,10 +153,12 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setTextOff("Play");
         playBtn.setTextOn("Pause");
         playBtn.setChecked(false);
-        Button rewBtn = new Button(context);
+        final Button rewBtn = new Button(context);
         rewBtn.setText("<");
-        Button fwdBtn = new Button(context);
+        rewBtn.setEnabled(false);
+        final Button fwdBtn = new Button(context);
         fwdBtn.setText(">");
+        fwdBtn.setEnabled(false);
         controlLayout.addView(rewBtn);
         controlLayout.addView(playBtn);
         controlLayout.addView(fwdBtn);
@@ -139,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 controller.resume();
+                rewBtn.setEnabled(isChecked);
+                fwdBtn.setEnabled(isChecked);
             }
         });
 
@@ -156,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // On met à jour la liste
+        // On met à jour l'UI
         controller.setUpdateSignalListener(new UpdateSignal() {
 
             @Override
@@ -177,16 +211,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         setContentView(mainLayout);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
     }
 
     @Override

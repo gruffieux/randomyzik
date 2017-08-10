@@ -17,7 +17,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
     protected SQLiteCursor cursor;
     protected MediaDAO dao;
     private Context context;
-    private UpdateSignal usListener;
+    private UpdateSignal updateSignalListener;
 
     public MediaController(Context context) {
         manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -27,7 +27,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
     }
 
     public void setUpdateSignalListener(UpdateSignal listener) {
-        usListener = listener;
+        updateSignalListener = listener;
     }
 
     public boolean selectTrack() {
@@ -66,7 +66,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                         updateState("read");
                         manager.abandonAudioFocus(afListener);
                         selectTrack();
-                        usListener.onTrackReaden(id);
+                        updateSignalListener.onTrackReaden(id);
                     }
                 });
             }
@@ -80,14 +80,15 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
     }
 
     public void rewind() {
-        try {
-            player.stop();
-            player.prepare();
-            player.seekTo(0);
-            player.start();
-        }
-        catch (Exception e) {
+        if (player != null && player.isPlaying()) {
+            try {
+                player.stop();
+                player.prepare();
+                player.seekTo(0);
+                player.start();
+            } catch (Exception e) {
 
+            }
         }
     }
 
@@ -106,8 +107,12 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
         else {
             if (player.isPlaying()) {
                 player.pause();
+                manager.abandonAudioFocus(this);
             } else {
-                player.start();
+                int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                    player.start();
+                }
             }
         }
     }
@@ -139,15 +144,13 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                 // Raise volume to normal, restart playback if necessary
                 if (player != null) {
                     player.setVolume(1f, 1f);
-                    //player.start();
-                    usListener.onTrackResume(true);
+                    updateSignalListener.onTrackResume(true);
                 }
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
                 if (player != null) {
-                    //player.start();
-                    usListener.onTrackResume(true);
+                    updateSignalListener.onTrackResume(true);
                 }
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
@@ -161,7 +164,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                 // Pause playback
                 if (player != null) {
                     //player.pause();
-                    usListener.onTrackResume(false);
+                    updateSignalListener.onTrackResume(false);
                 }
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
