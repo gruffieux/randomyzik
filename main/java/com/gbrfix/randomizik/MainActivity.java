@@ -13,7 +13,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.ToggleButton;
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final Context context = this;
+        Context context = this;
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERSMISSIONS_REQUEST_STORAGE);
@@ -66,12 +66,13 @@ public class MainActivity extends AppCompatActivity {
         init(context);
     }
 
-    protected void init(Context context) {
+    protected void init(final Context context) {
         // On récupère les fichiers musicaux
         File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         final File[] files = file.listFiles();
         String[] flags = new String[files.length];
         final long[] ids = new long[files.length];
+        final ListView listView = new ListView(context);
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
@@ -80,6 +81,13 @@ public class MainActivity extends AppCompatActivity {
             MediaDAO dao = new MediaDAO(context);
             dao.open();
             SQLiteCursor cursor = dao.getAll();
+
+            // Cursor adapter pour la listeView
+            String[] fromColumns = {"_id", "path"};
+            int[] toViews = {R.id.id, R.id.path};
+            TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
+            listView.setAdapter(adapter);
+
             if (!dao.getDb().isReadOnly()) {
                 if (cursor.getCount() == 0) {
                     for (int i = 0; i < files.length; i++) {
@@ -118,31 +126,16 @@ public class MainActivity extends AppCompatActivity {
         catch (SQLException e) {
             Log.v("SQLException", e.getMessage());
         }
+        catch (Exception e) {
+            Log.v("Exception", e.getMessage());
+        }
 
         // Layout principale
         LinearLayout mainLayout = new LinearLayout(context);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
 
         // Vue pour la liste des chansons
-        ScrollView listView = new ScrollView(context);
         listView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-
-        // Layout pour la liste des chansons
-        final LinearLayout listLayout = new LinearLayout(context);
-        listLayout.setOrientation(LinearLayout.VERTICAL);
-
-        // On créé une vue pour chaque fichier
-        for (int i = 0; i < files.length; i++) {
-            TextView songView = new TextView(context);
-            songView.setText(files[i].getName());
-            if (flags[i].equals("read")) {
-                songView.setTextColor(Color.RED);
-            }
-            listLayout.addView(songView);
-        }
-
-        // On ajoute la vue au layout pour la liste de chansons
-        listView.addView(listLayout);
         mainLayout.addView(listView);
 
         // On créé un layout avec les boutons de contrôle
@@ -195,12 +188,16 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTrackReaden(int id) {
-                for (int i = 0; i < files.length; i++) {
-                    if (ids[i] == id) {
-                        TextView songView = (TextView)listLayout.getChildAt(i);
-                        songView.setTextColor(Color.RED);
-                        break;
-                    }
+                try {
+                    MediaDAO dao = new MediaDAO(context);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAll();
+                    TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+                    adapter.changeCursor(cursor);
+                    dao.close();
+                }
+                catch (SQLException e) {
+                    Log.v("SQLException", e.getMessage());
                 }
             }
 

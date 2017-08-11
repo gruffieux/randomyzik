@@ -13,7 +13,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAll() {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias`;", null);
+        return (SQLiteCursor)this.db.rawQuery("SELECT `id` AS `_id`, `path`, `flag` FROM `medias` ORDER BY `flag` DESC;", null);
     }
 
    /* public void add(String path, String flag) {
