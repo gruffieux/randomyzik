@@ -117,6 +117,10 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
         }
     }
 
+    public boolean isPlaying() {
+        return player.isPlaying();
+    }
+
     public void updateState(String flag) {
         dao.open();
 
