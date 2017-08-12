@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
+import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -30,8 +31,8 @@ TODO
 
 public class MainActivity extends AppCompatActivity {
     public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
-    public boolean configChanged = false;
     public MediaController controller = null;
+    protected boolean resumeEnabled = true;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -147,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 controller.resume();
+                resumeEnabled = true;
                 rewBtn.setEnabled(isChecked);
                 fwdBtn.setEnabled(isChecked);
             }
@@ -195,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
+        // Force l'UI à l'état initial
         /*Configuration config=getResources().getConfiguration();
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
             setContentView(R.layout.playlist);
@@ -203,27 +206,27 @@ public class MainActivity extends AppCompatActivity {
             setContentView(R.layout.playlist);
         }*/
 
-        configChanged = true;
+        if (controller.isPlaying()) {
+            controller.resume();
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
+        bundle.putBoolean("resumeEnabled", resumeEnabled);
+
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
+        resumeEnabled = bundle.getBoolean("resumeEnabled");
+
         super.onRestoreInstanceState(bundle);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (!configChanged) {
-            controller.destroy();
-        }
-
-        configChanged = false;
     }
 }

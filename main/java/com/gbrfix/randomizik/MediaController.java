@@ -113,6 +113,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                     player.start();
                 }
+                player.start();
             }
         }
     }
@@ -167,7 +168,6 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
                 if (player != null) {
-                    //player.pause();
                     updateSignalListener.onTrackResume(false);
                 }
                 break;
