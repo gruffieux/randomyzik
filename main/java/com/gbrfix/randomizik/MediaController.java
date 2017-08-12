@@ -173,8 +173,6 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                     player.setVolume(0.5f, 0.5f);
                 }
                 break;
-            case AudioManager.AUDIOFOCUS_NONE:
-                break;
         }
     }
 }
