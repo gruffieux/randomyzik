@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
-import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -32,7 +31,6 @@ TODO
 public class MainActivity extends AppCompatActivity {
     public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     public MediaController controller = null;
-    protected boolean resumeEnabled = true;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -148,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 controller.resume();
-                resumeEnabled = true;
                 rewBtn.setEnabled(isChecked);
                 fwdBtn.setEnabled(isChecked);
             }
@@ -198,35 +195,43 @@ public class MainActivity extends AppCompatActivity {
         super.onConfigurationChanged(newConfig);
 
         // Force l'UI à l'état initial
-        /*Configuration config=getResources().getConfiguration();
+        Configuration config=getResources().getConfiguration();
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
             setContentView(R.layout.playlist);
         }
         else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setContentView(R.layout.playlist);
-        }*/
-
-        if (controller.isPlaying()) {
-            controller.resume();
         }
     }
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        bundle.putBoolean("resumeEnabled", resumeEnabled);
+        bundle.putBoolean("isPlaying", controller.isPlaying());
+        bundle.putString("currentSource", controller.getCurrentSource());
+        bundle.putInt("currentPosition", controller.getCurrentPosition());
 
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
-        resumeEnabled = bundle.getBoolean("resumeEnabled");
-
         super.onRestoreInstanceState(bundle);
+
+        boolean isPlaying = bundle.getBoolean("isPlaying");
+
+        if (isPlaying) {
+            String currentSource = bundle.getString("currentSource");
+            int currentPosition = bundle.getInt("currentPosition");
+            controller.restaurePlayer(currentSource, currentPosition);
+            ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+            playBtn.setChecked(true);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        controller.destroy();
     }
 }
