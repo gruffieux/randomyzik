@@ -32,14 +32,21 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     }
 
     public int getCurrentPosition() {
+        if (player == null) {
+            return 0;
+        }
+
         return player.getCurrentPosition();
     }
 
     public void restaurePlayer(String source, int position) {
         currentSource = source;
-        player = MediaPlayer.create(context, Uri.parse(source));
-        player.seekTo(position);
-        player.setOnCompletionListener(this);
+
+        if (player != null) {
+            player = MediaPlayer.create(context, Uri.parse(source));
+            player.seekTo(position);
+            player.setOnCompletionListener(this);
+        }
     }
 
     public void setUpdateSignalListener(UpdateSignal listener) {
