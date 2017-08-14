@@ -5,6 +5,6 @@ package com.gbrfix.randomizik;
  */
 
 public interface UpdateSignal {
-    void onTrackReaden(int id);
+    void onTrackReaden(boolean last);
     void onTrackResume(boolean start);
 }

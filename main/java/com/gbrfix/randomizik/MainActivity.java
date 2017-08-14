@@ -30,7 +30,6 @@ TODO
 
 public class MainActivity extends AppCompatActivity {
     public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
-    public boolean configChanged = false;
     public MediaController controller = null;
 
     @Override
@@ -39,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
             case MY_PERSMISSIONS_REQUEST_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission was granted, app can run
+                    setContentView(R.layout.playlist);
                     init(this);
                 }
                 else {
@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        setContentView(R.layout.playlist);
+
         init(context);
     }
 
@@ -72,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         final File[] files = file.listFiles();
         String[] flags = new String[files.length];
         final long[] ids = new long[files.length];
-        final ListView listView = new ListView(context);
+        final ListView listView = (ListView)findViewById(R.id.playlist);
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
@@ -86,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
             String[] fromColumns = {"_id", "path"};
             int[] toViews = {R.id.id, R.id.path};
             TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
+
             listView.setAdapter(adapter);
 
             if (!dao.getDb().isReadOnly()) {
@@ -130,35 +133,15 @@ public class MainActivity extends AppCompatActivity {
             Log.v("Exception", e.getMessage());
         }
 
-        // Layout principale
-        LinearLayout mainLayout = new LinearLayout(context);
-        mainLayout.setOrientation(LinearLayout.VERTICAL);
-
-        // Vue pour la liste des chansons
-        listView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-        mainLayout.addView(listView);
-
-        // On créé un layout avec les boutons de contrôle
-        LinearLayout controlLayout = new LinearLayout(context);
-        controlLayout.setOrientation(LinearLayout.HORIZONTAL);
-        controlLayout.setHorizontalGravity(1);
-        final ToggleButton playBtn = new ToggleButton(context);
-        playBtn.setTextOff("Play");
-        playBtn.setTextOn("Pause");
-        playBtn.setChecked(false);
-        final Button rewBtn = new Button(context);
-        rewBtn.setText("<");
-        rewBtn.setEnabled(false);
-        final Button fwdBtn = new Button(context);
-        fwdBtn.setText(">");
-        fwdBtn.setEnabled(false);
-        controlLayout.addView(rewBtn);
-        controlLayout.addView(playBtn);
-        controlLayout.addView(fwdBtn);
-        mainLayout.addView(controlLayout);
-
         // On instancie le contrôleur
         controller = new MediaController(context);
+
+        // On récup les éléments de l'UI
+        final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+        final Button rewBtn = (Button)findViewById(R.id.rew);
+        final Button fwdBtn = (Button)findViewById(R.id.fwd);
+        LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
+        controlLayout.setHorizontalGravity(1);
 
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -187,17 +170,20 @@ public class MainActivity extends AppCompatActivity {
         controller.setUpdateSignalListener(new UpdateSignal() {
 
             @Override
-            public void onTrackReaden(int id) {
-                try {
-                    MediaDAO dao = new MediaDAO(context);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAll();
-                    TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
-                    adapter.changeCursor(cursor);
-                    dao.close();
+            public void onTrackReaden(boolean last) {
+                if (!last) {
+                    try {
+                        MediaDAO dao = new MediaDAO(context);
+                        dao.open();
+                        SQLiteCursor cursor = dao.getAll();
+                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                        adapter.changeCursor(cursor);
+                        dao.close();
+                    } catch (SQLException e) {
+                        Log.v("SQLException", e.getMessage());
+                    }
                 }
-                catch (SQLException e) {
-                    Log.v("SQLException", e.getMessage());
+                else {
                 }
             }
 
@@ -206,37 +192,54 @@ public class MainActivity extends AppCompatActivity {
                 playBtn.setChecked(start);
             }
         });
-
-        setContentView(mainLayout);
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
+        // Force l'UI à l'état initial
         Configuration config=getResources().getConfiguration();
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            //setContentView(R.layout.activity_main);
+            setContentView(R.layout.playlist);
         }
         else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //setContentView(R.layout.activity_main);
+            setContentView(R.layout.playlist);
         }
-
-        configChanged = true;
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle bundle) {
+    public void onSaveInstanceState(Bundle bundle) {
+        if (controller != null) {
+            bundle.putBoolean("isPlaying", controller.isPlaying());
+            bundle.putInt("currentId", controller.getCurrentId());
+            bundle.putInt("currentPosition", controller.getCurrentPosition());
+        }
+
+        super.onSaveInstanceState(bundle);
+    }
+
+    @Override
+    public void onRestoreInstanceState(Bundle bundle) {
+        super.onRestoreInstanceState(bundle);
+
+        boolean isPlaying = bundle.getBoolean("isPlaying");
+
+        if (isPlaying) {
+            int currentId = bundle.getInt("currentId");
+            int currentPosition = bundle.getInt("currentPosition");
+            controller.restorePlayer(currentId, currentPosition);
+            ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+            playBtn.setChecked(true);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        if (!configChanged) {
+        if (controller != null) {
             controller.destroy();
         }
-
-        configChanged = false;
     }
 }

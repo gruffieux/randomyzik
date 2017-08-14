@@ -5,25 +5,57 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.content.Context;
+import android.util.Log;
 
 import java.util.Random;
 
 /**
  * Created by gab on 16.07.2017.
  */
-public class MediaController implements AudioManager.OnAudioFocusChangeListener {
+public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
     protected static MediaPlayer player = null;
     protected AudioManager manager;
-    protected SQLiteCursor cursor;
     protected MediaDAO dao;
     private Context context;
     private UpdateSignal updateSignalListener;
+    protected int currentId;
 
     public MediaController(Context context) {
         manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        cursor = null;
         dao = new MediaDAO(context);
         this.context = context;
+        currentId = 0;
+    }
+
+    public int getCurrentId() {
+        return currentId;
+    }
+
+    public int getCurrentPosition() {
+        if (player == null) {
+            return 0;
+        }
+
+        return player.getCurrentPosition();
+    }
+
+    public void restorePlayer(int id, int position) {
+        currentId = id;
+
+        try {
+            dao.open();
+            SQLiteCursor cursor = dao.getFromId(currentId);
+            cursor.moveToFirst();
+            String path = cursor.getString(1);
+            player = MediaPlayer.create(context, Uri.parse(path));
+            dao.close();
+        }
+        catch (Exception e) {
+            Log.v("Exception", e.getMessage());
+        }
+
+        player.seekTo(position);
+        player.setOnCompletionListener(this);
     }
 
     public void setUpdateSignalListener(UpdateSignal listener) {
@@ -33,7 +65,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
     public boolean selectTrack() {
         dao.open();
 
-        cursor = dao.getFromFlag("unread");
+        SQLiteCursor cursor = dao.getFromFlag("unread");
         int total = cursor.getCount();
 
         dao.close();
@@ -42,11 +74,17 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
             return false;
         }
 
-        Random random = new Random();
-        int pos = random.nextInt(total - 1);
-        cursor.moveToPosition(pos);
-        final int id = cursor.getInt(0);
-        final String path = cursor.getString(1);
+        if (total > 1) {
+            Random random = new Random();
+            int pos = random.nextInt(total - 1);
+            cursor.moveToPosition(pos);
+        }
+        else {
+            cursor.moveToFirst();
+        }
+
+        currentId = cursor.getInt(0);
+        String path = cursor.getString(1);
 
         try {
             if (player != null) {
@@ -57,18 +95,7 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
                 player = MediaPlayer.create(context, Uri.parse(path));
                 //player.seekTo(player.getDuration() - 10000);
                 player.start();
-
-                final AudioManager.OnAudioFocusChangeListener afListener = this;
-
-                // On traite lorsque la lecture est complétée
-                player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    public void onCompletion(MediaPlayer mp) {
-                        updateState("read");
-                        manager.abandonAudioFocus(afListener);
-                        selectTrack();
-                        updateSignalListener.onTrackReaden(id);
-                    }
-                });
+                player.setOnCompletionListener(this);
             }
 
         }
@@ -117,12 +144,15 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
         }
     }
 
+    public boolean isPlaying() {
+        return player != null && player.isPlaying();
+    }
+
     public void updateState(String flag) {
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {
-            int id = cursor.getInt(0);
-            dao.update(id, flag);
+            dao.update(currentId, flag);
         }
 
         dao.close();
@@ -137,41 +167,43 @@ public class MediaController implements AudioManager.OnAudioFocusChangeListener 
         }
     }
 
+    @Override
+    public void onCompletion(MediaPlayer mediaPlayer) {
+        updateState("read");
+        manager.abandonAudioFocus(this);
+        boolean res = selectTrack();
+        updateSignalListener.onTrackReaden(!res);
+    }
+
+    @Override
     public void onAudioFocusChange(int focusChange) {
+        if (player == null) {
+            return;
+        }
+
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
-                if (player != null) {
-                    player.setVolume(1f, 1f);
-                    updateSignalListener.onTrackResume(true);
-                }
+                player.setVolume(1f, 1f);
+                updateSignalListener.onTrackResume(true);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
-                if (player != null) {
-                    updateSignalListener.onTrackResume(true);
-                }
+                updateSignalListener.onTrackResume(true);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                if (player != null) {
-                    player.setVolume(1f, 1f);
-                }
+                player.setVolume(1f, 1f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
                 // Permanent loss of audio focus
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
-                if (player != null) {
-                    //player.pause();
-                    updateSignalListener.onTrackResume(false);
-                }
+                updateSignalListener.onTrackResume(false);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lower the volume, keep playing
-                if (player != null) {
-                    player.setVolume(0.5f, 0.5f);
-                }
+                player.setVolume(0.5f, 0.5f);
                 break;
         }
     }
