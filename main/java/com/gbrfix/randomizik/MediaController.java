@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.content.Context;
+import android.util.Log;
 
 import java.util.Random;
 
@@ -14,21 +15,20 @@ import java.util.Random;
 public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
     protected static MediaPlayer player = null;
     protected AudioManager manager;
-    protected SQLiteCursor cursor;
     protected MediaDAO dao;
     private Context context;
     private UpdateSignal updateSignalListener;
-    protected String currentSource;
+    protected int currentId;
 
     public MediaController(Context context) {
         manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        cursor = null;
         dao = new MediaDAO(context);
         this.context = context;
+        currentId = 0;
     }
 
-    public String getCurrentSource() {
-        return currentSource;
+    public int getCurrentId() {
+        return currentId;
     }
 
     public int getCurrentPosition() {
@@ -39,9 +39,21 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         return player.getCurrentPosition();
     }
 
-    public void restaurePlayer(String source, int position) {
-        currentSource = source;
-        player = MediaPlayer.create(context, Uri.parse(currentSource));
+    public void restorePlayer(int id, int position) {
+        currentId = id;
+
+        try {
+            dao.open();
+            SQLiteCursor cursor = dao.getFromId(currentId);
+            cursor.moveToFirst();
+            String path = cursor.getString(1);
+            player = MediaPlayer.create(context, Uri.parse(path));
+            dao.close();
+        }
+        catch (Exception e) {
+            Log.v("Exception", e.getMessage());
+        }
+
         player.seekTo(position);
         player.setOnCompletionListener(this);
     }
@@ -53,7 +65,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     public boolean selectTrack() {
         dao.open();
 
-        cursor = dao.getFromFlag("unread");
+        SQLiteCursor cursor = dao.getFromFlag("unread");
         int total = cursor.getCount();
 
         dao.close();
@@ -62,11 +74,17 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             return false;
         }
 
-        Random random = new Random();
-        int pos = random.nextInt(total - 1);
-        cursor.moveToPosition(pos);
-        final int id = cursor.getInt(0);
-        currentSource = cursor.getString(1);
+        if (total > 1) {
+            Random random = new Random();
+            int pos = random.nextInt(total - 1);
+            cursor.moveToPosition(pos);
+        }
+        else {
+            cursor.moveToFirst();
+        }
+
+        currentId = cursor.getInt(0);
+        String path = cursor.getString(1);
 
         try {
             if (player != null) {
@@ -74,7 +92,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             }
             int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                player = MediaPlayer.create(context, Uri.parse(currentSource));
+                player = MediaPlayer.create(context, Uri.parse(path));
                 //player.seekTo(player.getDuration() - 10000);
                 player.start();
                 player.setOnCompletionListener(this);
@@ -134,8 +152,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {
-            int id = cursor.getInt(0);
-            dao.update(id, flag);
+            dao.update(currentId, flag);
         }
 
         dao.close();
@@ -154,8 +171,8 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     public void onCompletion(MediaPlayer mediaPlayer) {
         updateState("read");
         manager.abandonAudioFocus(this);
-        selectTrack();
-        updateSignalListener.onTrackReaden(0);
+        boolean res = selectTrack();
+        updateSignalListener.onTrackReaden(!res);
     }
 
     @Override

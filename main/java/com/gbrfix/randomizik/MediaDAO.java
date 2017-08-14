@@ -32,6 +32,10 @@ public class MediaDAO extends DAOBase {
         this.db.execSQL("DELETE FROM `medias` WHERE `id`=" + String.valueOf(id));
     }
 
+    public SQLiteCursor getFromId(int id) {
+        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `id`='"+String.valueOf(id)+"'", null);
+    }
+
     public SQLiteCursor getFromPath(String path) {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `path`=?;", new String[] {path});
     }

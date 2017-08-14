@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
             case MY_PERSMISSIONS_REQUEST_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission was granted, app can run
+                    setContentView(R.layout.playlist);
                     init(this);
                 }
                 else {
@@ -55,14 +56,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.playlist);
-
         Context context = this;
 
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERSMISSIONS_REQUEST_STORAGE);
             return;
         }
+
+        setContentView(R.layout.playlist);
 
         init(context);
     }
@@ -169,17 +170,20 @@ public class MainActivity extends AppCompatActivity {
         controller.setUpdateSignalListener(new UpdateSignal() {
 
             @Override
-            public void onTrackReaden(int id) {
-                try {
-                    MediaDAO dao = new MediaDAO(context);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAll();
-                    TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
-                    adapter.changeCursor(cursor);
-                    dao.close();
+            public void onTrackReaden(boolean last) {
+                if (!last) {
+                    try {
+                        MediaDAO dao = new MediaDAO(context);
+                        dao.open();
+                        SQLiteCursor cursor = dao.getAll();
+                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                        adapter.changeCursor(cursor);
+                        dao.close();
+                    } catch (SQLException e) {
+                        Log.v("SQLException", e.getMessage());
+                    }
                 }
-                catch (SQLException e) {
-                    Log.v("SQLException", e.getMessage());
+                else {
                 }
             }
 
@@ -206,9 +210,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        bundle.putBoolean("isPlaying", controller.isPlaying());
-        bundle.putString("currentSource", controller.getCurrentSource());
-        bundle.putInt("currentPosition", controller.getCurrentPosition());
+        if (controller != null) {
+            bundle.putBoolean("isPlaying", controller.isPlaying());
+            bundle.putInt("currentId", controller.getCurrentId());
+            bundle.putInt("currentPosition", controller.getCurrentPosition());
+        }
 
         super.onSaveInstanceState(bundle);
     }
@@ -220,9 +226,9 @@ public class MainActivity extends AppCompatActivity {
         boolean isPlaying = bundle.getBoolean("isPlaying");
 
         if (isPlaying) {
-            String currentSource = bundle.getString("currentSource");
+            int currentId = bundle.getInt("currentId");
             int currentPosition = bundle.getInt("currentPosition");
-            controller.restaurePlayer(currentSource, currentPosition);
+            controller.restorePlayer(currentId, currentPosition);
             ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
             playBtn.setChecked(true);
         }
@@ -232,6 +238,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        controller.destroy();
+        if (controller != null) {
+            controller.destroy();
+        }
     }
 }
