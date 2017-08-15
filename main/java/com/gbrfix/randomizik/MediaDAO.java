@@ -13,17 +13,18 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAll() {
-        return (SQLiteCursor)this.db.rawQuery("SELECT `id` AS `_id`, `path`, `flag` FROM `medias` ORDER BY `flag` DESC;", null);
+        return (SQLiteCursor)this.db.rawQuery("SELECT `id` AS `_id`, `path`, `flag`, `track_nb`, `title`, `album`, `artist` FROM `medias` ORDER BY `flag` DESC;", null);
     }
 
-   /* public void add(String path, String flag) {
-        this.db.execSQL("INSERT INTO `medias` (`path`, `flag`) VALUES (\"" + path + "\", \"" + flag + "\");");
-    }*/
-
-    public long insert(String path, String flag) {
+    public long insert(Media media) {
         ContentValues values = new ContentValues();
-        values.put("path", path);
-        values.put("flag", flag);
+
+        values.put("path", media.getPath());
+        values.put("flag", media.getFlag());
+        values.put("track_nb", media.getTrackNb());
+        values.put("title", media.getTitle());
+        values.put("album", media.getAlbum());
+        values.put("artist", media.getArtist());
 
         return this.db.insert("medias", null, values);
     }

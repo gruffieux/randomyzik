@@ -85,17 +85,19 @@ public class MainActivity extends AppCompatActivity {
             SQLiteCursor cursor = dao.getAll();
 
             // Cursor adapter pour la listeView
-            String[] fromColumns = {"_id", "path"};
-            int[] toViews = {R.id.id, R.id.path};
+            String[] fromColumns = {"track_nb", "title", "album", "artist"};
+            int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
             TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
 
             listView.setAdapter(adapter);
 
             if (!dao.getDb().isReadOnly()) {
+                MediaFactory factory = new MediaFactory();
                 if (cursor.getCount() == 0) {
                     for (int i = 0; i < files.length; i++) {
-                        ids[i] = dao.insert(files[i].getPath(), "unread");
-                        flags[i] = "unread";
+                        Media media = factory.createMedia(files[i].getPath());
+                        ids[i] = dao.insert(media);
+                        flags[i] = media.getFlag();
                     }
                 } else {
                     while (cursor.moveToNext()) {
@@ -117,9 +119,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                     for (int i = 0; i < files.length; i++) {
+                        Media media = factory.createMedia(files[i].getPath());
                         if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
-                            ids[i] = dao.insert(files[i].getPath(), "unread");
-                            flags[i] = "unread";
+                            ids[i] = dao.insert(media);
+                            flags[i] = media.getFlag();
                         }
                     }
                 }
