@@ -24,7 +24,6 @@ import java.io.File;
 
 /*
 TODO
-- ListView avec ListAdapter pour affichier les titres, artistes, albums
 - Morceau en cours de lecture avec barre de progression
 */
 
