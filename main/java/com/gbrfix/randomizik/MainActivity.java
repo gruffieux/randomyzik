@@ -11,15 +11,20 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Button;
 import android.widget.ToggleButton;
 import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
+
+import org.w3c.dom.Text;
+
 import java.io.File;
 
 /*
@@ -150,6 +155,9 @@ public class MainActivity extends AppCompatActivity {
                 controller.resume();
                 rewBtn.setEnabled(isChecked);
                 fwdBtn.setEnabled(isChecked);
+                if (isChecked) {
+                    new Thread(controller).start();
+                }
             }
         });
 
@@ -171,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
         controller.setUpdateSignalListener(new UpdateSignal() {
 
             @Override
-            public void onTrackReaden(boolean last) {
+            public void onTrackRead(boolean last) {
                 try {
                     MediaDAO dao = new MediaDAO(context);
                     dao.open();
@@ -187,6 +195,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTrackResume(boolean start) {
                 playBtn.setChecked(start);
+            }
+
+            @Override
+            public void onTrackSelect(int id, int duration) {
+                ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+                progressBar.setProgress(0);
+                progressBar.setMax(duration);
+                TextView textView = (TextView)findViewById(R.id.currentTrack);
+                textView.setText(controller.getTrackLabel(id));
+            }
+
+            @Override
+            public void onTrackProgress(int position) {
+                ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+                progressBar.setProgress(position);
             }
         });
     }
@@ -208,9 +231,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle bundle) {
         if (controller != null) {
-            bundle.putBoolean("isPlaying", controller.isPlaying());
-            bundle.putInt("currentId", controller.getCurrentId());
-            bundle.putInt("currentPosition", controller.getCurrentPosition());
+            controller.savePlayer(bundle);
         }
 
         super.onSaveInstanceState(bundle);
@@ -223,8 +244,18 @@ public class MainActivity extends AppCompatActivity {
         boolean isPlaying = bundle.getBoolean("isPlaying");
         int currentId = bundle.getInt("currentId");
         int currentPosition = bundle.getInt("currentPosition");
+        int duration = bundle.getInt("duration");
 
-        controller.restorePlayer(currentId, currentPosition);
+        ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+        progressBar.setMax(duration);
+        progressBar.setProgress(currentPosition);
+
+        if (controller != null) {
+            controller.restorePlayer(currentId, currentPosition);
+            TextView currentTrack = (TextView)findViewById(R.id.currentTrack);
+            currentTrack.setText(controller.getTrackLabel(currentId));
+        }
+
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         playBtn.setChecked(isPlaying);
     }

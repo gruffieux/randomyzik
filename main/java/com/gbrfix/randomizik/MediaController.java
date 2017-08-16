@@ -1,18 +1,22 @@
 package com.gbrfix.randomizik;
 
 import android.database.sqlite.SQLiteCursor;
+import android.database.sqlite.SQLiteException;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
+import android.widget.ProgressBar;
+import android.widget.SeekBar;
 
 import java.util.Random;
 
 /**
  * Created by gab on 16.07.2017.
  */
-public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
+public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, Runnable {
     protected static MediaPlayer player = null;
     protected AudioManager manager;
     protected MediaDAO dao;
@@ -31,12 +35,17 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         return currentId;
     }
 
-    public int getCurrentPosition() {
+    public boolean savePlayer(Bundle bundle) {
         if (player == null) {
-            return 0;
+            return false;
         }
 
-        return player.getCurrentPosition();
+        bundle.putBoolean("isPlaying", player.isPlaying());
+        bundle.putInt("currentId", currentId);
+        bundle.putInt("currentPosition", player.getCurrentPosition());
+        bundle.putInt("duration", player.getDuration());
+
+        return true;
     }
 
     public void restorePlayer(int id, int position) {
@@ -58,6 +67,20 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
 
     public void setUpdateSignalListener(UpdateSignal listener) {
         updateSignalListener = listener;
+    }
+
+    public String getTrackLabel(int id) {
+        try {
+            dao.open();
+            SQLiteCursor cursor = dao.getFromId(id);
+            cursor.moveToFirst();
+            String label = cursor.getString(4) + " - " + cursor.getString(5) + " - " + cursor.getString(6);
+            dao.close();
+            return label;
+        }
+        catch (Exception e) {
+            return "???";
+        }
     }
 
     public boolean selectTrack() {
@@ -94,6 +117,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 //player.seekTo(player.getDuration() - 10000);
                 player.start();
                 player.setOnCompletionListener(this);
+                updateSignalListener.onTrackSelect(currentId, player.getDuration());
             }
 
         }
@@ -142,10 +166,6 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         }
     }
 
-    public boolean isPlaying() {
-        return player != null && player.isPlaying();
-    }
-
     public void updateState(String flag) {
         dao.open();
 
@@ -170,7 +190,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         updateState("read");
         manager.abandonAudioFocus(this);
         boolean res = selectTrack();
-        updateSignalListener.onTrackReaden(!res);
+        updateSignalListener.onTrackRead(!res);
     }
 
     @Override
@@ -203,6 +223,27 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 // Lower the volume, keep playing
                 player.setVolume(0.5f, 0.5f);
                 break;
+        }
+    }
+
+    @Override
+    public void run() {
+        if (player == null) {
+            return;
+        }
+
+        int currentPosition = 0;
+        int total = player.getDuration();
+
+        while (currentPosition < total) {
+            try {
+                Thread.sleep(1000);
+                currentPosition = player.getCurrentPosition();
+            }
+            catch (Exception e) {
+                return;
+            }
+            updateSignalListener.onTrackProgress(currentPosition);
         }
     }
 }
