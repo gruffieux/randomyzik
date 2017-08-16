@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
             String[] fromColumns = {"track_nb", "title", "album", "artist"};
             int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
             TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
-
             listView.setAdapter(adapter);
 
             if (!dao.getDb().isReadOnly()) {
@@ -173,19 +172,15 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onTrackReaden(boolean last) {
-                if (!last) {
-                    try {
-                        MediaDAO dao = new MediaDAO(context);
-                        dao.open();
-                        SQLiteCursor cursor = dao.getAll();
-                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                        adapter.changeCursor(cursor);
-                        dao.close();
-                    } catch (SQLException e) {
-                        Log.v("SQLException", e.getMessage());
-                    }
-                }
-                else {
+                try {
+                    MediaDAO dao = new MediaDAO(context);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAll();
+                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                    adapter.changeCursor(cursor);
+                    dao.close();
+                } catch (SQLException e) {
+                    Log.v("SQLException", e.getMessage());
                 }
             }
 
@@ -226,14 +221,12 @@ public class MainActivity extends AppCompatActivity {
         super.onRestoreInstanceState(bundle);
 
         boolean isPlaying = bundle.getBoolean("isPlaying");
+        int currentId = bundle.getInt("currentId");
+        int currentPosition = bundle.getInt("currentPosition");
 
-        if (isPlaying) {
-            int currentId = bundle.getInt("currentId");
-            int currentPosition = bundle.getInt("currentPosition");
-            controller.restorePlayer(currentId, currentPosition);
-            ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-            playBtn.setChecked(true);
-        }
+        controller.restorePlayer(currentId, currentPosition);
+        ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+        playBtn.setChecked(isPlaying);
     }
 
     @Override

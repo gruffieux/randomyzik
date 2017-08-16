@@ -7,9 +7,6 @@ import android.media.MediaMetadataRetriever;
  */
 
 public class MediaFactory extends MediaMetadataRetriever {
-    public MediaFactory() {
-    }
-
     public Media createMedia(String path) {
         setDataSource(path);
 

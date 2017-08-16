@@ -40,22 +40,20 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     }
 
     public void restorePlayer(int id, int position) {
-        currentId = id;
-
         try {
             dao.open();
-            SQLiteCursor cursor = dao.getFromId(currentId);
+            SQLiteCursor cursor = dao.getFromId(id);
             cursor.moveToFirst();
+            currentId = id;
             String path = cursor.getString(1);
             player = MediaPlayer.create(context, Uri.parse(path));
+            player.seekTo(position);
+            player.setOnCompletionListener(this);
             dao.close();
         }
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
         }
-
-        player.seekTo(position);
-        player.setOnCompletionListener(this);
     }
 
     public void setUpdateSignalListener(UpdateSignal listener) {
@@ -100,7 +98,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
 
         }
         catch (Exception e) {
-
+            Log.v("Exception", e.getMessage());
         }
 
         return true;
@@ -114,7 +112,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 player.seekTo(0);
                 player.start();
             } catch (Exception e) {
-
+                Log.v("Exception", e.getMessage());
             }
         }
     }
