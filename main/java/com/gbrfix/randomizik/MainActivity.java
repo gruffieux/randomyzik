@@ -256,6 +256,14 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setChecked(isPlaying);
     }
 
+    protected void onPause() {
+        super.onPause();
+    }
+
+    protected void onStop() {
+        super.onStop();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

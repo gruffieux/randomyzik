@@ -35,7 +35,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(MEDIA_TABLE_DROP);
             db.execSQL(MEDIAS_TABLE_CREATE);
         }
-        else if (oldVersion == 2 && newVersion == 3) {
+        if (oldVersion == 2 && newVersion >= 3) {
             try {
                 db.execSQL("ALTER TABLE `medias` ADD `track_nb` TEXT;");
             }
@@ -43,7 +43,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 Log.v("SQLiteException", e.getMessage());
             }
         }
-        else if (oldVersion == 3 && newVersion == 4) {
+        if (oldVersion <= 3 && newVersion >= 4) {
             try {
                 db.execSQL("ALTER TABLE `medias` ADD `title` TEXT;");
                 db.execSQL("ALTER TABLE `medias` ADD `album` TEXT;");
