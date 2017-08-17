@@ -1,23 +1,19 @@
 package com.gbrfix.randomizik;
 
 import android.database.sqlite.SQLiteCursor;
-import android.database.sqlite.SQLiteException;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.ProgressBar;
-import android.widget.SeekBar;
-
 import java.util.Random;
 
 /**
  * Created by gab on 16.07.2017.
  */
 public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, Runnable {
-    protected static MediaPlayer player = null;
+    protected MediaPlayer player;
     protected AudioManager manager;
     protected MediaDAO dao;
     private Context context;
@@ -25,6 +21,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     protected int currentId;
 
     public MediaController(Context context) {
+        player = null;
         manager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         dao = new MediaDAO(context);
         this.context = context;
@@ -49,6 +46,10 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     }
 
     public void restorePlayer(int id, int position) {
+        if (player != null) {
+            return;
+        }
+
         try {
             dao.open();
             SQLiteCursor cursor = dao.getFromId(id);
@@ -79,7 +80,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             return label;
         }
         catch (Exception e) {
-            return "???";
+            return "";
         }
     }
 
