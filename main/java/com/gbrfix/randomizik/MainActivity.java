@@ -26,6 +26,7 @@ import java.io.File;
 /*
 TODO
 - BUG: Restore inoportun en mode paysage lorsque écran éteint
+Progressbar état pas toujours restaurée
 */
 
 public class MainActivity extends AppCompatActivity {
@@ -66,6 +67,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.playlist);
 
         init(context);
+    }
+
+    protected void onStart() {
+        super.onStart();
+    }
+
+    protected void onRestart() {
+        super.onRestart();
+    }
+
+    protected void onResume() {
+        super.onResume();
     }
 
     protected void init(final Context context) {
@@ -235,22 +248,22 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
-        super.onRestoreInstanceState(bundle);
-
         boolean isPlaying = bundle.getBoolean("isPlaying");
         int currentId = bundle.getInt("currentId");
         int currentPosition = bundle.getInt("currentPosition");
         int duration = bundle.getInt("duration");
-
-        ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-        progressBar.setMax(duration);
-        progressBar.setProgress(currentPosition);
 
         if (controller != null) {
             controller.restorePlayer(currentId, currentPosition);
             TextView currentTrack = (TextView)findViewById(R.id.currentTrack);
             currentTrack.setText(controller.getTrackLabel(currentId));
         }
+
+        super.onRestoreInstanceState(bundle);
+
+        ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+        progressBar.setMax(duration);
+        progressBar.setProgress(currentPosition);
 
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         playBtn.setChecked(isPlaying);

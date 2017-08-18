@@ -46,10 +46,6 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     }
 
     public void restorePlayer(int id, int position) {
-        if (player != null) {
-            return;
-        }
-
         try {
             dao.open();
             SQLiteCursor cursor = dao.getFromId(id);
