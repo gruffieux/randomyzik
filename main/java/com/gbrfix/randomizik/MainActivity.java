@@ -25,8 +25,7 @@ import java.io.File;
 
 /*
 TODO
-- BUG: Restore inoportun en mode paysage lorsque écran éteint
-Progressbar état pas toujours restaurée
+Mettre en pause lors de la déconnection de périphériques de sortie
 */
 
 public class MainActivity extends AppCompatActivity {
@@ -67,18 +66,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.playlist);
 
         init(context);
-    }
-
-    protected void onStart() {
-        super.onStart();
-    }
-
-    protected void onRestart() {
-        super.onRestart();
-    }
-
-    protected void onResume() {
-        super.onResume();
     }
 
     protected void init(final Context context) {
@@ -150,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
         // On instancie le contrôleur
         controller = new MediaController(context);
+        controller.registerDeviceCallbacks();
 
         // On récup les éléments de l'UI
         final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
@@ -267,14 +255,6 @@ public class MainActivity extends AppCompatActivity {
 
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         playBtn.setChecked(isPlaying);
-    }
-
-    protected void onPause() {
-        super.onPause();
-    }
-
-    protected void onStop() {
-        super.onStop();
     }
 
     @Override

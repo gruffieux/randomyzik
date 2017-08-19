@@ -1,6 +1,8 @@
 package com.gbrfix.randomizik;
 
 import android.database.sqlite.SQLiteCursor;
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -19,6 +21,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     private Context context;
     private UpdateSignal updateSignalListener;
     protected int currentId;
+    private boolean playAfterConnect;
 
     public MediaController(Context context) {
         player = null;
@@ -26,6 +29,38 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         dao = new MediaDAO(context);
         this.context = context;
         currentId = 0;
+        playAfterConnect = false;
+    }
+
+    public void registerDeviceCallbacks() {
+        manager.registerAudioDeviceCallback(new AudioDeviceCallback() {
+            @Override
+            public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
+                super.onAudioDevicesAdded(addedDevices);
+                if (player != null && !player.isPlaying() && playAfterConnect) {
+                    for (int i = 0; i < addedDevices.length; i++) {
+                        if (addedDevices[i].isSink()) {
+                            updateSignalListener.onTrackResume(true);
+                            playAfterConnect = false;
+                            return;
+                        }
+                    }
+                }
+            }
+            @Override
+            public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
+                super.onAudioDevicesRemoved(removedDevices);
+                if (player != null && player.isPlaying()) {
+                    for (int i = 0; i < removedDevices.length; i++) {
+                        if (removedDevices[i].isSink()) {
+                            updateSignalListener.onTrackResume(false);
+                            playAfterConnect = true;
+                            return;
+                        }
+                    }
+                }
+            }
+        }, null);
     }
 
     public int getCurrentId() {
