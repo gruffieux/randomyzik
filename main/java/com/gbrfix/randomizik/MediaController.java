@@ -1,8 +1,9 @@
 package com.gbrfix.randomizik;
 
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.sqlite.SQLiteCursor;
-import android.media.AudioDeviceCallback;
-import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -15,13 +16,14 @@ import java.util.Random;
  * Created by gab on 16.07.2017.
  */
 public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, Runnable {
-    protected MediaPlayer player;
-    protected AudioManager manager;
-    protected MediaDAO dao;
+    private MediaPlayer player;
+    private AudioManager manager;
+    private MediaDAO dao;
     private Context context;
     private UpdateSignal updateSignalListener;
-    protected int currentId;
-    private boolean playAfterConnect;
+    private int currentId;
+    private IntentFilter intentFilter;
+    private BecomingNoisyReceiver myNoisyAudioReceiver;
 
     public MediaController(Context context) {
         player = null;
@@ -29,38 +31,9 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         dao = new MediaDAO(context);
         this.context = context;
         currentId = 0;
-        playAfterConnect = false;
-    }
+        intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        myNoisyAudioReceiver = new BecomingNoisyReceiver();
 
-    public void registerDeviceCallbacks() {
-        manager.registerAudioDeviceCallback(new AudioDeviceCallback() {
-            @Override
-            public void onAudioDevicesAdded(AudioDeviceInfo[] addedDevices) {
-                super.onAudioDevicesAdded(addedDevices);
-                if (player != null && !player.isPlaying() && playAfterConnect) {
-                    for (int i = 0; i < addedDevices.length; i++) {
-                        if (addedDevices[i].isSink()) {
-                            updateSignalListener.onTrackResume(true);
-                            playAfterConnect = false;
-                            return;
-                        }
-                    }
-                }
-            }
-            @Override
-            public void onAudioDevicesRemoved(AudioDeviceInfo[] removedDevices) {
-                super.onAudioDevicesRemoved(removedDevices);
-                if (player != null && player.isPlaying()) {
-                    for (int i = 0; i < removedDevices.length; i++) {
-                        if (removedDevices[i].isSink()) {
-                            updateSignalListener.onTrackResume(false);
-                            playAfterConnect = true;
-                            return;
-                        }
-                    }
-                }
-            }
-        }, null);
     }
 
     public int getCurrentId() {
@@ -155,6 +128,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         }
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
+            return false;
         }
 
         return true;
@@ -183,16 +157,20 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
 
     public void resume() {
         if (player == null) {
-            selectTrack();
+            if (selectTrack()) {
+                context.registerReceiver(myNoisyAudioReceiver, intentFilter);
+            }
         }
         else {
             if (player.isPlaying()) {
                 player.pause();
                 manager.abandonAudioFocus(this);
+                context.unregisterReceiver(myNoisyAudioReceiver);
             } else {
                 int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                     player.start();
+                    context.registerReceiver(myNoisyAudioReceiver, intentFilter);
                 }
             }
         }
@@ -222,6 +200,9 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         updateState("read");
         manager.abandonAudioFocus(this);
         boolean res = selectTrack();
+        if (!res) {
+            context.unregisterReceiver(myNoisyAudioReceiver);
+        }
         updateSignalListener.onTrackRead(!res);
     }
 
@@ -276,6 +257,15 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 return;
             }
             updateSignalListener.onTrackProgress(currentPosition);
+        }
+    }
+
+    private class BecomingNoisyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                updateSignalListener.onTrackResume(false);
+            }
         }
     }
 }

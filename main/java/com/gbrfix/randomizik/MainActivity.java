@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -22,11 +23,6 @@ import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
 import java.io.File;
-
-/*
-TODO
-Mettre en pause lors de la déconnection de périphériques de sortie
-*/
 
 public class MainActivity extends AppCompatActivity {
     public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
@@ -137,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
         // On instancie le contrôleur
         controller = new MediaController(context);
-        controller.registerDeviceCallbacks();
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On récup les éléments de l'UI
         final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
