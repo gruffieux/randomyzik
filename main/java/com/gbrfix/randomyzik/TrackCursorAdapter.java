@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.view.View;
 import android.widget.SimpleCursorAdapter;
 
@@ -20,10 +19,10 @@ public class TrackCursorAdapter extends SimpleCursorAdapter {
         super.bindView(view, context, cursor);
 
         if (cursor.getString(2).equals("read")) {
-            view.setBackgroundColor(Color.RED);
+            view.setAlpha(0.5f);
         }
         else {
-            view.setBackgroundColor(Color.WHITE);
+            view.setAlpha(1f);
         }
     }
 }
