@@ -1,4 +1,4 @@
-package com.gbrfix.randomizik;
+package com.gbrfix.randomyzik;
 
 import android.Manifest;
 import android.content.Context;

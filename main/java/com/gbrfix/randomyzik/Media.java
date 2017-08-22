@@ -1,4 +1,4 @@
-package com.gbrfix.randomizik;
+package com.gbrfix.randomyzik;
 
 /**
  * Created by gab on 15.08.2017.
