@@ -35,16 +35,13 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission was granted, app can run
                     setContentView(R.layout.playlist);
-                    init(this);
+                    init(this, 1);
                 }
                 else {
                     // Permission denied, display info
-                    TextView infoMsg = new TextView(this);
-                    infoMsg.setText("Sorry, application needs read/write storage permissions to run.");
-                    infoMsg.setTextColor(Color.RED);
-                    setContentView(infoMsg);
+                    setContentView(R.layout.playlist);
+                    init(this, 0);
                 }
-                return;
         }
     }
 
@@ -60,74 +57,81 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.playlist);
-
-        init(context);
+        init(context, 1);
     }
 
-    protected void init(final Context context) {
-        // On récupère les fichiers musicaux
-        File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-        final File[] files = file.listFiles();
-        String[] flags = new String[files.length];
-        final long[] ids = new long[files.length];
+    protected void init(final Context context, int perms) {
         final ListView listView = (ListView)findViewById(R.id.playlist);
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
         try {
-            MediaDAO dao = new MediaDAO(context);
-            dao.open();
-            SQLiteCursor cursor = dao.getAll();
+            if (perms == 1) {
+                // On récupère les fichiers musicaux
+                File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+                final File[] files = file.listFiles();
+                String[] flags = new String[files.length];
+                final long[] ids = new long[files.length];
 
-            // Cursor adapter pour la listeView
-            String[] fromColumns = {"track_nb", "title", "album", "artist"};
-            int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-            TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
-            listView.setAdapter(adapter);
+                MediaDAO dao = new MediaDAO(context);
+                dao.open();
+                SQLiteCursor cursor = dao.getAll();
 
-            if (!dao.getDb().isReadOnly()) {
-                MediaFactory factory = new MediaFactory();
-                if (cursor.getCount() == 0) {
-                    for (int i = 0; i < files.length; i++) {
-                        Media media = factory.createMedia(files[i].getPath());
-                        ids[i] = dao.insert(media);
-                        flags[i] = media.getFlag();
-                    }
-                } else {
-                    while (cursor.moveToNext()) {
-                        int id = cursor.getInt(0);
-                        String path = cursor.getString(1);
-                        String flag = cursor.getString(2);
-                        int i = 0;
-                        for (i = 0; i < files.length; i++) {
-                            if (files[i].getPath().equals(path)) {
-                                break;
-                            }
-                        }
-                        if (i >= files.length) {
-                            dao.remove(id);
-                        }
-                        else {
-                            flags[i] = flag;
-                            ids[i] = id;
-                        }
-                    }
-                    for (int i = 0; i < files.length; i++) {
-                        Media media = factory.createMedia(files[i].getPath());
-                        if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
+                if (!dao.getDb().isReadOnly()) {
+                    MediaFactory factory = new MediaFactory();
+                    if (cursor.getCount() == 0) {
+                        for (int i = 0; i < files.length; i++) {
+                            Media media = factory.createMedia(files[i].getPath());
                             ids[i] = dao.insert(media);
                             flags[i] = media.getFlag();
                         }
+                    } else {
+                        while (cursor.moveToNext()) {
+                            int id = cursor.getInt(0);
+                            String path = cursor.getString(1);
+                            String flag = cursor.getString(2);
+                            int i = 0;
+                            for (i = 0; i < files.length; i++) {
+                                if (files[i].getPath().equals(path)) {
+                                    break;
+                                }
+                            }
+                            if (i >= files.length) {
+                                dao.remove(id);
+                            } else {
+                                flags[i] = flag;
+                                ids[i] = id;
+                            }
+                        }
+                        for (int i = 0; i < files.length; i++) {
+                            Media media = factory.createMedia(files[i].getPath());
+                            if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
+                                ids[i] = dao.insert(media);
+                                flags[i] = media.getFlag();
+                            }
+                        }
                     }
+
+                    // Cursor adapter pour la listeView
+                    cursor = dao.getAll();
+                    String[] fromColumns = {"track_nb", "title", "album", "artist"};
+                    int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
+                    TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
+                    listView.setAdapter(adapter);
                 }
+                dao.close();
             }
-            dao.close();
-        }
-        catch (SQLException e) {
+            else {
+                ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+                playBtn.setEnabled(false);
+                TextView infoMsg = (TextView)findViewById(R.id.currentTrack);
+                infoMsg.setTextColor(Color.RED);
+                infoMsg.setText("App needs read/write storage permissions to works");
+            }
+        } catch (SQLException e) {
             Log.v("SQLException", e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             Log.v("Exception", e.getMessage());
         }
 
@@ -246,11 +250,15 @@ public class MainActivity extends AppCompatActivity {
         super.onRestoreInstanceState(bundle);
 
         ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-        progressBar.setMax(duration);
-        progressBar.setProgress(currentPosition);
+        if (progressBar != null) {
+            progressBar.setMax(duration);
+            progressBar.setProgress(currentPosition);
+        }
 
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-        playBtn.setChecked(isPlaying);
+        if (playBtn != null) {
+            playBtn.setChecked(isPlaying);
+        }
     }
 
     @Override
