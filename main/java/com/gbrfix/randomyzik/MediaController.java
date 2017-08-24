@@ -88,7 +88,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         }
     }
 
-    public boolean selectTrack() {
+    public void selectTrack() throws Exception {
         dao.open();
 
         SQLiteCursor cursor = dao.getFromFlag("unread");
@@ -97,7 +97,8 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         dao.close();
 
         if (total == 0) {
-            return false;
+            currentId = 0;
+            throw new Exception("Playlist was completed and needs new mp3 loaded");
         }
 
         if (total > 1) {
@@ -112,42 +113,31 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         currentId = cursor.getInt(0);
         String path = cursor.getString(1);
 
-        try {
-            if (player != null) {
-                player.release();
-            }
-            int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-            if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                player = MediaPlayer.create(context, Uri.parse(path));
-                //player.seekTo(player.getDuration() - 10000);
-                player.start();
-                player.setOnCompletionListener(this);
-                updateSignalListener.onTrackSelect(currentId, player.getDuration());
-            }
-
-        }
-        catch (Exception e) {
-            Log.v("Exception", e.getMessage());
-            return false;
+        if (player != null) {
+            player.release();
         }
 
-        return true;
+        int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+
+        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            player = MediaPlayer.create(context, Uri.parse(path));
+            //player.seekTo(player.getDuration() - 10000);
+            player.start();
+            player.setOnCompletionListener(this);
+            updateSignalListener.onTrackSelect(currentId, player.getDuration());
+        }
     }
 
-    public void rewind() {
+    public void rewind() throws Exception {
         if (player != null && player.isPlaying()) {
-            try {
-                player.stop();
-                player.prepare();
-                player.seekTo(0);
-                player.start();
-            } catch (Exception e) {
-                Log.v("Exception", e.getMessage());
-            }
+            player.stop();
+            player.prepare();
+            player.seekTo(0);
+            player.start();
         }
     }
 
-    public void forward() {
+    public void forward() throws Exception {
         if (player != null && player.isPlaying()) {
             player.stop();
             manager.abandonAudioFocus(this);
@@ -155,18 +145,18 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         }
     }
 
-    public void resume() {
+    public void resume() throws Exception {
         if (player == null) {
-            if (selectTrack()) {
-                context.registerReceiver(myNoisyAudioReceiver, intentFilter);
-            }
+            selectTrack();
+            context.registerReceiver(myNoisyAudioReceiver, intentFilter);
         }
         else {
             if (player.isPlaying()) {
                 player.pause();
                 manager.abandonAudioFocus(this);
                 context.unregisterReceiver(myNoisyAudioReceiver);
-            } else {
+            }
+            else {
                 int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                     player.start();
@@ -199,11 +189,15 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     public void onCompletion(MediaPlayer mediaPlayer) {
         updateState("read");
         manager.abandonAudioFocus(this);
-        boolean res = selectTrack();
-        if (!res) {
-            context.unregisterReceiver(myNoisyAudioReceiver);
+
+        try {
+            selectTrack();
+            updateSignalListener.onTrackRead(false);
         }
-        updateSignalListener.onTrackRead(!res);
+        catch (Exception e) {
+            context.unregisterReceiver(myNoisyAudioReceiver);
+            updateSignalListener.onTrackRead(true);
+        }
     }
 
     @Override

@@ -61,7 +61,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void init(final Context context, int perms) {
+        // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
+        final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+        final Button rewBtn = (Button)findViewById(R.id.rew);
+        final Button fwdBtn = (Button)findViewById(R.id.fwd);
+        LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
+        controlLayout.setHorizontalGravity(1);
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
@@ -73,87 +79,89 @@ public class MainActivity extends AppCompatActivity {
                 final File[] files = file.listFiles();
                 String[] flags = new String[files.length];
                 final long[] ids = new long[files.length];
-
                 MediaDAO dao = new MediaDAO(context);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-
-                if (!dao.getDb().isReadOnly()) {
-                    MediaFactory factory = new MediaFactory();
-                    if (cursor.getCount() == 0) {
-                        for (int i = 0; i < files.length; i++) {
-                            Media media = factory.createMedia(files[i].getPath());
+                MediaFactory factory = new MediaFactory();
+                if (cursor.getCount() == 0) {
+                    for (int i = 0; i < files.length; i++) {
+                        Media media = factory.createMedia(files[i].getPath());
+                        ids[i] = dao.insert(media);
+                        flags[i] = media.getFlag();
+                    }
+                } else {
+                    while (cursor.moveToNext()) {
+                        int id = cursor.getInt(0);
+                        String path = cursor.getString(1);
+                        String flag = cursor.getString(2);
+                        int i = 0;
+                        for (i = 0; i < files.length; i++) {
+                            if (files[i].getPath().equals(path)) {
+                                break;
+                            }
+                        }
+                        if (i >= files.length) {
+                            dao.remove(id);
+                        } else {
+                            flags[i] = flag;
+                            ids[i] = id;
+                        }
+                    }
+                    for (int i = 0; i < files.length; i++) {
+                        Media media = factory.createMedia(files[i].getPath());
+                        if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
                             ids[i] = dao.insert(media);
                             flags[i] = media.getFlag();
                         }
-                    } else {
-                        while (cursor.moveToNext()) {
-                            int id = cursor.getInt(0);
-                            String path = cursor.getString(1);
-                            String flag = cursor.getString(2);
-                            int i = 0;
-                            for (i = 0; i < files.length; i++) {
-                                if (files[i].getPath().equals(path)) {
-                                    break;
-                                }
-                            }
-                            if (i >= files.length) {
-                                dao.remove(id);
-                            } else {
-                                flags[i] = flag;
-                                ids[i] = id;
-                            }
-                        }
-                        for (int i = 0; i < files.length; i++) {
-                            Media media = factory.createMedia(files[i].getPath());
-                            if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
-                                ids[i] = dao.insert(media);
-                                flags[i] = media.getFlag();
-                            }
-                        }
                     }
+                }
 
-                    // Cursor adapter pour la listeView
-                    cursor = dao.getAll();
+                // Cursor adapter pour la listeView
+                cursor = dao.getAll();
+                if (cursor.getCount() > 0) {
                     String[] fromColumns = {"track_nb", "title", "album", "artist"};
                     int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
                     TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
                     listView.setAdapter(adapter);
                 }
+                else {
+                    throw new Exception("No mp3 found in Music directory");
+                }
                 dao.close();
             }
             else {
-                ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-                playBtn.setEnabled(false);
-                TextView infoMsg = (TextView)findViewById(R.id.currentTrack);
-                infoMsg.setTextColor(Color.RED);
-                infoMsg.setText("App needs read/write storage permissions to works");
+                throw new Exception("App needs read/write storage permissions to works");
             }
+
         } catch (SQLException e) {
             Log.v("SQLException", e.getMessage());
         } catch (Exception e) {
-            Log.v("Exception", e.getMessage());
+            playBtn.setEnabled(false);
+            rewBtn.setEnabled(false);
+            fwdBtn.setEnabled(false);
+            infoMsg(e.getMessage(), Color.RED);
         }
 
         // On instancie le contrôleur
         controller = new MediaController(context);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-        // On récup les éléments de l'UI
-        final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-        final Button rewBtn = (Button)findViewById(R.id.rew);
-        final Button fwdBtn = (Button)findViewById(R.id.fwd);
-        LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
-        controlLayout.setHorizontalGravity(1);
-
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                controller.resume();
-                rewBtn.setEnabled(isChecked);
-                fwdBtn.setEnabled(isChecked);
-                if (isChecked) {
-                    new Thread(controller).start();
+                try {
+                    controller.resume();
+                    rewBtn.setEnabled(isChecked);
+                    fwdBtn.setEnabled(isChecked);
+                    if (isChecked) {
+                        new Thread(controller).start();
+                    }
+                }
+                catch (Exception e) {
+                    playBtn.setEnabled(false);
+                    rewBtn.setEnabled(false);
+                    fwdBtn.setEnabled(false);
+                    infoMsg(e.getMessage(), Color.RED);
                 }
             }
         });
@@ -161,14 +169,30 @@ public class MainActivity extends AppCompatActivity {
         // On traite le changement d'état du bouton en arrière
         rewBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                controller.rewind();
+                try {
+                    controller.rewind();
+                }
+                catch (Exception e) {
+                    playBtn.setEnabled(false);
+                    rewBtn.setEnabled(false);
+                    fwdBtn.setEnabled(false);
+                    infoMsg(e.getMessage(), Color.RED);
+                }
             }
         });
 
         // On traite le changement d'état du bouton en avant
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                controller.forward();
+                try {
+                    controller.forward();
+                }
+                catch (Exception e) {
+                    playBtn.setEnabled(false);
+                    rewBtn.setEnabled(false);
+                    fwdBtn.setEnabled(false);
+                    infoMsg(e.getMessage(), Color.RED);
+                }
             }
         });
 
@@ -184,6 +208,12 @@ public class MainActivity extends AppCompatActivity {
                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                     adapter.changeCursor(cursor);
                     dao.close();
+                    if (last) {
+                        playBtn.setEnabled(false);
+                        rewBtn.setEnabled(false);
+                        fwdBtn.setEnabled(false);
+                        infoMsg("Playlist ended", Color.GRAY);
+                    }
                 } catch (SQLException e) {
                     Log.v("SQLException", e.getMessage());
                 }
@@ -199,8 +229,7 @@ public class MainActivity extends AppCompatActivity {
                 ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
                 progressBar.setProgress(0);
                 progressBar.setMax(duration);
-                TextView textView = (TextView)findViewById(R.id.currentTrack);
-                textView.setText(controller.getTrackLabel(id));
+                infoMsg(controller.getTrackLabel(id), Color.BLACK);
             }
 
             @Override
@@ -209,6 +238,12 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setProgress(position);
             }
         });
+    }
+
+    public void infoMsg(String msg, int color) {
+        TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
+        infoMsg.setTextColor(color);
+        infoMsg.setText(msg);
     }
 
     @Override
@@ -243,8 +278,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (controller != null) {
             controller.restorePlayer(currentId, currentPosition);
-            TextView currentTrack = (TextView)findViewById(R.id.currentTrack);
-            currentTrack.setText(controller.getTrackLabel(currentId));
         }
 
         super.onRestoreInstanceState(bundle);
@@ -258,6 +291,11 @@ public class MainActivity extends AppCompatActivity {
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         if (playBtn != null) {
             playBtn.setChecked(isPlaying);
+        }
+
+        TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
+        if (infoMsg != null && controller != null) {
+            infoMsg.setText(controller.getTrackLabel(currentId));
         }
     }
 
