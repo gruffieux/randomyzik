@@ -98,7 +98,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
 
         if (total == 0) {
             currentId = 0;
-            throw new Exception("Playlist was completed and needs new mp3 loaded");
+            throw new PlayEndException("Playlist was completed and needs new mp3 loaded");
         }
 
         if (total > 1) {
@@ -194,9 +194,12 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             selectTrack();
             updateSignalListener.onTrackRead(false);
         }
-        catch (Exception e) {
+        catch (PlayEndException e) {
             context.unregisterReceiver(myNoisyAudioReceiver);
             updateSignalListener.onTrackRead(true);
+        }
+        catch (Exception e) {
+            Log.v("Exception", e.getMessage());
         }
     }
 
