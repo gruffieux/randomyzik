@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
+import java.io.File;
 import java.util.Random;
 
 /**
@@ -53,14 +54,19 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         return true;
     }
 
-    public void restorePlayer(int id, int position) {
+    public boolean restorePlayer(int id, int position) {
+        if (player != null) {
+            return false;
+        }
+
         try {
             dao.open();
             SQLiteCursor cursor = dao.getFromId(id);
             cursor.moveToFirst();
             currentId = id;
             String path = cursor.getString(1);
-            player = MediaPlayer.create(context, Uri.parse(path));
+            File file = new File(path);
+            player = MediaPlayer.create(context, Uri.fromFile(file));
             player.seekTo(position);
             player.setOnCompletionListener(this);
             dao.close();
@@ -68,6 +74,8 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
         }
+
+        return true;
     }
 
     public void setUpdateSignalListener(UpdateSignal listener) {
@@ -120,7 +128,8 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            player = MediaPlayer.create(context, Uri.parse(path));
+            File file = new File(path);
+            player = MediaPlayer.create(context, Uri.fromFile(file));
             //player.seekTo(player.getDuration() - 10000);
             player.start();
             player.setOnCompletionListener(this);
