@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
@@ -11,7 +12,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -22,7 +22,6 @@ import android.widget.ToggleButton;
 import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
-import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
@@ -74,68 +73,30 @@ public class MainActivity extends AppCompatActivity {
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
         try {
             if (perms == 1) {
-                // On récupère les fichiers musicaux
-                File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-                final File[] files = file.listFiles();
-                String[] flags = new String[files.length];
-                final long[] ids = new long[files.length];
+                // Start service
+                Intent intent = new Intent(this, DbService.class);
+                startService(intent);
+
                 MediaDAO dao = new MediaDAO(context);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                MediaFactory factory = new MediaFactory();
-                if (cursor.getCount() == 0) {
-                    for (int i = 0; i < files.length; i++) {
-                        Media media = factory.createMedia(files[i].getPath());
-                        ids[i] = dao.insert(media);
-                        flags[i] = media.getFlag();
-                    }
-                } else {
-                    while (cursor.moveToNext()) {
-                        int id = cursor.getInt(0);
-                        String path = cursor.getString(1);
-                        String flag = cursor.getString(2);
-                        int i = 0;
-                        for (i = 0; i < files.length; i++) {
-                            if (files[i].getPath().equals(path)) {
-                                break;
-                            }
-                        }
-                        if (i >= files.length) {
-                            dao.remove(id);
-                        } else {
-                            flags[i] = flag;
-                            ids[i] = id;
-                        }
-                    }
-                    for (int i = 0; i < files.length; i++) {
-                        Media media = factory.createMedia(files[i].getPath());
-                        if (dao.getFromPath(files[i].getPath()).getCount() == 0) {
-                            ids[i] = dao.insert(media);
-                            flags[i] = media.getFlag();
-                        }
-                    }
-                }
 
                 // Cursor adapter pour la listeView
-                cursor = dao.getAll();
                 if (cursor.getCount() > 0) {
                     String[] fromColumns = {"track_nb", "title", "album", "artist"};
                     int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
                     TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
                     listView.setAdapter(adapter);
-                }
-                else {
+                } else {
                     throw new Exception("No mp3 found in Music directory");
                 }
+
                 dao.close();
-            }
-            else {
+            } else {
                 throw new Exception("App needs read/write storage permissions to works");
             }
-
-        } catch (SQLException e) {
-            Log.v("SQLException", e.getMessage());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             playBtn.setEnabled(false);
             rewBtn.setEnabled(false);
             fwdBtn.setEnabled(false);
