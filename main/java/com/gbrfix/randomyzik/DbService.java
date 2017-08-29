@@ -32,10 +32,7 @@ public class DbService extends IntentService implements FilenameFilter {
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
 
         File musicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-        scanMediaFiles(musicDir, true);
-        //final File[] files = file.listFiles(this);
-        String[] flags = new String[mediaFiles.size()];
-        final long[] ids = new long[mediaFiles.size()];
+        scanMediaFiles(musicDir);
         MediaDAO dao = new MediaDAO(context);
         MediaFactory factory = new MediaFactory();
 
@@ -45,34 +42,27 @@ public class DbService extends IntentService implements FilenameFilter {
             if (cursor.getCount() == 0) {
                 for (int i = 0; i < mediaFiles.size(); i++) {
                     Media media = factory.createMedia(mediaFiles.get(i).getPath());
-                    ids[i] = dao.insert(media);
-                    flags[i] = media.getFlag();
+                    dao.insert(media);
                 }
             } else {
                 while (cursor.moveToNext()) {
                     int id = cursor.getInt(0);
                     String path = cursor.getString(1);
-                    String flag = cursor.getString(2);
                     int i = 0;
                     for (i = 0; i < mediaFiles.size(); i++) {
                         if (mediaFiles.get(i).getPath().equals(path)) {
+                            mediaFiles.remove(i); // Nouveau fichiers pas detectés
                             break;
                         }
                     }
                     if (i >= mediaFiles.size()) {
                         dao.remove(id);
                     }
-                    else {
-                        flags[i] = flag;
-                        ids[i] = id;
-                        //mediaFiles.remove(i); // Nouveau fichiers pas detectés
-                    }
                 }
                 for (int i = 0; i < mediaFiles.size(); i++) {
                     Media media = factory.createMedia(mediaFiles.get(i).getPath());
                     if (dao.getFromPath(mediaFiles.get(i).getPath()).getCount() == 0) {
-                        ids[i] = dao.insert(media);
-                        flags[i] = media.getFlag();
+                        dao.insert(media);
                     }
                 }
             }
@@ -97,14 +87,14 @@ public class DbService extends IntentService implements FilenameFilter {
         return false;
     }
 
-    private void scanMediaFiles(File dir, boolean root) {
-        File[] files = dir.listFiles(root ? null : this);
+    private void scanMediaFiles(File dir) {
+        File[] files = dir.listFiles();
 
         for (int i = 0; i < files.length; i++) {
             if (files[i].isDirectory()) {
-                scanMediaFiles(files[i], false);
+                scanMediaFiles(files[i]);
             }
-            else {
+            else if (files[i].isFile() && accept(files[i], files[i].getName())) {
                 mediaFiles.add(files[i]);
             }
         }
