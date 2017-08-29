@@ -4,7 +4,9 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteCursor;
+import android.os.Binder;
 import android.os.Environment;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import java.io.File;
@@ -16,15 +18,21 @@ import java.util.ArrayList;
  */
 
 public class DbService extends IntentService implements FilenameFilter {
+    private final IBinder binder = new DbBinder();
+    private DbServiceSignal dbServiceListener;
     private ArrayList<File> mediaFiles;
+
     public DbService() {
         super("DbIntentService");
 
         mediaFiles = new ArrayList<File>();
     }
 
-    @Override
-    protected void onHandleIntent(@Nullable Intent intent) {
+    public void setDbServiceListener(DbServiceSignal listener) {
+        dbServiceListener = listener;
+    }
+
+    public void run() {
         Context context = this;
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
@@ -37,12 +45,14 @@ public class DbService extends IntentService implements FilenameFilter {
         MediaFactory factory = new MediaFactory();
 
         try {
+            boolean updated = false;
             dao.open();
             SQLiteCursor cursor = dao.getAll();
             if (cursor.getCount() == 0) {
                 for (int i = 0; i < mediaFiles.size(); i++) {
                     Media media = factory.createMedia(mediaFiles.get(i).getPath());
                     dao.insert(media);
+                    updated = true;
                 }
             } else {
                 while (cursor.moveToNext()) {
@@ -51,19 +61,24 @@ public class DbService extends IntentService implements FilenameFilter {
                     int i = 0;
                     for (i = 0; i < mediaFiles.size(); i++) {
                         if (mediaFiles.get(i).getPath().equals(path)) {
-                            mediaFiles.remove(i); // Nouveau fichiers pas detectés
+                            mediaFiles.remove(i);
                             break;
                         }
                     }
                     if (i >= mediaFiles.size()) {
                         dao.remove(id);
+                        updated = true;
                     }
                 }
                 for (int i = 0; i < mediaFiles.size(); i++) {
                     Media media = factory.createMedia(mediaFiles.get(i).getPath());
                     if (dao.getFromPath(mediaFiles.get(i).getPath()).getCount() == 0) {
                         dao.insert(media);
+                        updated = true;
                     }
+                }
+                if (updated) {
+                    dbServiceListener.onUpdateEntries();
                 }
             }
             dao.close();
@@ -98,5 +113,21 @@ public class DbService extends IntentService implements FilenameFilter {
                 mediaFiles.add(files[i]);
             }
         }
+    }
+
+    public class DbBinder extends Binder {
+        DbService getService() {
+            return DbService.this;
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+    @Override
+    protected void onHandleIntent(@Nullable Intent intent) {
+        run();
     }
 }

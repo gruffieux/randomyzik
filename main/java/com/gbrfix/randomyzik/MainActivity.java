@@ -1,13 +1,16 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -24,8 +27,38 @@ import android.content.res.Configuration;
 import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
-    public final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
-    public MediaController controller = null;
+    final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
+    MediaController controller = null;
+    DbService dbService;
+
+    private ServiceConnection connection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            DbService.DbBinder binder = (DbService.DbBinder)iBinder;
+            dbService = binder.getService();
+            dbService.setDbServiceListener(new DbServiceSignal() {
+                @Override
+                public void onUpdateEntries() {
+                    try {
+                        MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
+                        dao.open();
+                        SQLiteCursor cursor = dao.getAll();
+                        ListView listView = (ListView)findViewById(R.id.playlist);
+                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                        adapter.changeCursor(cursor);
+                        dao.close();
+                    } catch (SQLException e) {
+                        Log.v("SQLException", e.getMessage());
+                    }
+                }
+            });
+            dbService.run();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
+    };
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -59,6 +92,16 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
     protected void init(final Context context, int perms) {
         // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
@@ -73,9 +116,8 @@ public class MainActivity extends AppCompatActivity {
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
         try {
             if (perms == 1) {
-                // Start service
                 Intent intent = new Intent(this, DbService.class);
-                startService(intent);
+                bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
                 MediaDAO dao = new MediaDAO(context);
                 dao.open();
@@ -267,5 +309,7 @@ public class MainActivity extends AppCompatActivity {
         if (controller != null) {
             controller.destroy();
         }
+
+        unbindService(connection);
     }
 }
