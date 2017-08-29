@@ -47,6 +47,10 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=?;", new String[] {flag});
     }
 
+    public SQLiteCursor getFromMeta(String trackNb, String title, String album, String artist) {
+        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `track_nb`=? AND `title`=? AND `album`=? AND `artist`=?;", new String[] {trackNb, title, album, artist});
+    }
+
     public void update(int id, String flag) {
         this.db.execSQL("UPDATE `medias` SET `flag`=\"" + flag + "\" WHERE `id`=" + String.valueOf(id));
     }
