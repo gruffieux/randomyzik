@@ -52,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
-            dbService.run();
+            dbService.scan();
         }
 
         @Override
@@ -92,16 +92,6 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
     protected void init(final Context context, int perms) {
         // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
@@ -130,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                     TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
                     listView.setAdapter(adapter);
                 } else {
-                    throw new Exception("No mp3 found in Music directory");
+                    throw new Exception("No mp3 found");
                 }
 
                 dao.close();

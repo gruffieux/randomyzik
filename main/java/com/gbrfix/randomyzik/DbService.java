@@ -32,14 +32,14 @@ public class DbService extends IntentService implements FilenameFilter {
         dbServiceListener = listener;
     }
 
-    public void run() {
+    public void scan() {
         Context context = this;
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
 
-        File musicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+        File musicDir = Environment.getExternalStorageDirectory();
         scanMediaFiles(musicDir);
         MediaDAO dao = new MediaDAO(context);
         MediaFactory factory = new MediaFactory();
@@ -61,13 +61,15 @@ public class DbService extends IntentService implements FilenameFilter {
                     int i = 0;
                     for (i = 0; i < mediaFiles.size(); i++) {
                         if (mediaFiles.get(i).getPath().equals(path)) {
-                            mediaFiles.remove(i);
                             break;
                         }
                     }
                     if (i >= mediaFiles.size()) {
                         dao.remove(id);
                         updated = true;
+                    }
+                    else {
+                        mediaFiles.remove(i);
                     }
                 }
                 for (int i = 0; i < mediaFiles.size(); i++) {
@@ -77,11 +79,11 @@ public class DbService extends IntentService implements FilenameFilter {
                         updated = true;
                     }
                 }
-                if (updated) {
-                    dbServiceListener.onUpdateEntries();
-                }
             }
             dao.close();
+            if (updated) {
+                dbServiceListener.onUpdateEntries();
+            }
         }
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
@@ -128,6 +130,6 @@ public class DbService extends IntentService implements FilenameFilter {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        run();
+        scan();
     }
 }
