@@ -10,6 +10,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.os.Environment;
+import android.os.FileObserver;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -26,10 +28,12 @@ import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     MediaController controller = null;
-    DbService dbService;
+    DbService dbService = null;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -53,10 +57,12 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             dbService.scan();
+            dbService.setBound(true);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
+            dbService.setBound(false);
         }
     };
 
@@ -231,6 +237,18 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setProgress(position);
             }
         });
+
+        // On vérifie si le dossier est modifié et on relance le scanner si c'est le cas
+        /*File mediaDir = Environment.getExternalStorageDirectory();
+        FileObserver mediaObserver = new FileObserver(mediaDir.getPath(), FileObserver.ACCESS) {
+            @Override
+            public void onEvent(int i, String s) {
+                if (dbService.isBound()) {
+                    dbService.scan();
+                }
+            }
+        };
+        mediaObserver.startWatching();*/
     }
 
     public void infoMsg(String msg, int color) {
@@ -300,6 +318,8 @@ public class MainActivity extends AppCompatActivity {
             controller.destroy();
         }
 
-        unbindService(connection);
+        if (dbService != null && dbService.isBound()) {
+            unbindService(connection);
+        }
     }
 }

@@ -21,11 +21,22 @@ public class DbService extends IntentService implements FilenameFilter {
     private final IBinder binder = new DbBinder();
     private DbServiceSignal dbServiceListener;
     private ArrayList<File> mediaFiles;
+    private boolean bound;
+
+    public boolean isBound() {
+        return bound;
+    }
+
+    public void setBound(boolean bound) {
+        this.bound = bound;
+    }
 
     public DbService() {
         super("DbIntentService");
 
         mediaFiles = new ArrayList<File>();
+        bound = false;
+
     }
 
     public void setDbServiceListener(DbServiceSignal listener) {
