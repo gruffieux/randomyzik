@@ -13,6 +13,12 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAll() {
+        String sql = "SELECT `id`, `path` FROM `medias`;";
+
+        return (SQLiteCursor)this.db.rawQuery(sql, null);
+    }
+
+    public SQLiteCursor getAllOrdered() {
         String sql = "SELECT `id` AS `_id`, `path`, `flag`, `track_nb`, `title`, `album`, `artist` FROM `medias` ORDER BY `flag` DESC;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, null);

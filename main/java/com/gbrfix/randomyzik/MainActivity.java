@@ -43,21 +43,26 @@ public class MainActivity extends AppCompatActivity {
             dbService.setDbServiceListener(new DbServiceSignal() {
                 @Override
                 public void onUpdateEntries() {
-                    try {
-                        MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
-                        dao.open();
-                        SQLiteCursor cursor = dao.getAll();
-                        ListView listView = (ListView)findViewById(R.id.playlist);
-                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                        adapter.changeCursor(cursor);
-                        dao.close();
-                    } catch (SQLException e) {
-                        Log.v("SQLException", e.getMessage());
-                    }
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
+                                dao.open();
+                                SQLiteCursor cursor = dao.getAllOrdered();
+                                ListView listView = (ListView)findViewById(R.id.playlist);
+                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                                adapter.changeCursor(cursor);
+                                dao.close();
+                            } catch (SQLException e) {
+                                Log.v("SQLException", e.getMessage());
+                            }
+                        }
+                    });
                 }
             });
-            dbService.scan();
             dbService.setBound(true);
+            dbService.scan();
         }
 
         @Override
@@ -117,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
 
                 MediaDAO dao = new MediaDAO(context);
                 dao.open();
-                SQLiteCursor cursor = dao.getAll();
+                SQLiteCursor cursor = dao.getAllOrdered();
 
                 // Cursor adapter pour la listeView
                 if (cursor.getCount() > 0) {
@@ -203,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     MediaDAO dao = new MediaDAO(context);
                     dao.open();
-                    SQLiteCursor cursor = dao.getAll();
+                    SQLiteCursor cursor = dao.getAllOrdered();
                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                     adapter.changeCursor(cursor);
                     dao.close();
@@ -238,17 +243,37 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // On vérifie si le dossier est modifié et on relance le scanner si c'est le cas
-        /*File mediaDir = Environment.getExternalStorageDirectory();
-        FileObserver mediaObserver = new FileObserver(mediaDir.getPath(), FileObserver.ACCESS) {
+        File mediaDir = Environment.getExternalStorageDirectory();
+        RecursiveFileObserver mediaObserver = new RecursiveFileObserver(mediaDir.getPath()) {
             @Override
-            public void onEvent(int i, String s) {
-                if (dbService.isBound()) {
-                    dbService.scan();
+            public void onEvent(int event, String path) {
+                switch (event) {
+                    case FileObserver.MODIFY:
+                    case FileObserver.DELETE:
+                        if (dbService.isBound() && !dbService.isLocked()) {
+//                            dbService.setDbServiceListener(new DbServiceSignal() {
+//                                @Override
+//                                public void onUpdateEntries() {
+//                                    try {
+//                                        MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
+//                                        dao.open();
+//                                        SQLiteCursor cursor = dao.getAllOrdered();
+//                                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+//                                        adapter.changeCursor(cursor);
+//                                        dao.close();
+//                                    } catch (SQLException e) {
+//                                        Log.v("SQLException", e.getMessage());
+//                                    }
+//                                }
+//                            });
+                            dbService.scan();
+                        }
+                        break;
+                    default:
                 }
             }
         };
-        mediaObserver.startWatching();*/
+        mediaObserver.startWatching();
     }
 
     public void infoMsg(String msg, int color) {
