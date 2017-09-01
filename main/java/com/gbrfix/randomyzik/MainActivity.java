@@ -10,7 +10,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -249,18 +248,16 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // On mémorise la position du scroll
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            listView.setOnScrollListener(new AbsListView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(AbsListView absListView, int i) {
-                }
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView absListView, int i) {
+            }
 
-                @Override
-                public void onScroll(AbsListView absListView, int i, int i1, int i2) {
-                    scrollY = i;
-                }
-            });
-        }
+            @Override
+            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+                scrollY = i;
+            }
+        });
     }
 
     public void infoMsg(String msg, int color) {
