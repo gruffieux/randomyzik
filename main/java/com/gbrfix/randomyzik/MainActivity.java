@@ -10,12 +10,14 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -30,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     MediaController controller = null;
     DbService dbService = null;
+    int scrollY = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -99,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
-    public void init(final Context context, int perms) {
+    protected void init(final Context context, int perms) {
         // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
         final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
@@ -244,6 +247,20 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setProgress(position);
             }
         });
+
+        // On mémorise la position du scroll
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView absListView, int i) {
+                }
+
+                @Override
+                public void onScroll(AbsListView absListView, int i, int i1, int i2) {
+                    scrollY = i;
+                }
+            });
+        }
     }
 
     public void infoMsg(String msg, int color) {
@@ -268,6 +285,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
+        bundle.putInt("scrollY", scrollY);
+
         if (controller != null) {
             controller.savePlayer(bundle);
         }
@@ -286,7 +305,14 @@ public class MainActivity extends AppCompatActivity {
             controller.restorePlayer(currentId, currentPosition);
         }
 
+        scrollY = bundle.getInt("scrollY");
+
         super.onRestoreInstanceState(bundle);
+
+        ListView listView = (ListView)findViewById(R.id.playlist);
+        if (listView != null) {
+            listView.setSelection(scrollY);
+        }
 
         ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
         if (progressBar != null) {
