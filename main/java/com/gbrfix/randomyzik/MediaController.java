@@ -21,7 +21,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
     private AudioManager manager;
     private MediaDAO dao;
     private Context context;
-    private UpdateSignal updateSignalListener;
+    private MediaSignal mediaSignalListener;
     private int currentId;
     private IntentFilter intentFilter;
     private BecomingNoisyReceiver myNoisyAudioReceiver;
@@ -78,8 +78,8 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         return true;
     }
 
-    public void setUpdateSignalListener(UpdateSignal listener) {
-        updateSignalListener = listener;
+    public void setMediaSignalListener(MediaSignal listener) {
+        mediaSignalListener = listener;
     }
 
     public String getTrackLabel(int id) {
@@ -133,7 +133,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             //player.seekTo(player.getDuration() - 10000);
             player.start();
             player.setOnCompletionListener(this);
-            updateSignalListener.onTrackSelect(currentId, player.getDuration());
+            mediaSignalListener.onTrackSelect(currentId, player.getDuration());
         }
     }
 
@@ -201,11 +201,11 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
 
         try {
             selectTrack();
-            updateSignalListener.onTrackRead(false);
+            mediaSignalListener.onTrackRead(false);
         }
         catch (PlayEndException e) {
             context.unregisterReceiver(myNoisyAudioReceiver);
-            updateSignalListener.onTrackRead(true);
+            mediaSignalListener.onTrackRead(true);
         }
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
@@ -223,11 +223,11 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
                 player.setVolume(1f, 1f);
-                updateSignalListener.onTrackResume(true);
+                mediaSignalListener.onTrackResume(true);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
-                updateSignalListener.onTrackResume(true);
+                mediaSignalListener.onTrackResume(true);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
                 player.setVolume(1f, 1f);
@@ -236,7 +236,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
                 // Permanent loss of audio focus
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
-                updateSignalListener.onTrackResume(false);
+                mediaSignalListener.onTrackResume(false);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lower the volume, keep playing
@@ -262,7 +262,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             catch (Exception e) {
                 return;
             }
-            updateSignalListener.onTrackProgress(currentPosition);
+            mediaSignalListener.onTrackProgress(currentPosition);
         }
     }
 
@@ -270,7 +270,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                updateSignalListener.onTrackResume(false);
+                mediaSignalListener.onTrackResume(false);
             }
         }
     }

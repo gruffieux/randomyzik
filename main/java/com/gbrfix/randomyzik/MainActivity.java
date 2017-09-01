@@ -26,8 +26,6 @@ import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
 
-import java.io.File;
-
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     MediaController controller = null;
@@ -38,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
-            dbService.setDbServiceListener(new DbServiceSignal() {
+            dbService.setDbSignalListener(new DbSignal() {
                 @Override
                 public void onUpdateEntries() {
                     runOnUiThread(new Runnable() {
@@ -101,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
-    protected void init(final Context context, int perms) {
+    public void init(final Context context, int perms) {
         // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
         final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
@@ -199,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // On met à jour l'UI
-        controller.setUpdateSignalListener(new UpdateSignal() {
+        controller.setMediaSignalListener(new MediaSignal() {
 
             @Override
             public void onTrackRead(final boolean last) {

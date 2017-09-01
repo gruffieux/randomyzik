@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 public class DbService extends IntentService implements FilenameFilter {
     private final IBinder binder = new DbBinder();
-    private DbServiceSignal dbServiceListener;
+    private DbSignal dbSignalListener;
     private ArrayList<File> mediaFiles;
     private RecursiveFileObserver mediaObserver;
     File mediaDir = Environment.getExternalStorageDirectory();
@@ -58,8 +58,8 @@ public class DbService extends IntentService implements FilenameFilter {
         mediaObserver.startWatching();
     }
 
-    public void setDbServiceListener(DbServiceSignal listener) {
-        dbServiceListener = listener;
+    public void setDbSignalListener(DbSignal listener) {
+        dbSignalListener = listener;
     }
 
     private void scan() {
@@ -113,7 +113,7 @@ public class DbService extends IntentService implements FilenameFilter {
             }
             dao.close();
             if (updated) {
-                dbServiceListener.onUpdateEntries();
+                dbSignalListener.onUpdateEntries();
             }
         }
         catch (Exception e) {
