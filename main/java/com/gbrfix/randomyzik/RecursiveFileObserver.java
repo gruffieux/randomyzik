@@ -1,8 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.os.FileObserver;
-import android.util.Log;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;

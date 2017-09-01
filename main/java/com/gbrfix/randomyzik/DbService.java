@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
 import android.os.Environment;
+import android.os.FileObserver;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -21,7 +22,9 @@ public class DbService extends IntentService implements FilenameFilter {
     private final IBinder binder = new DbBinder();
     private DbServiceSignal dbServiceListener;
     private ArrayList<File> mediaFiles;
-    private boolean bound, locked;
+    private RecursiveFileObserver mediaObserver;
+    File mediaDir = Environment.getExternalStorageDirectory();
+    private boolean bound;
 
     public boolean isBound() {
         return bound;
@@ -31,31 +34,43 @@ public class DbService extends IntentService implements FilenameFilter {
         this.bound = bound;
     }
 
-    public boolean isLocked() {
-        return locked;
-    }
-
     public DbService() {
         super("DbIntentService");
 
         mediaFiles = new ArrayList<File>();
-        bound = locked = false;
+    }
 
+    public void start() {
+        mediaObserver = new RecursiveFileObserver(mediaDir.getPath()) {
+            @Override
+            public void onEvent(int event, String path) {
+                switch (event) {
+                    case FileObserver.MODIFY:
+                    case FileObserver.DELETE:
+                        scan();
+                        break;
+                    default:
+                }
+            }
+        };
+
+        scan();
+        mediaObserver.startWatching();
     }
 
     public void setDbServiceListener(DbServiceSignal listener) {
         dbServiceListener = listener;
     }
 
-    public void scan() {
-        locked = true;
+    private void scan() {
+        mediaObserver.stopWatching();
+
         Context context = this;
 
         // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
         // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
         // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
 
-        File mediaDir = Environment.getExternalStorageDirectory();
         scanMediaFiles(mediaDir);
         MediaDAO dao = new MediaDAO(context);
         MediaFactory factory = new MediaFactory();
@@ -105,7 +120,7 @@ public class DbService extends IntentService implements FilenameFilter {
             Log.v("Exception", e.getMessage());
         }
         finally {
-            locked = false;
+            mediaObserver.startWatching();
         }
     }
 

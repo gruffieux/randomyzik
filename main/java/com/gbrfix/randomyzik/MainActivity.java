@@ -10,8 +10,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
-import android.os.Environment;
-import android.os.FileObserver;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -62,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             dbService.setBound(true);
-            dbService.scan();
+            dbService.start();
         }
 
         @Override
@@ -204,22 +202,28 @@ public class MainActivity extends AppCompatActivity {
         controller.setUpdateSignalListener(new UpdateSignal() {
 
             @Override
-            public void onTrackRead(boolean last) {
+            public void onTrackRead(final boolean last) {
                 try {
-                    MediaDAO dao = new MediaDAO(context);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAllOrdered();
-                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    adapter.changeCursor(cursor);
-                    dao.close();
-                    if (last) {
-                        playBtn.setEnabled(false);
-                        rewBtn.setEnabled(false);
-                        fwdBtn.setEnabled(false);
-                        infoMsg("Playlist ended", Color.GRAY);
-                    }
-                } catch (SQLException e) {
-                    Log.v("SQLException", e.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            MediaDAO dao = new MediaDAO(context);
+                            dao.open();
+                            SQLiteCursor cursor = dao.getAllOrdered();
+                            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                            adapter.changeCursor(cursor);
+                            dao.close();
+                            if (last) {
+                                playBtn.setEnabled(false);
+                                rewBtn.setEnabled(false);
+                                fwdBtn.setEnabled(false);
+                                infoMsg("Playlist ended", Color.GRAY);
+                            }
+                        }
+                    });
+
+                } catch (Exception e) {
+                    Log.v("Exception", e.getMessage());
                 }
             }
 
@@ -242,38 +246,6 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setProgress(position);
             }
         });
-
-        File mediaDir = Environment.getExternalStorageDirectory();
-        RecursiveFileObserver mediaObserver = new RecursiveFileObserver(mediaDir.getPath()) {
-            @Override
-            public void onEvent(int event, String path) {
-                switch (event) {
-                    case FileObserver.MODIFY:
-                    case FileObserver.DELETE:
-                        if (dbService.isBound() && !dbService.isLocked()) {
-//                            dbService.setDbServiceListener(new DbServiceSignal() {
-//                                @Override
-//                                public void onUpdateEntries() {
-//                                    try {
-//                                        MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
-//                                        dao.open();
-//                                        SQLiteCursor cursor = dao.getAllOrdered();
-//                                        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-//                                        adapter.changeCursor(cursor);
-//                                        dao.close();
-//                                    } catch (SQLException e) {
-//                                        Log.v("SQLException", e.getMessage());
-//                                    }
-//                                }
-//                            });
-                            dbService.scan();
-                        }
-                        break;
-                    default:
-                }
-            }
-        };
-        mediaObserver.startWatching();
     }
 
     public void infoMsg(String msg, int color) {
