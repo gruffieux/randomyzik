@@ -16,7 +16,7 @@ import java.util.Random;
 /**
  * Created by gab on 16.07.2017.
  */
-public class MediaController implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener, Runnable {
+public class MediaController implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener, Runnable {
     private MediaPlayer player;
     private AudioManager manager;
     private MediaDAO dao;
@@ -69,6 +69,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             player = MediaPlayer.create(context, Uri.fromFile(file));
             player.seekTo(position);
             player.setOnCompletionListener(this);
+            player.setOnErrorListener(this);
             dao.close();
         }
         catch (Exception e) {
@@ -133,6 +134,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             //player.seekTo(player.getDuration() - 10000);
             player.start();
             player.setOnCompletionListener(this);
+            player.setOnErrorListener(this);
             mediaSignalListener.onTrackSelect(currentId, player.getDuration());
         }
     }
@@ -264,6 +266,11 @@ public class MediaController implements MediaPlayer.OnCompletionListener, AudioM
             }
             mediaSignalListener.onTrackProgress(currentPosition);
         }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mediaPlayer, int i, int i1) {
+        return false;
     }
 
     private class BecomingNoisyReceiver extends BroadcastReceiver {

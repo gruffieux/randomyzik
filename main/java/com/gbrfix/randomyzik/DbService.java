@@ -23,7 +23,7 @@ public class DbService extends IntentService implements FilenameFilter {
     private DbSignal dbSignalListener;
     private ArrayList<File> mediaFiles;
     private RecursiveFileObserver mediaObserver;
-    File mediaDir = Environment.getExternalStorageDirectory();
+    File mediaDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
     private boolean bound;
 
     public boolean isBound() {
@@ -130,7 +130,7 @@ public class DbService extends IntentService implements FilenameFilter {
 
         if (lastIndex > 0) {
             String ext = s.substring(lastIndex);
-            if (ext.equals(".mp3")) {
+            if (ext.matches("\\.mp3|\\.flac|\\.ogg")) {
                 return true;
             }
         }
