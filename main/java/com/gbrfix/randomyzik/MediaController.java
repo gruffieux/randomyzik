@@ -181,7 +181,7 @@ public class MediaController implements MediaPlayer.OnCompletionListener, MediaP
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {
-            dao.update(currentId, flag);
+            dao.updateFlag(currentId, flag);
         }
 
         dao.close();

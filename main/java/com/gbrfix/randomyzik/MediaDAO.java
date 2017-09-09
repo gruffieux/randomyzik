@@ -38,7 +38,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public void remove(int id) {
-        this.db.execSQL("DELETE FROM `medias` WHERE `id`=" + String.valueOf(id));
+        this.db.delete("medias", "`id`=?", new String[] {String.valueOf(id)});
     }
 
     public SQLiteCursor getFromId(int id) {
@@ -57,7 +57,9 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `track_nb`=? AND `title`=? AND `album`=? AND `artist`=?;", new String[] {trackNb, title, album, artist});
     }
 
-    public void update(int id, String flag) {
-        this.db.execSQL("UPDATE `medias` SET `flag`=\"" + flag + "\" WHERE `id`=" + String.valueOf(id));
+    public void updateFlag(int id, String flag) {
+        ContentValues values = new ContentValues();
+        values.put("flag", flag);
+        this.db.update("medias", values,  "`id`=?", new String[] {String.valueOf(id)});
     }
 }

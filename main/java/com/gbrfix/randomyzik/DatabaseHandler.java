@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.content.ContentValues;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -7,8 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.content.Context;
 import android.util.Log;
-
-import java.io.File;
 
 /**
  * Created by gab on 16.07.2017.
@@ -49,20 +48,41 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE `medias` ADD `album` TEXT;");
                 db.execSQL("ALTER TABLE `medias` ADD `artist` TEXT;");
 
-                // On met à jour les données existantes
+                // On met à jour avec les meta tags
                 MediaFactory factory = new MediaFactory();
                 SQLiteCursor cursor = (SQLiteCursor) db.rawQuery("SELECT * FROM `medias`", null);
                 while (cursor.moveToNext()) {
                     int id = cursor.getInt(0);
                     String path = cursor.getString(1);
                     Media media = factory.createMedia(path);
-                    db.execSQL("UPDATE `medias` SET `track_nb`=\"" + media.getTrackNb() + "\", " +
-                            "`title`=\"" + media.getTitle() + "\", `album`=\"" + media.getAlbum() + "\", `artist`=\"" + media.getArtist() + "\"" +
-                            "WHERE `id`=" + String.valueOf(id));
+                    ContentValues values = new ContentValues();
+                    values.put("track_nb", media.getTrackNb());
+                    values.put("title", media.getTitle());
+                    values.put("album", media.getAlbum());
+                    values.put("artist", media.getArtist());
+                    db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
                 }
             }
-            catch (SQLiteException e) {
-                Log.v("SQLiteException", e.getMessage());
+            catch (Exception e) {
+                Log.v("Exception", e.getMessage());
+            }
+        }
+        if (oldVersion <= 4 && newVersion >= 5) {
+            try {
+                // On corrige les titres
+                MediaFactory factory = new MediaFactory();
+                SQLiteCursor cursor = (SQLiteCursor) db.rawQuery("SELECT `id`, `path` FROM `medias`", null);
+                while (cursor.moveToNext()) {
+                    int id = cursor.getInt(0);
+                    String path = cursor.getString(1);
+                    Media media = factory.createMedia(path);
+                    ContentValues values = new ContentValues();
+                    values.put("title", media.getTitle());
+                    db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
+                }
+            }
+            catch (Exception e) {
+                Log.v("Exception", e.getMessage());
             }
         }
     }

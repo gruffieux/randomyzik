@@ -16,7 +16,9 @@ public class MediaFactory extends MediaMetadataRetriever {
 
         if (title != null ? title.isEmpty() : true) {
             File file = new File(path);
-            title = file.getName();
+            String filename = file.getName();
+            int lastIndex = filename.lastIndexOf('.');
+            title = lastIndex > 0 ? filename.substring(0, lastIndex) : filename;
         }
 
         media.setTrackNb(extractMetadata(MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER));
