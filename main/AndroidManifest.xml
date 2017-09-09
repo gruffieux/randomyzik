@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <service android:name=".DbService" />
+        <service android:name=".AudioService" />
     </application>
 
 </manifest>

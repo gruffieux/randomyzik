@@ -29,13 +29,15 @@ import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
-    MediaController controller = null;
     DbService dbService = null;
+    AudioService audioService = null;
     int scrollY = 0;
+    int currentId = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            // Service de scanning
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
             dbService.setDbSignalListener(new DbSignal() {
@@ -66,6 +68,80 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             dbService.setBound(false);
+        }
+    };
+
+    private ServiceConnection audioConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
+            audioService = audioBinder.getService();
+            audioService.setMediaSignalListener(new MediaSignal() {
+                @Override
+                public void onTrackRead(final boolean last) {
+                    try {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MediaDAO dao = new MediaDAO(audioService.getApplicationContext());
+                                dao.open();
+                                SQLiteCursor cursor = dao.getAllOrdered();
+                                ListView listView = (ListView)findViewById(R.id.playlist);
+                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                                adapter.changeCursor(cursor);
+                                dao.close();
+                                if (last) {
+                                    ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+                                    Button rewBtn = (Button)findViewById(R.id.rew);
+                                    Button fwdBtn = (Button)findViewById(R.id.fwd);
+                                    playBtn.setEnabled(false);
+                                    rewBtn.setEnabled(false);
+                                    fwdBtn.setEnabled(false);
+                                    infoMsg("Playlist ended", Color.GRAY);
+                                }
+                            }
+                        });
+
+                    } catch (Exception e) {
+                        Log.v("Exception", e.getMessage());
+                    }
+                }
+
+                @Override
+                public void onTrackResume(boolean start) {
+                    ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+                    playBtn.setChecked(start);
+                }
+
+                @Override
+                public void onTrackSelect(int id, int duration) {
+                    ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+                    progressBar.setProgress(0);
+                    progressBar.setMax(duration);
+                    infoMsg(audioService.getTrackLabel(id), Color.BLACK);
+                }
+
+                @Override
+                public void onTrackProgress(int position) {
+                    ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+                    progressBar.setProgress(position);
+                }
+            });
+            audioService.setBound(true);
+            audioService.init();
+
+            if (currentId != 0) {
+                audioService.setCurrentId(currentId);
+                TextView infoMsg = (TextView) findViewById(R.id.infoMsg);
+                if (infoMsg != null) {
+                    infoMsg.setText(audioService.getTrackLabel(currentId));
+                }
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            audioService.setBound(false);
         }
     };
 
@@ -144,19 +220,28 @@ public class MainActivity extends AppCompatActivity {
             infoMsg(e.getMessage(), Color.RED);
         }
 
-        // On instancie le contrôleur
-        controller = new MediaController(context);
+        // On instancie le service audio
+        Intent intent = new Intent(this, AudioService.class);
+        bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 try {
-                    controller.resume();
+
                     rewBtn.setEnabled(isChecked);
                     fwdBtn.setEnabled(isChecked);
-                    if (isChecked) {
-                        new Thread(controller).start();
+                    if (audioService != null) {
+                        audioService.resume();
+                        if (isChecked) {
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    audioService.progress();
+                                }
+                            }).start();
+                        }
                     }
                 }
                 catch (Exception e) {
@@ -172,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
         rewBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    controller.rewind();
+                    audioService.rewind();
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -187,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    controller.forward();
+                    audioService.forward();
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -195,55 +280,6 @@ public class MainActivity extends AppCompatActivity {
                     fwdBtn.setEnabled(false);
                     infoMsg(e.getMessage(), Color.RED);
                 }
-            }
-        });
-
-        // On met à jour l'UI
-        controller.setMediaSignalListener(new MediaSignal() {
-
-            @Override
-            public void onTrackRead(final boolean last) {
-                try {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            MediaDAO dao = new MediaDAO(context);
-                            dao.open();
-                            SQLiteCursor cursor = dao.getAllOrdered();
-                            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                            adapter.changeCursor(cursor);
-                            dao.close();
-                            if (last) {
-                                playBtn.setEnabled(false);
-                                rewBtn.setEnabled(false);
-                                fwdBtn.setEnabled(false);
-                                infoMsg("Playlist ended", Color.GRAY);
-                            }
-                        }
-                    });
-
-                } catch (Exception e) {
-                    Log.v("Exception", e.getMessage());
-                }
-            }
-
-            @Override
-            public void onTrackResume(boolean start) {
-                playBtn.setChecked(start);
-            }
-
-            @Override
-            public void onTrackSelect(int id, int duration) {
-                ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-                progressBar.setProgress(0);
-                progressBar.setMax(duration);
-                infoMsg(controller.getTrackLabel(id), Color.BLACK);
-            }
-
-            @Override
-            public void onTrackProgress(int position) {
-                ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-                progressBar.setProgress(position);
             }
         });
 
@@ -282,11 +318,14 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        bundle.putInt("scrollY", scrollY);
-
-        if (controller != null) {
-            controller.savePlayer(bundle);
+        if (audioService != null && audioService.getPlayer() != null){
+            bundle.putBoolean("isPlaying", audioService.getPlayer().isPlaying());
+            bundle.putInt("currentId", audioService.getCurrentId());
+            bundle.putInt("currentPosition", audioService.getPlayer().getCurrentPosition());
+            bundle.putInt("duration", audioService.getPlayer().getDuration());
         }
+
+        bundle.putInt("scrollY", scrollY);
 
         super.onSaveInstanceState(bundle);
     }
@@ -294,14 +333,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         boolean isPlaying = bundle.getBoolean("isPlaying");
-        int currentId = bundle.getInt("currentId");
+        currentId = bundle.getInt("currentId");
         int currentPosition = bundle.getInt("currentPosition");
         int duration = bundle.getInt("duration");
-
-        if (controller != null) {
-            controller.restorePlayer(currentId, currentPosition);
-        }
-
         scrollY = bundle.getInt("scrollY");
 
         super.onRestoreInstanceState(bundle);
@@ -321,23 +355,18 @@ public class MainActivity extends AppCompatActivity {
         if (playBtn != null) {
             playBtn.setChecked(isPlaying);
         }
-
-        TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
-        if (infoMsg != null && controller != null) {
-            infoMsg.setText(controller.getTrackLabel(currentId));
-        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        if (controller != null) {
-            controller.destroy();
-        }
-
         if (dbService != null && dbService.isBound()) {
             unbindService(connection);
+        }
+
+        if (audioService != null && audioService.isBound() && !audioService.getPlayer().isPlaying()) {
+            unbindService(audioConnection);
         }
     }
 }
