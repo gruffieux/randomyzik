@@ -1,6 +1,7 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,7 @@ import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
     DbService dbService = null;
     AudioService audioService = null;
     int scrollY = 0;
-    int currentId = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -74,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection audioConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
+            final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
             audioService = audioBinder.getService();
             audioService.setMediaSignalListener(new MediaSignal() {
                 @Override
@@ -102,6 +103,14 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
 
+                        // On notifie le premier-plan
+                        Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
+                            .setContentTitle(getText(R.string.notif_play_title))
+                            .setContentText(audioService.getCurrentTrackLabel())
+                            .setSmallIcon(R.drawable.ic_stat_audio)
+                            .build();
+                        audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
+
                     } catch (Exception e) {
                         Log.v("Exception", e.getMessage());
                     }
@@ -128,14 +137,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             audioService.setBound(true);
-            audioService.init();
 
-            if (currentId != 0) {
-                audioService.setCurrentId(currentId);
-                TextView infoMsg = (TextView) findViewById(R.id.infoMsg);
-                if (infoMsg != null) {
-                    infoMsg.setText(audioService.getTrackLabel(currentId));
-                }
+            TextView infoMsg = (TextView) findViewById(R.id.infoMsg);
+            if (infoMsg != null) {
+                infoMsg.setText(audioService.getCurrentTrackLabel());
             }
         }
 
@@ -221,26 +226,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // On instancie le service audio
-        Intent intent = new Intent(this, AudioService.class);
+        final Intent intent = new Intent(this, AudioService.class);
         bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+        //final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 try {
-
                     rewBtn.setEnabled(isChecked);
                     fwdBtn.setEnabled(isChecked);
                     if (audioService != null) {
                         audioService.resume();
                         if (isChecked) {
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    audioService.progress();
-                                }
-                            }).start();
+                            // On notifie le premier-plan
+                            Notification notification = new NotificationCompat.Builder(context)
+                                .setContentTitle(getText(R.string.notif_play_title))
+                                .setContentText(audioService.getCurrentTrackLabel())
+                                .setSmallIcon(R.drawable.ic_stat_audio)
+                                //.setContentIntent(pendingIntent)
+                                .build();
+                            audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
+                        }
+                        else {
+                            audioService.stopForeground(true);
                         }
                     }
                 }
@@ -257,7 +267,9 @@ public class MainActivity extends AppCompatActivity {
         rewBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    audioService.rewind();
+                    if (audioService != null) {
+                        audioService.rewind();
+                    }
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -272,7 +284,17 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    audioService.forward();
+                    if (audioService != null) {
+                        audioService.forward();
+
+                        // On notifie le premier-plan
+                        Notification notification = new NotificationCompat.Builder(context)
+                            .setContentTitle(getText(R.string.notif_play_title))
+                            .setContentText(audioService.getCurrentTrackLabel())
+                            .setSmallIcon(R.drawable.ic_stat_audio)
+                            .build();
+                        audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
+                    }
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -320,7 +342,6 @@ public class MainActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle bundle) {
         if (audioService != null && audioService.getPlayer() != null){
             bundle.putBoolean("isPlaying", audioService.getPlayer().isPlaying());
-            bundle.putInt("currentId", audioService.getCurrentId());
             bundle.putInt("currentPosition", audioService.getPlayer().getCurrentPosition());
             bundle.putInt("duration", audioService.getPlayer().getDuration());
         }
@@ -333,7 +354,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         boolean isPlaying = bundle.getBoolean("isPlaying");
-        currentId = bundle.getInt("currentId");
         int currentPosition = bundle.getInt("currentPosition");
         int duration = bundle.getInt("duration");
         scrollY = bundle.getInt("scrollY");
@@ -365,8 +385,8 @@ public class MainActivity extends AppCompatActivity {
             unbindService(connection);
         }
 
-        if (audioService != null && audioService.isBound() && !audioService.getPlayer().isPlaying()) {
+        /*if (audioService != null && audioService.isBound()) {
             unbindService(audioConnection);
-        }
+        }*/
     }
 }

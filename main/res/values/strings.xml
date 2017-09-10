@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">RandoMyZik</string>
+    <string name="notif_play_title">Playing random music</string>
 </resources>

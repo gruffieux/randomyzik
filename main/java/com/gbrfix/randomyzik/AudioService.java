@@ -21,6 +21,8 @@ import java.util.Random;
  */
 
 public class AudioService extends IntentService implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
+    public final static int ONGOING_NOTIFICATION_ID = 1;
+
     private MediaPlayer player;
     private AudioManager manager;
     private MediaDAO dao;
@@ -50,16 +52,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         return binder;
     }
 
-    public int getCurrentId() {
-        return currentId;
-    }
-
-    public void setCurrentId(int currentId) {
-        this.currentId = currentId;
-    }
-
     public MediaPlayer getPlayer() {
-
         return player;
     }
 
@@ -72,7 +65,10 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
     }
 
-    public void init() {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
         manager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         dao = new MediaDAO(this);
     }
@@ -95,7 +91,11 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         }
     }
 
-    public void selectTrack() throws Exception {
+    public String getCurrentTrackLabel() {
+        return getTrackLabel(currentId);
+    }
+
+    private void selectTrack() throws Exception {
         dao.open();
 
         SQLiteCursor cursor = dao.getFromFlag("unread");
@@ -134,6 +134,24 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             player.setOnCompletionListener(this);
             player.setOnErrorListener(this);
             mediaSignalListener.onTrackSelect(currentId, player.getDuration());
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int currentPosition = 0;
+                    int total = player.getDuration();
+                    while (currentPosition < total) {
+                        try {
+                            Thread.sleep(1000);
+                            currentPosition = player.getCurrentPosition();
+                        }
+                        catch (Exception e) {
+                            return;
+                        }
+                        mediaSignalListener.onTrackProgress(currentPosition);
+                    }
+                }
+            }).start();
         }
     }
 
@@ -245,26 +263,6 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 // Lower the volume, keep playing
                 player.setVolume(0.5f, 0.5f);
                 break;
-        }
-    }
-
-    public void progress() {
-        if (player == null) {
-            return;
-        }
-
-        int currentPosition = 0;
-        int total = player.getDuration();
-
-        while (currentPosition < total) {
-            try {
-                Thread.sleep(1000);
-                currentPosition = player.getCurrentPosition();
-            }
-            catch (Exception e) {
-                return;
-            }
-            mediaSignalListener.onTrackProgress(currentPosition);
         }
     }
 
