@@ -105,7 +105,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         if (total == 0) {
             currentId = 0;
-            throw new PlayEndException("Playlist was completed and needs new mp3 loaded");
+            throw new PlayEndException(getString(R.string.err_all_read));
         }
 
         if (total > 1) {

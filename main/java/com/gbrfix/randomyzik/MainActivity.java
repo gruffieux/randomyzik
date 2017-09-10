@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                                     playBtn.setEnabled(false);
                                     rewBtn.setEnabled(false);
                                     fwdBtn.setEnabled(false);
-                                    infoMsg("Playlist ended", Color.GRAY);
+                                    infoMsg(getString(R.string.info_play_end), Color.GRAY);
                                 }
                             }
                         });
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
             audioService.setBound(true);
 
             TextView infoMsg = (TextView) findViewById(R.id.infoMsg);
-            if (infoMsg != null) {
+            if (infoMsg != null && infoMsg.getText().length() == 0) {
                 infoMsg.setText(audioService.getCurrentTrackLabel());
             }
         }
@@ -210,12 +210,13 @@ public class MainActivity extends AppCompatActivity {
                     TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
                     listView.setAdapter(adapter);
                 } else {
-                    throw new Exception("No mp3 found");
+                    throw new Exception(getString(R.string.err_no_file));
                 }
 
                 dao.close();
-            } else {
-                throw new Exception("App needs read/write storage permissions to works");
+            }
+            else {
+                throw new Exception(getString(R.string.err_no_perms));
             }
         }
         catch (Exception e) {
@@ -228,7 +229,6 @@ public class MainActivity extends AppCompatActivity {
         // On instancie le service audio
         final Intent intent = new Intent(this, AudioService.class);
         bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
-        //final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On traite le changement d'état du bouton play
@@ -245,7 +245,6 @@ public class MainActivity extends AppCompatActivity {
                                 .setContentTitle(getText(R.string.notif_play_title))
                                 .setContentText(audioService.getCurrentTrackLabel())
                                 .setSmallIcon(R.drawable.ic_stat_audio)
-                                //.setContentIntent(pendingIntent)
                                 .build();
                             audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
                         }
@@ -384,9 +383,5 @@ public class MainActivity extends AppCompatActivity {
         if (dbService != null && dbService.isBound()) {
             unbindService(connection);
         }
-
-        /*if (audioService != null && audioService.isBound()) {
-            unbindService(audioConnection);
-        }*/
     }
 }
