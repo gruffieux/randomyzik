@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -75,6 +76,10 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection audioConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            // On créé un intent pour les notifications
+            final Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+            final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+
             final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
             audioService = audioBinder.getService();
             audioService.setMediaSignalListener(new MediaSignal() {
@@ -102,16 +107,8 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                         });
-
-                        // On notifie le premier-plan
-                        Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
-                            .setContentTitle(getText(R.string.notif_play_title))
-                            .setContentText(audioService.getCurrentTrackLabel())
-                            .setSmallIcon(R.drawable.ic_stat_audio)
-                            .build();
-                        audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
-
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         Log.v("Exception", e.getMessage());
                     }
                 }
@@ -127,7 +124,17 @@ public class MainActivity extends AppCompatActivity {
                     ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
                     progressBar.setProgress(0);
                     progressBar.setMax(duration);
-                    infoMsg(audioService.getTrackLabel(id), Color.BLACK);
+                    String label = audioService.getTrackLabel(id);
+                    infoMsg(label, Color.BLACK);
+
+                    // On notifie le premier-plan
+                    Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
+                        .setContentTitle(getText(R.string.notif_play_title))
+                        .setContentText(label)
+                        .setSmallIcon(R.drawable.ic_stat_audio)
+                        .setContentIntent(pendingIntent)
+                        .build();
+                    audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
                 }
 
                 @Override
@@ -226,10 +233,14 @@ public class MainActivity extends AppCompatActivity {
             infoMsg(e.getMessage(), Color.RED);
         }
 
-        // On instancie le service audio
+        // On se connecte au service audio
         final Intent intent = new Intent(this, AudioService.class);
         bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+
+        // On créé un intent pour les notifications
+        final Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
 
         // On traite le changement d'état du bouton play
         playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -241,10 +252,11 @@ public class MainActivity extends AppCompatActivity {
                         audioService.resume();
                         if (isChecked) {
                             // On notifie le premier-plan
-                            Notification notification = new NotificationCompat.Builder(context)
+                            Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
                                 .setContentTitle(getText(R.string.notif_play_title))
                                 .setContentText(audioService.getCurrentTrackLabel())
                                 .setSmallIcon(R.drawable.ic_stat_audio)
+                                .setContentIntent(pendingIntent)
                                 .build();
                             audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
                         }
@@ -285,14 +297,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (audioService != null) {
                         audioService.forward();
-
-                        // On notifie le premier-plan
-                        Notification notification = new NotificationCompat.Builder(context)
-                            .setContentTitle(getText(R.string.notif_play_title))
-                            .setContentText(audioService.getCurrentTrackLabel())
-                            .setSmallIcon(R.drawable.ic_stat_audio)
-                            .build();
-                        audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
                     }
                 }
                 catch (Exception e) {
