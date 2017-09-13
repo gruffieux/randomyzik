@@ -28,7 +28,6 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     private MediaDAO dao;
     private MediaSignal mediaSignalListener;
     private int currentId;
-    private int total, totalRead;
     private IntentFilter intentFilter;
     private AudioService.BecomingNoisyReceiver myNoisyAudioReceiver;
     private final IBinder binder = new AudioService.AudioBinder();
@@ -62,7 +61,6 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         player = null;
         currentId = 0;
-        total = totalRead = 0;
         intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
     }
@@ -73,11 +71,6 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         manager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         dao = new MediaDAO(this);
-
-        dao.open();
-        SQLiteCursor cursor = dao.getAll();
-        total = cursor.getCount();
-        dao.close();
     }
 
     public void setMediaSignalListener(MediaSignal listener) {
@@ -102,36 +95,35 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         return getTrackLabel(currentId);
     }
 
-    public String getSummary() {
+    public String getSummary(int total, int totalRead) {
         float percent = (float)totalRead / (float)total * 100;
 
-        return String.format("Playing track %1$d/%2$d, %3$.1f%% of playlist completed.", totalRead, total, percent);
+        return String.format(getString(R.string.info_track_summary), totalRead, total, percent);
     }
 
     private void selectTrack() throws Exception {
         dao.open();
 
-        SQLiteCursor cursor = dao.getFromFlag("unread");
+        SQLiteCursor cursor = dao.getAll();
         int total = cursor.getCount();
+
+        cursor = dao.getFromFlag("unread");
+        int totalUnread = cursor.getCount();
 
         dao.close();
 
-        if (total == 0) {
+        if (totalUnread == 0) {
             currentId = 0;
             throw new PlayEndException(getString(R.string.err_all_read));
         }
 
-        if (total > 1) {
+        if (totalUnread > 1) {
             Random random = new Random();
-            int pos = random.nextInt(total - 1);
+            int pos = random.nextInt(totalUnread - 1);
             cursor.moveToPosition(pos);
         }
         else {
             cursor.moveToFirst();
-        }
-
-        if (this.total > 0) {
-            totalRead = this.total - total + 1;
         }
 
         currentId = cursor.getInt(0);
@@ -150,7 +142,8 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             player.start();
             player.setOnCompletionListener(this);
             player.setOnErrorListener(this);
-            mediaSignalListener.onTrackSelect(currentId, player.getDuration());
+            int totalRead = total - totalUnread + 1;
+            mediaSignalListener.onTrackSelect(currentId, player.getDuration(), total, totalRead);
 
             new Thread(new Runnable() {
                 @Override

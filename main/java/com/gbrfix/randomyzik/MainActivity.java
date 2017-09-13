@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     DbService dbService = null;
     AudioService audioService = null;
     int scrollY = 0;
+    int totalTrack = 0;
+    int totalReadTrack = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -120,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onTrackSelect(int id, int duration) {
+                public void onTrackSelect(int id, int duration, int total, int totalRead) {
                     ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
                     progressBar.setProgress(0);
                     progressBar.setMax(duration);
@@ -128,9 +130,11 @@ public class MainActivity extends AppCompatActivity {
                     infoMsg(label, Color.BLACK);
 
                     // On notifie le premier-plan
+                    totalTrack = total;
+                    totalReadTrack = totalRead;
                     Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
                         .setContentTitle(label)
-                        .setContentText(audioService.getSummary())
+                        .setContentText(audioService.getSummary(totalTrack, totalReadTrack))
                         .setSmallIcon(R.drawable.ic_stat_audio)
                         .setContentIntent(pendingIntent)
                         .build();
@@ -254,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                             // On notifie le premier-plan
                             Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
                                 .setContentTitle(audioService.getCurrentTrackLabel())
-                                .setContentText(audioService.getSummary())
+                                .setContentText(audioService.getSummary(totalTrack, totalReadTrack))
                                 .setSmallIcon(R.drawable.ic_stat_audio)
                                 .setContentIntent(pendingIntent)
                                 .build();
