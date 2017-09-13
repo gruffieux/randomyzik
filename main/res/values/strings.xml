@@ -4,5 +4,4 @@
     <string name="err_no_perms">App needs read/write storage permissions to works</string>
     <string name="err_all_read">Playlist was completed</string>
     <string name="info_play_end">Playlist ended</string>
-    <string name="notif_play_title">Playing random music</string>
 </resources>

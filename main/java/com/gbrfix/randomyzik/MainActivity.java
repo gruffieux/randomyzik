@@ -129,8 +129,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // On notifie le premier-plan
                     Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
-                        .setContentTitle(getText(R.string.notif_play_title))
-                        .setContentText(label)
+                        .setContentTitle(label)
+                        .setContentText(audioService.getSummary())
                         .setSmallIcon(R.drawable.ic_stat_audio)
                         .setContentIntent(pendingIntent)
                         .build();
@@ -253,8 +253,8 @@ public class MainActivity extends AppCompatActivity {
                         if (isChecked) {
                             // On notifie le premier-plan
                             Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
-                                .setContentTitle(getText(R.string.notif_play_title))
-                                .setContentText(audioService.getCurrentTrackLabel())
+                                .setContentTitle(audioService.getCurrentTrackLabel())
+                                .setContentText(audioService.getSummary())
                                 .setSmallIcon(R.drawable.ic_stat_audio)
                                 .setContentIntent(pendingIntent)
                                 .build();
