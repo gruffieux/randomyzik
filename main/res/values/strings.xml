@@ -5,4 +5,5 @@
     <string name="err_all_read">Playlist was completly read</string>
     <string name="info_play_end">Playlist ended</string>
     <string name="info_track_summary">Playing track %1$d/%2$d, %3$.1f%% of playlist read.</string>
+    <string name="info_scanning">Scanning audio files, please wait...</string>
 </resources>

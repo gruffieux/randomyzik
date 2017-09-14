@@ -41,28 +41,45 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+            final Button rewBtn = (Button)findViewById(R.id.rew);
+            final Button fwdBtn = (Button)findViewById(R.id.fwd);
+
             // Service de scanning
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
             dbService.setDbSignalListener(new DbSignal() {
                 @Override
-                public void onUpdateEntries() {
+                public void onScanCompleted(final boolean update) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
-                                MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
-                                dao.open();
-                                SQLiteCursor cursor = dao.getAllOrdered();
-                                ListView listView = (ListView)findViewById(R.id.playlist);
-                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                                adapter.changeCursor(cursor);
-                                dao.close();
-                            } catch (SQLException e) {
-                                Log.v("SQLException", e.getMessage());
+                            playBtn.setEnabled(true);
+                            TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
+                            infoMsg.setText("");
+                            if (update) {
+                                try {
+                                    MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
+                                    dao.open();
+                                    SQLiteCursor cursor = dao.getAllOrdered();
+                                    ListView listView = (ListView) findViewById(R.id.playlist);
+                                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                                    adapter.changeCursor(cursor);
+                                    dao.close();
+                                } catch (SQLException e) {
+                                    Log.v("SQLException", e.getMessage());
+                                }
                             }
                         }
                     });
+                }
+
+                @Override
+                public void onError(String msg) {
+                    infoMsg(msg, Color.RED);
+                    playBtn.setEnabled(false);
+                    rewBtn.setEnabled(false);
+                    fwdBtn.setEnabled(false);
                 }
             });
             dbService.setBound(true);
@@ -202,11 +219,10 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
 
-        // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
-        // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
-        // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
         try {
             if (perms == 1) {
+                infoMsg(getString(R.string.info_scanning), Color.GRAY);
+
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
@@ -215,14 +231,10 @@ public class MainActivity extends AppCompatActivity {
                 SQLiteCursor cursor = dao.getAllOrdered();
 
                 // Cursor adapter pour la listeView
-                if (cursor.getCount() > 0) {
-                    String[] fromColumns = {"track_nb", "title", "album", "artist"};
-                    int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-                    TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
-                    listView.setAdapter(adapter);
-                } else {
-                    throw new Exception(getString(R.string.err_no_file));
-                }
+                String[] fromColumns = {"track_nb", "title", "album", "artist"};
+                int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
+                TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
+                listView.setAdapter(adapter);
 
                 dao.close();
             }

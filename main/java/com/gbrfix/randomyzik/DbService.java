@@ -62,21 +62,16 @@ public class DbService extends IntentService implements FilenameFilter {
         dbSignalListener = listener;
     }
 
+    // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
+    // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
+    // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
     private void scan() {
-        mediaObserver.stopWatching();
-
-        Context context = this;
-
-        // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
-        // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
-        // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
-
-        scanMediaFiles(mediaDir);
-        MediaDAO dao = new MediaDAO(context);
-        MediaFactory factory = new MediaFactory();
-
         try {
+            mediaObserver.stopWatching();
+            scanMediaFiles(mediaDir);
             boolean updated = false;
+            MediaFactory factory = new MediaFactory();
+            MediaDAO dao = new MediaDAO(this);
             dao.open();
             SQLiteCursor cursor = dao.getAll();
             if (cursor.getCount() == 0) {
@@ -112,12 +107,10 @@ public class DbService extends IntentService implements FilenameFilter {
                 }
             }
             dao.close();
-            if (updated) {
-                dbSignalListener.onUpdateEntries();
-            }
+            dbSignalListener.onScanCompleted(updated);
         }
         catch (Exception e) {
-            Log.v("Exception", e.getMessage());
+            dbSignalListener.onError(e.getMessage());
         }
         finally {
             mediaObserver.startWatching();
@@ -138,8 +131,12 @@ public class DbService extends IntentService implements FilenameFilter {
         return false;
     }
 
-    private void scanMediaFiles(File dir) {
+    private void scanMediaFiles(File dir) throws Exception {
         File[] files = dir.listFiles();
+
+        if (files.length == 0) {
+            throw new Exception(getString(R.string.err_no_file));
+        }
 
         for (int i = 0; i < files.length; i++) {
             if (files[i].isDirectory()) {
