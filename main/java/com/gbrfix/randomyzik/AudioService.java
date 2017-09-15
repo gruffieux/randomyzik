@@ -97,6 +97,9 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
     public String getSummary(int total, int totalRead) {
         float percent = (float)totalRead / (float)total * 100;
+        float f = percent * 10;
+        int n = (int)f;
+        percent = (float)n / 10;
 
         return String.format(getString(R.string.info_track_summary), totalRead, total, percent);
     }
