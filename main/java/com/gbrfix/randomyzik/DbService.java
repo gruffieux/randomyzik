@@ -1,7 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.app.IntentService;
-import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
@@ -9,7 +8,6 @@ import android.os.Environment;
 import android.os.FileObserver;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;

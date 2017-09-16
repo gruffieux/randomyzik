@@ -122,7 +122,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         if (totalUnread > 1) {
             Random random = new Random();
-            int pos = random.nextInt(totalUnread - 1);
+            int pos = random.nextInt(totalUnread);
             cursor.moveToPosition(pos);
         }
         else {

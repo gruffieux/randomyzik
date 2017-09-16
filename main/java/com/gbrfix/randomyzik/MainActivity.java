@@ -56,7 +56,9 @@ public class MainActivity extends AppCompatActivity {
                         public void run() {
                             playBtn.setEnabled(true);
                             TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
-                            infoMsg.setText("");
+                            if (infoMsg.getText().equals(getText(R.string.info_scanning))) {
+                                infoMsg.setText("");
+                            }
                             if (update) {
                                 try {
                                     MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
@@ -166,9 +168,8 @@ public class MainActivity extends AppCompatActivity {
             });
             audioService.setBound(true);
 
-            TextView infoMsg = (TextView) findViewById(R.id.infoMsg);
-            if (infoMsg != null && infoMsg.getText().length() == 0) {
-                infoMsg.setText(audioService.getCurrentTrackLabel());
+            if (audioService.getPlayer() != null) {
+                infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
             }
         }
 
