@@ -35,8 +35,6 @@ public class MainActivity extends AppCompatActivity {
     DbService dbService = null;
     AudioService audioService = null;
     int scrollY = 0;
-    int totalTrack = 0;
-    int totalReadTrack = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -149,11 +147,9 @@ public class MainActivity extends AppCompatActivity {
                     infoMsg(label, Color.BLACK);
 
                     // On notifie le premier-plan
-                    totalTrack = total;
-                    totalReadTrack = totalRead;
                     Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
                         .setContentTitle(label)
-                        .setContentText(audioService.getSummary(totalTrack, totalReadTrack))
+                        .setContentText(audioService.getSummary(total, totalRead))
                         .setSmallIcon(R.drawable.ic_stat_audio)
                         .setContentIntent(pendingIntent)
                         .build();
@@ -267,19 +263,6 @@ public class MainActivity extends AppCompatActivity {
                     fwdBtn.setEnabled(isChecked);
                     if (audioService != null) {
                         audioService.resume();
-                        if (isChecked) {
-                            // On notifie le premier-plan
-                            Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
-                                .setContentTitle(audioService.getCurrentTrackLabel())
-                                .setContentText(audioService.getSummary(totalTrack, totalReadTrack))
-                                .setSmallIcon(R.drawable.ic_stat_audio)
-                                .setContentIntent(pendingIntent)
-                                .build();
-                            audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
-                        }
-                        else {
-                            audioService.stopForeground(true);
-                        }
                     }
                 }
                 catch (Exception e) {
