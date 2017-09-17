@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
         final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         final Button rewBtn = (Button)findViewById(R.id.rew);
         final Button fwdBtn = (Button)findViewById(R.id.fwd);
+        ToggleButton modeBtn = (ToggleButton)findViewById(R.id.mode);
         LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
 
@@ -304,6 +305,15 @@ public class MainActivity extends AppCompatActivity {
                     rewBtn.setEnabled(false);
                     fwdBtn.setEnabled(false);
                     infoMsg(e.getMessage(), Color.RED);
+                }
+            }
+        });
+
+        modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (audioService != null) {
+                    audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
                 }
             }
         });

@@ -22,12 +22,16 @@ import java.util.Random;
 
 public class AudioService extends IntentService implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
     public final static int ONGOING_NOTIFICATION_ID = 1;
+    public final static int MODE_TRACK = 0;
+    public final static int MODE_ALBUM = 1;
 
     private MediaPlayer player;
     private AudioManager manager;
     private MediaDAO dao;
     private MediaSignal mediaSignalListener;
     private int currentId;
+    private int mode;
+    private boolean lastOfAlbum;
     private IntentFilter intentFilter;
     private AudioService.BecomingNoisyReceiver myNoisyAudioReceiver;
     private final IBinder binder = new AudioService.AudioBinder();
@@ -56,11 +60,22 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         return player;
     }
 
+    public int getMode() {
+        return mode;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+        lastOfAlbum = false;
+    }
+
     public AudioService() {
         super("MediaIntentService");
 
         player = null;
         currentId = 0;
+        mode = MODE_TRACK;
+        lastOfAlbum = false;
         intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
     }
@@ -110,7 +125,32 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         SQLiteCursor cursor = dao.getAll();
         int total = cursor.getCount();
 
-        cursor = dao.getFromFlag("unread");
+        if (mode == MODE_ALBUM) {
+            if (currentId == 0 || lastOfAlbum == true) {
+                cursor = dao.getFromFlagAlbumGrouped("unread");
+            }
+            else {
+                cursor = dao.getFromId(currentId);
+            }
+            int totalAlbum = cursor.getCount();
+            if (totalAlbum > 1) {
+                Random random = new Random();
+                int pos = random.nextInt(totalAlbum);
+                cursor.moveToPosition(pos);
+            }
+            else {
+                cursor.moveToFirst();
+            }
+            String title = cursor.getString(4);
+            String album = cursor.getString(5);
+            String artist = cursor.getString(6);
+            cursor = dao.getFromAlbum(album, artist);
+            lastOfAlbum = cursor.getCount() <= 1;
+        }
+        else {
+            cursor = dao.getUnread();
+        }
+
         int totalUnread = cursor.getCount();
 
         dao.close();
@@ -120,7 +160,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             throw new PlayEndException(getString(R.string.err_all_read));
         }
 
-        if (totalUnread > 1) {
+        if (mode == MODE_TRACK && totalUnread > 1) {
             Random random = new Random();
             int pos = random.nextInt(totalUnread);
             cursor.moveToPosition(pos);
@@ -179,6 +219,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
     public void forward() throws Exception {
         if (player != null && player.isPlaying()) {
+            updateState("skip");
             player.stop();
             manager.abandonAudioFocus(this);
             selectTrack();
@@ -206,7 +247,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         }
     }
 
-    public void updateState(String flag) {
+    private void updateState(String flag) {
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {

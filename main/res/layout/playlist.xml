@@ -27,13 +27,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:text="Rewind" />
+                android:text="Rewind"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
             <ToggleButton
                 android:id="@+id/play"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Play"
+                android:textAppearance="@style/TextAppearance.AppCompat.Button"
                 android:textOff="Play"
                 android:textOn="Pause" />
 
@@ -42,7 +44,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:enabled="false"
-                android:text="Next" />
+                android:text="Skip"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+            <ToggleButton
+                android:id="@+id/mode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                android:textOff="Track mode"
+                android:textOn="Album mode" />
 
         </LinearLayout>
 
