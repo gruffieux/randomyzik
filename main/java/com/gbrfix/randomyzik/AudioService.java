@@ -125,6 +125,9 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         SQLiteCursor cursor = dao.getAll();
         int total = cursor.getCount();
 
+        SQLiteCursor cursorUnread = dao.getUnread();
+        int totalUnread = cursorUnread.getCount();
+
         if (mode == MODE_ALBUM) {
             if (currentId == 0 || lastOfAlbum == true) {
                 cursor = dao.getFromFlagAlbumGrouped("unread");
@@ -141,17 +144,14 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             else {
                 cursor.moveToFirst();
             }
-            String title = cursor.getString(4);
             String album = cursor.getString(5);
             String artist = cursor.getString(6);
             cursor = dao.getFromAlbum(album, artist);
             lastOfAlbum = cursor.getCount() <= 1;
         }
         else {
-            cursor = dao.getUnread();
+            cursor = cursorUnread;
         }
-
-        int totalUnread = cursor.getCount();
 
         dao.close();
 
