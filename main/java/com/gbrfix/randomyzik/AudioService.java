@@ -130,6 +130,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         if (mode == MODE_ALBUM) {
             if (currentId == 0 || lastOfAlbum == true) {
+                dao.replaceFlag("skip", "unread");
                 cursor = dao.getFromFlagAlbumGrouped("unread");
             }
             else {
