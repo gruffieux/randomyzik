@@ -357,6 +357,7 @@ public class MainActivity extends AppCompatActivity {
             bundle.putBoolean("isPlaying", audioService.getPlayer().isPlaying());
             bundle.putInt("currentPosition", audioService.getPlayer().getCurrentPosition());
             bundle.putInt("duration", audioService.getPlayer().getDuration());
+            bundle.putInt("mode", audioService.getMode());
         }
 
         bundle.putInt("scrollY", scrollY);
@@ -369,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
         boolean isPlaying = bundle.getBoolean("isPlaying");
         int currentPosition = bundle.getInt("currentPosition");
         int duration = bundle.getInt("duration");
+        int mode = bundle.getInt("mode");
         scrollY = bundle.getInt("scrollY");
 
         super.onRestoreInstanceState(bundle);
@@ -387,6 +389,11 @@ public class MainActivity extends AppCompatActivity {
         ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
         if (playBtn != null) {
             playBtn.setChecked(isPlaying);
+        }
+
+        ToggleButton modeBtn = (ToggleButton)findViewById(R.id.mode);
+        if (modeBtn != null) {
+            modeBtn.setChecked(mode == AudioService.MODE_ALBUM);
         }
     }
 
