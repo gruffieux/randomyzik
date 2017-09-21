@@ -65,20 +65,49 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album` ORDER BY `album`, `artist`, `track_nb`;", new String[] {flag});
     }
 
-    public SQLiteCursor getFromAlbum(String album, String artist) {
-        ArrayList<String> args = new ArrayList<String>(2);
-        String valAlbum = album != null ? "=?" : "IS NULL";
-        String valArtist = artist != null ? "=?" : "IS NULL";
+    public SQLiteCursor getFromAlbum(String album, String artist, String flag) {
+        ArrayList<String> args = new ArrayList<String>();
+        String query = "SELECT `id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist` FROM `medias` WHERE (";
 
-        if (album != null) {
-            args.add(0, album);
+        if (album != null && !album.isEmpty()) {
+            query += " `album`=?";
+            args.add(album);
+        }
+        else {
+            query += " `album` IS NULL";
         }
 
-        if (artist != null) {
-            args.add(1, artist);
+        if (artist != null && !artist.isEmpty()) {
+            query += " AND `artist`=?";
+            args.add(artist);
+        }
+        else {
+            query += " OR `artist` IS NULL";
         }
 
-        return (SQLiteCursor)this.db.rawQuery("SELECT `id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist` FROM `medias` WHERE `album`"+valAlbum+" AND `artist`"+valArtist+" AND `flag`='unread' ORDER BY `album`, `artist`, `track_nb`;", new String[] {args.get(0), args.get(1)});
+        query += ")";
+
+        if (flag != null && !flag.isEmpty()) {
+            query += " AND `flag`=?";
+            args.add(flag);
+        }
+
+        query += " ORDER BY `album`, `artist`, `track_nb`;";
+        String[] arr = null;
+
+        switch (args.size()) {
+            case 1:
+                arr = new String[] {args.get(0)};
+                break;
+            case 2:
+                arr = new String[] {args.get(0), args.get(1)};
+                break;
+            case 3:
+                arr = new String[] {args.get(0), args.get(1), args.get(2)};
+                break;
+        }
+
+        return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
     public void updateFlag(int id, String flag) {

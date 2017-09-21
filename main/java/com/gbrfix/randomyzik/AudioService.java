@@ -147,7 +147,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             }
             String album = cursor.getString(5);
             String artist = cursor.getString(6);
-            cursor = dao.getFromAlbum(album, artist);
+            cursor = dao.getFromAlbum(album, artist, "unread");
             lastOfAlbum = cursor.getCount() <= 1;
         }
         else {
