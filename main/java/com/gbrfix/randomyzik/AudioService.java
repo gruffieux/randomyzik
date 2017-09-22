@@ -56,8 +56,20 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         return binder;
     }
 
-    public MediaPlayer getPlayer() {
-        return player;
+    public boolean playerIsActive() {
+        return player != null;
+    }
+
+    public boolean playerIsPlaying() {
+        return player != null && player.isPlaying();
+    }
+
+    public int playerPosition() {
+        return player != null ? player.getCurrentPosition() : 0;
+    }
+
+    public int playerDuration() {
+        return player != null ? player.getDuration() : 0;
     }
 
     public int getMode() {
@@ -137,6 +149,10 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 cursor = dao.getFromId(currentId);
             }
             int totalAlbum = cursor.getCount();
+            if (totalAlbum == 0) {
+                currentId = 0;
+                throw new PlayEndException(getString(R.string.err_all_read));
+            }
             if (totalAlbum > 1) {
                 Random random = new Random();
                 int pos = random.nextInt(totalAlbum);
@@ -149,26 +165,22 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             String artist = cursor.getString(6);
             cursor = dao.getFromAlbum(album, artist, "unread");
             lastOfAlbum = cursor.getCount() <= 1;
+            cursor.moveToFirst();
         }
         else {
+            if (totalUnread == 0) {
+                currentId = 0;
+                throw new PlayEndException(getString(R.string.err_all_read));
+            }
             cursor = cursorUnread;
+            if (totalUnread > 1) {
+                Random random = new Random();
+                int pos = random.nextInt(totalUnread);
+                cursor.moveToPosition(pos);
+            }
         }
 
         dao.close();
-
-        if (totalUnread == 0) {
-            currentId = 0;
-            throw new PlayEndException(getString(R.string.err_all_read));
-        }
-
-        if (mode == MODE_TRACK && totalUnread > 1) {
-            Random random = new Random();
-            int pos = random.nextInt(totalUnread);
-            cursor.moveToPosition(pos);
-        }
-        else {
-            cursor.moveToFirst();
-        }
 
         currentId = cursor.getInt(0);
         String path = cursor.getString(1);

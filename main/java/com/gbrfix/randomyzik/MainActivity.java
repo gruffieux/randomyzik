@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
             });
             audioService.setBound(true);
 
-            if (audioService.getPlayer() != null) {
+            if (audioService.playerIsActive()) {
                 infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
             }
         }
@@ -353,13 +353,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        if (audioService != null && audioService.getPlayer() != null){
-            bundle.putBoolean("isPlaying", audioService.getPlayer().isPlaying());
-            bundle.putInt("currentPosition", audioService.getPlayer().getCurrentPosition());
-            bundle.putInt("duration", audioService.getPlayer().getDuration());
-            bundle.putInt("mode", audioService.getMode());
-        }
-
+        bundle.putBoolean("isPlaying", audioService != null ? audioService.playerIsPlaying() : false);
+        bundle.putInt("currentPosition", audioService != null ? audioService.playerPosition() : 0);
+        bundle.putInt("duration", audioService != null ? audioService.playerDuration() : 0);
+        bundle.putInt("mode", audioService != null ? audioService.getMode() : AudioService.MODE_TRACK);
         bundle.putInt("scrollY", scrollY);
 
         super.onSaveInstanceState(bundle);
