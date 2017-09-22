@@ -344,10 +344,10 @@ public class MainActivity extends AppCompatActivity {
         // Force l'UI à l'état initial
         Configuration config=getResources().getConfiguration();
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            setContentView(R.layout.playlist);
+            //setContentView(R.layout.playlist); // Provoque des plantées
         }
         else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setContentView(R.layout.playlist);
+            //setContentView(R.layout.playlist); // Provoque des plantées
         }
     }
 
