@@ -20,12 +20,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Button;
-import android.widget.ToggleButton;
 import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
@@ -39,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-            final Button rewBtn = (Button)findViewById(R.id.rew);
-            final Button fwdBtn = (Button)findViewById(R.id.fwd);
+            final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
+            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
 
             // Service de scanning
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
@@ -116,9 +116,9 @@ public class MainActivity extends AppCompatActivity {
                                 adapter.changeCursor(cursor);
                                 dao.close();
                                 if (last) {
-                                    ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-                                    Button rewBtn = (Button)findViewById(R.id.rew);
-                                    Button fwdBtn = (Button)findViewById(R.id.fwd);
+                                    ImageButton playBtn = (ImageButton)findViewById(R.id.play);
+                                    ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+                                    ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
                                     playBtn.setEnabled(false);
                                     rewBtn.setEnabled(false);
                                     fwdBtn.setEnabled(false);
@@ -134,8 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTrackResume(boolean start) {
-                    ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-                    playBtn.setChecked(start);
+                    clickPlayButton(!start);
                 }
 
                 @Override
@@ -167,6 +166,13 @@ public class MainActivity extends AppCompatActivity {
             if (audioService.playerIsActive()) {
                 infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
             }
+
+            ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+            rewBtn.setEnabled(audioService.playerIsPlaying());
+            rewBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
+            ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+            fwdBtn.setEnabled(audioService.playerIsPlaying());
+            fwdBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
         }
 
         @Override
@@ -207,13 +213,34 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
+    protected void clickPlayButton(boolean pause) {
+        ImageButton playBtn = (ImageButton)findViewById(R.id.play);
+        ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+        ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+
+        try {
+            audioService.resume();
+            rewBtn.setEnabled(!pause);
+            rewBtn.setColorFilter(pause == true ? Color.GRAY : 0);
+            fwdBtn.setEnabled(!pause);
+            fwdBtn.setColorFilter(pause == true ? Color.GRAY : 0);
+            playBtn.setImageResource(pause == true ? R.drawable.ic_action_play : R.drawable.ic_action_pause);
+        }
+        catch (Exception e) {
+            playBtn.setEnabled(false);
+            rewBtn.setEnabled(false);
+            fwdBtn.setEnabled(false);
+            infoMsg(e.getMessage(), Color.RED);
+        }
+    }
+
     protected void init(final Context context, int perms) {
         // On récup les éléments de l'UI
         final ListView listView = (ListView)findViewById(R.id.playlist);
-        final ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
-        final Button rewBtn = (Button)findViewById(R.id.rew);
-        final Button fwdBtn = (Button)findViewById(R.id.fwd);
-        ToggleButton modeBtn = (ToggleButton)findViewById(R.id.mode);
+        final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
+        final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+        final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+        Switch modeBtn = (Switch)findViewById(R.id.mode);
         LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
 
@@ -257,21 +284,10 @@ public class MainActivity extends AppCompatActivity {
         final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
 
         // On traite le changement d'état du bouton play
-        playBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                try {
-                    rewBtn.setEnabled(isChecked);
-                    fwdBtn.setEnabled(isChecked);
-                    if (audioService != null) {
-                        audioService.resume();
-                    }
-                }
-                catch (Exception e) {
-                    playBtn.setEnabled(false);
-                    rewBtn.setEnabled(false);
-                    fwdBtn.setEnabled(false);
-                    infoMsg(e.getMessage(), Color.RED);
-                }
+        playBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                clickPlayButton(audioService.playerIsPlaying());
             }
         });
 
@@ -279,9 +295,7 @@ public class MainActivity extends AppCompatActivity {
         rewBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    if (audioService != null) {
-                        audioService.rewind();
-                    }
+                    audioService.rewind();
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -296,9 +310,7 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    if (audioService != null) {
-                        audioService.forward();
-                    }
+                    audioService.forward();
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -312,9 +324,7 @@ public class MainActivity extends AppCompatActivity {
         modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (audioService != null) {
-                    audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
-                }
+                audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
             }
         });
 
@@ -383,12 +393,14 @@ public class MainActivity extends AppCompatActivity {
             progressBar.setProgress(currentPosition);
         }
 
-        ToggleButton playBtn = (ToggleButton)findViewById(R.id.play);
+        ImageButton playBtn = (ImageButton)findViewById(R.id.play);
         if (playBtn != null) {
-            playBtn.setChecked(isPlaying);
+            if (isPlaying) {
+                playBtn.setImageResource(R.drawable.ic_action_pause);
+            }
         }
 
-        ToggleButton modeBtn = (ToggleButton)findViewById(R.id.mode);
+        Switch modeBtn = (Switch)findViewById(R.id.mode);
         if (modeBtn != null) {
             modeBtn.setChecked(mode == AudioService.MODE_ALBUM);
         }

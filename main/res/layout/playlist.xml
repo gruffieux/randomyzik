@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -22,38 +23,40 @@
             android:layout_height="match_parent"
             android:orientation="horizontal">
 
-            <Button
+            <ImageButton
                 android:id="@+id/rew"
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:enabled="false"
-                android:text="Rewind"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+                android:layout_weight="1"
+                app:srcCompat="@drawable/ic_action_rewind" />
 
-            <ToggleButton
+            <ImageButton
                 android:id="@+id/play"
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Play"
-                android:textAppearance="@style/TextAppearance.AppCompat.Button"
-                android:textOff="Play"
-                android:textOn="Pause" />
+                android:layout_weight="1"
+                app:srcCompat="@drawable/ic_action_play" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/fwd"
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:enabled="false"
-                android:text="Skip"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+                android:layout_weight="1"
+                app:srcCompat="@drawable/ic_action_skip" />
 
-            <ToggleButton
+            <Switch
                 android:id="@+id/mode"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                android:textOff="Track mode"
-                android:textOn="Album mode" />
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:showText="true"
+                android:splitTrack="true"
+                android:text="Random mode"
+                android:textOff="Track"
+                android:textOn="Album" />
 
         </LinearLayout>
 
