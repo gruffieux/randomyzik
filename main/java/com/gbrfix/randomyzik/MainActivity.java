@@ -219,7 +219,9 @@ public class MainActivity extends AppCompatActivity {
         ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
 
         try {
-            audioService.resume();
+            if (audioService != null) {
+                audioService.resume();
+            }
             rewBtn.setEnabled(!pause);
             rewBtn.setColorFilter(pause == true ? Color.GRAY : 0);
             fwdBtn.setEnabled(!pause);
@@ -295,7 +297,9 @@ public class MainActivity extends AppCompatActivity {
         rewBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    audioService.rewind();
+                    if (audioService != null) {
+                        audioService.rewind();
+                    }
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -310,7 +314,9 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
-                    audioService.forward();
+                    if (audioService != null) {
+                        audioService.forward();
+                    }
                 }
                 catch (Exception e) {
                     playBtn.setEnabled(false);
@@ -324,7 +330,9 @@ public class MainActivity extends AppCompatActivity {
         modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
+                if (audioService != null) {
+                    audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
+                }
             }
         });
 

@@ -21,7 +21,8 @@
             android:id="@+id/control"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_gravity="right">
 
             <ImageButton
                 android:id="@+id/rew"
@@ -51,12 +52,13 @@
                 android:id="@+id/mode"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_weight="2"
                 android:showText="true"
                 android:splitTrack="true"
                 android:text="Random mode"
                 android:textOff="Track"
-                android:textOn="Album" />
+                android:textOn="Album"
+                android:thumb="@android:drawable/btn_default_small" />
 
         </LinearLayout>
 
