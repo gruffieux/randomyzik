@@ -29,11 +29,14 @@ import android.widget.TextView;
 import android.widget.CompoundButton;
 import android.content.res.Configuration;
 import android.util.Log;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
     AudioService audioService = null;
+    SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int scrollY = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -99,6 +102,14 @@ public class MainActivity extends AppCompatActivity {
             final Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
             final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
 
+            final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
+            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+
+            final TextView positionLabel = (TextView)findViewById(R.id.position);
+            final TextView durationLabel = (TextView)findViewById(R.id.duration);
+            final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+
             final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
             audioService = audioBinder.getService();
             audioService.setMediaSignalListener(new MediaSignal() {
@@ -116,9 +127,6 @@ public class MainActivity extends AppCompatActivity {
                                 adapter.changeCursor(cursor);
                                 dao.close();
                                 if (last) {
-                                    ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-                                    ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-                                    ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
                                     playBtn.setEnabled(false);
                                     rewBtn.setEnabled(false);
                                     fwdBtn.setEnabled(false);
@@ -139,9 +147,15 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTrackSelect(int id, int duration, int total, int totalRead) {
-                    ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+                    // Libellé de position et durée
+                    positionLabel.setText(dateFormat.format(new Date(0)));
+                    durationLabel.setText(dateFormat.format(new Date(duration)));
+
+                    // Barre de progression
                     progressBar.setProgress(0);
                     progressBar.setMax(duration);
+
+                    // Titre en cours
                     String label = audioService.getTrackLabel(id);
                     infoMsg(label, Color.BLACK);
 
@@ -156,21 +170,31 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onTrackProgress(int position) {
-                    ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-                    progressBar.setProgress(position);
+                public void onTrackProgress(final int position) {
+                    try {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                positionLabel.setText(dateFormat.format(new Date(position)));
+                                progressBar.setProgress(position);
+                            }
+                        });
+                    }
+                    catch (Exception e) {
+                        Log.v("Exception", e.getMessage());
+                    }
                 }
             });
             audioService.setBound(true);
 
             if (audioService.playerIsActive()) {
+                positionLabel.setText(dateFormat.format(new Date(audioService.playerPosition())));
+                durationLabel.setText(dateFormat.format(new Date(audioService.playerDuration())));
                 infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
             }
 
-            ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
             rewBtn.setEnabled(audioService.playerIsPlaying());
             rewBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
-            ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
             fwdBtn.setEnabled(audioService.playerIsPlaying());
             fwdBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
         }
