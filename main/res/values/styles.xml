@@ -8,11 +8,4 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <!-- Custom application theme. -->
-    <style name="AppCustomTheme" parent="AppTheme">
-        <!-- Customize your theme here. -->
-        <item name="android:colorBackground">@color/colorPrimaryDark</item>
-        <item name="android:textColor">#ffffff</item>
-    </style>
-
 </resources>
