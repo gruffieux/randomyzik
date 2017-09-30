@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
@@ -193,10 +194,13 @@ public class MainActivity extends AppCompatActivity {
                 infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
             }
 
+            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            playBtn.setEnabled(true);
+            playBtn.setColorFilter(color);
             rewBtn.setEnabled(audioService.playerIsPlaying());
-            rewBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
+            rewBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : color);
             fwdBtn.setEnabled(audioService.playerIsPlaying());
-            fwdBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : 0);
+            fwdBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : color);
         }
 
         @Override
@@ -204,6 +208,13 @@ public class MainActivity extends AppCompatActivity {
             audioService.setBound(false);
         }
     };
+
+    public int fetchColor( Context c, int id ) {
+        int[] attrs = { id };
+        TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs );
+        int color = ta.getColor( 0, Color.BLACK );
+        return color;
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -246,10 +257,11 @@ public class MainActivity extends AppCompatActivity {
             if (audioService != null) {
                 audioService.resume();
             }
+            int color = fetchColor(this, R.attr.colorAccent);
             rewBtn.setEnabled(!pause);
-            rewBtn.setColorFilter(pause == true ? Color.GRAY : 0);
+            rewBtn.setColorFilter(pause == true ? Color.GRAY : color);
             fwdBtn.setEnabled(!pause);
-            fwdBtn.setColorFilter(pause == true ? Color.GRAY : 0);
+            fwdBtn.setColorFilter(pause == true ? Color.GRAY : color);
             playBtn.setImageResource(pause == true ? R.drawable.ic_action_play : R.drawable.ic_action_pause);
         }
         catch (Exception e) {
@@ -267,8 +279,15 @@ public class MainActivity extends AppCompatActivity {
         final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
         final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
         Switch modeBtn = (Switch)findViewById(R.id.mode);
+
         LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
+        playBtn.setEnabled(false);
+        playBtn.setColorFilter(Color.GRAY);
+        rewBtn.setEnabled(false);
+        rewBtn.setColorFilter(Color.GRAY);
+        fwdBtn.setEnabled(false);
+        fwdBtn.setColorFilter(Color.GRAY);
 
         try {
             if (perms == 1) {

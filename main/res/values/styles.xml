@@ -6,13 +6,24 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="attr/colorButton">@color/colorAccent</item>
     </style>
 
-    <!-- Custom application theme. -->
-    <style name="AppCustomTheme" parent="AppTheme">
-        <!-- Customize your theme here. -->
-        <item name="android:colorBackground">@color/colorPrimaryDark</item>
-        <item name="android:textColor">#ffffff</item>
+    <style name="playlist">
+        <item name="android:background">@color/colorPrimaryDark</item>
+        <item name="android:divider">@color/colorPrimary</item>
+        <item name="android:dividerHeight">0.8dp</item>
     </style>
 
+    <style name="track">
+        <item name="android:textColor">@color/colorWhite</item>
+    </style>
+
+    <style name="control">
+        <item name="android:background">@color/colorPrimaryDark</item>
+    </style>
+
+    <style name="info">
+        <item name="android:background">@color/colorPrimary</item>
+    </style>
 </resources>

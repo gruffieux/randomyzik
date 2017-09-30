@@ -10,6 +10,7 @@
         android:rowCount="2">
 
         <TextView
+            style="@style/track"
             android:id="@+id/track_nb"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
@@ -17,6 +18,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall" />
 
         <TextView
+            style="@style/track"
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,6 +34,7 @@
             android:layout_height="wrap_content">
 
             <TextView
+                style="@style/track"
                 android:id="@+id/album"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -40,6 +43,7 @@
                 android:textAppearance="?android:attr/textAppearanceSmall" />
 
             <TextView
+                style="@style/track"
                 android:id="@+id/artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

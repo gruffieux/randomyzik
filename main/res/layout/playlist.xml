@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
 
     <ListView
+        style="@style/playlist"
         android:id="@+id/playlist"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,6 +19,7 @@
         android:orientation="vertical">
 
         <LinearLayout
+            style="@style/control"
             android:id="@+id/control"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -49,6 +51,7 @@
                 app:srcCompat="@drawable/ic_action_skip" />
 
             <Switch
+                style="@style/track"
                 android:id="@+id/mode"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
@@ -63,12 +66,14 @@
         </LinearLayout>
 
         <LinearLayout
+            style="@style/control"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_gravity="center_horizontal">
 
             <TextView
+                style="@style/track"
                 android:id="@+id/position"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -84,6 +89,7 @@
                 android:layout_weight="10" />
 
             <TextView
+                style="@style/track"
                 android:id="@+id/duration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -94,6 +100,7 @@
         </LinearLayout>
 
         <TextView
+            style="@style/info"
             android:id="@+id/infoMsg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
