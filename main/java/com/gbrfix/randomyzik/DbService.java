@@ -159,6 +159,6 @@ public class DbService extends IntentService implements FilenameFilter {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        scan();
+        start();
     }
 }
