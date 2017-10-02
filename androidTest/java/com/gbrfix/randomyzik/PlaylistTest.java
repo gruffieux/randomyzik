@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by gab on 01.10.2017.
@@ -22,14 +23,16 @@ import static org.junit.Assert.assertFalse;
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
     final static int TEST_CHECK_SIZE = 1;
+    final static int TEST_PLAY_ALL_TRACKS = 2;
+    final static int TEST_PLAY_ALL_ALBUMS = 3;
 
     int currentTest = 0;
     DbService dbService = null;
+    AudioService audioService = null;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            //DAOBase.NAME = "playlist-test.db";
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
             dbService.setDbSignalListener(new DbSignal() {
@@ -67,12 +70,67 @@ public class PlaylistTest {
         }
     };
 
+    private ServiceConnection audioConnection = new ServiceConnection() {
+        int seek = 0;
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
+            audioService = audioBinder.getService();
+            audioService.setMediaSignalListener(new MediaSignal() {
+                @Override
+                public void onTrackRead(final boolean last) {
+                }
+
+                @Override
+                public void onTrackResume(boolean start) {
+                }
+
+                @Override
+                public void onTrackSelect(int id, int duration, int total, int totalRead) {
+                }
+
+                @Override
+                public void onTrackProgress(final int position) {
+                }
+            });
+            audioService.setBound(true);
+            switch (currentTest) {
+                case TEST_PLAY_ALL_TRACKS:
+                    audioService.setMode(AudioService.MODE_TRACK);
+                    break;
+                case TEST_PLAY_ALL_ALBUMS:
+                    audioService.setMode(AudioService.MODE_ALBUM);
+                    break;
+            }
+            if (currentTest == TEST_PLAY_ALL_TRACKS || currentTest == TEST_PLAY_ALL_ALBUMS) {
+                try {
+                    audioService.resume();
+                }
+                catch (PlayEndException e) {
+                    assertTrue(true);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            audioService.setBound(false);
+        }
+    };
+
     public PlaylistTest() {
         DAOBase.NAME = "playlist-test.db";
 
         Context c = InstrumentationRegistry.getTargetContext();
         Intent intent = new Intent(c, DbService.class);
         c.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+        Intent intent2 = new Intent(c, AudioService.class);
+        c.bindService(intent2, audioConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Test
@@ -90,5 +148,15 @@ public class PlaylistTest {
     @Test
     public void checkSize() {
         currentTest = TEST_CHECK_SIZE;
+    }
+
+    @Test
+    public void playAllTracks() {
+        currentTest = TEST_PLAY_ALL_TRACKS;
+    }
+
+    @Test
+    public void playAllAlbums() {
+        currentTest = TEST_PLAY_ALL_ALBUMS;
     }
 }
