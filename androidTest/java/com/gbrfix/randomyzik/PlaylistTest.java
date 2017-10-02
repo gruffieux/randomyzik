@@ -8,7 +8,9 @@ import android.database.sqlite.SQLiteCursor;
 import android.os.IBinder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -22,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
-    final static int TEST_CHECK_SIZE = 1;
+    final static int TEST_CREATE_LIST = 1;
     final static int TEST_PLAY_ALL_TRACKS = 2;
     final static int TEST_PLAY_ALL_ALBUMS = 3;
 
@@ -39,7 +41,7 @@ public class PlaylistTest {
                 @Override
                 public void onScanCompleted(final boolean update) {
                     switch (currentTest) {
-                        case TEST_CHECK_SIZE:
+                        case TEST_CREATE_LIST:
                             MediaDAO dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
                             dao.open();
                             SQLiteCursor cursor = dao.getAll();
@@ -47,15 +49,17 @@ public class PlaylistTest {
                             dao.close();
                             break;
                     }
+                    currentTest = 0;
                 }
 
                 @Override
                 public void onError(String msg) {
                     switch (currentTest) {
-                        case TEST_CHECK_SIZE:
+                        case TEST_CREATE_LIST:
                             assertFalse(true);
                             break;
                     }
+                    currentTest = 0;
                 }
             });
             dbService.setBound(true);
@@ -71,15 +75,17 @@ public class PlaylistTest {
     };
 
     private ServiceConnection audioConnection = new ServiceConnection() {
-        int seek = 0;
-
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
             audioService = audioBinder.getService();
             audioService.setMediaSignalListener(new MediaSignal() {
                 @Override
-                public void onTrackRead(final boolean last) {
+                public void onTrackRead(boolean last) {
+                    if (last) {
+                        assertTrue(true);
+                        currentTest = 0;
+                    }
                 }
 
                 @Override
@@ -91,7 +97,7 @@ public class PlaylistTest {
                 }
 
                 @Override
-                public void onTrackProgress(final int position) {
+                public void onTrackProgress(int position) {
                 }
             });
             audioService.setBound(true);
@@ -105,13 +111,16 @@ public class PlaylistTest {
             }
             if (currentTest == TEST_PLAY_ALL_TRACKS || currentTest == TEST_PLAY_ALL_ALBUMS) {
                 try {
+                    audioService.setTest(true);
                     audioService.resume();
                 }
                 catch (PlayEndException e) {
                     assertTrue(true);
+                    currentTest = 0;
                 }
                 catch (Exception e) {
-                    e.printStackTrace();
+                    assertTrue(false);
+                    currentTest = 0;
                 }
             }
         }
@@ -124,13 +133,6 @@ public class PlaylistTest {
 
     public PlaylistTest() {
         DAOBase.NAME = "playlist-test.db";
-
-        Context c = InstrumentationRegistry.getTargetContext();
-        Intent intent = new Intent(c, DbService.class);
-        c.bindService(intent, connection, Context.BIND_AUTO_CREATE);
-
-        Intent intent2 = new Intent(c, AudioService.class);
-        c.bindService(intent2, audioConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Test
@@ -146,17 +148,44 @@ public class PlaylistTest {
     }
 
     @Test
-    public void checkSize() {
-        currentTest = TEST_CHECK_SIZE;
+    public void createList() {
+        currentTest = TEST_CREATE_LIST;
+
+        Context c = InstrumentationRegistry.getTargetContext();
+        Intent intent = new Intent(c, DbService.class);
+        c.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+        while (currentTest != 0) {
+        }
+
+        Log.v("createList", "end");
     }
 
     @Test
     public void playAllTracks() {
         currentTest = TEST_PLAY_ALL_TRACKS;
+
+        Context c = InstrumentationRegistry.getTargetContext();
+        Intent intent = new Intent(c, AudioService.class);
+        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+
+        while (currentTest != 0) {
+        }
+
+        Log.v("PlayAllTracks", "end");
     }
 
     @Test
     public void playAllAlbums() {
         currentTest = TEST_PLAY_ALL_ALBUMS;
+
+        Context c = InstrumentationRegistry.getTargetContext();
+        Intent intent = new Intent(c, AudioService.class);
+        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+
+        while (currentTest != 0) {
+        }
+
+        Log.v("playAllAlbums", "end");
     }
 }

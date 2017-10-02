@@ -35,7 +35,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     private IntentFilter intentFilter;
     private AudioService.BecomingNoisyReceiver myNoisyAudioReceiver;
     private final IBinder binder = new AudioService.AudioBinder();
-    private boolean bound;
+    private boolean bound, test;
 
     public boolean isBound() {
         return bound;
@@ -81,13 +81,17 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         lastOfAlbum = false;
     }
 
+    public void setTest(boolean test) {
+        this.test = test;
+    }
+
     public AudioService() {
         super("MediaIntentService");
 
         player = null;
         currentId = 0;
         mode = MODE_TRACK;
-        lastOfAlbum = false;
+        lastOfAlbum = test = false;
         intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
     }
@@ -178,6 +182,9 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 int pos = random.nextInt(totalUnread);
                 cursor.moveToPosition(pos);
             }
+            else {
+                cursor.moveToFirst();
+            }
         }
 
         dao.close();
@@ -194,7 +201,9 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             File file = new File(path);
             player = MediaPlayer.create(this, Uri.fromFile(file));
-            //player.seekTo(player.getDuration() - 10000);
+            if (test) {
+                player.seekTo(player.getDuration() - 10);
+            }
             player.start();
             player.setOnCompletionListener(this);
             player.setOnErrorListener(this);
@@ -210,8 +219,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                         try {
                             Thread.sleep(1000);
                             currentPosition = player.getCurrentPosition();
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             return;
                         }
                         mediaSignalListener.onTrackProgress(currentPosition);
