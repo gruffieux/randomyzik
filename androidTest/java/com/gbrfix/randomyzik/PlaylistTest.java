@@ -21,6 +21,8 @@ import static org.junit.Assert.assertFalse;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
+    final static int TEST_CHECK_SIZE = 1;
+
     int currentTest = 0;
     DbService dbService = null;
 
@@ -34,7 +36,7 @@ public class PlaylistTest {
                 @Override
                 public void onScanCompleted(final boolean update) {
                     switch (currentTest) {
-                        case 1:
+                        case TEST_CHECK_SIZE:
                             MediaDAO dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
                             dao.open();
                             SQLiteCursor cursor = dao.getAll();
@@ -47,7 +49,7 @@ public class PlaylistTest {
                 @Override
                 public void onError(String msg) {
                     switch (currentTest) {
-                        case 1:
+                        case TEST_CHECK_SIZE:
                             assertFalse(true);
                             break;
                     }
@@ -86,7 +88,7 @@ public class PlaylistTest {
     }
 
     @Test
-    public void createList() {
-        currentTest = 1;
+    public void checkSize() {
+        currentTest = TEST_CHECK_SIZE;
     }
 }
