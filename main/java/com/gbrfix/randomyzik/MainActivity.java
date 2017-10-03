@@ -142,8 +142,10 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onTrackResume(boolean start) {
-                    clickPlayButton(!start);
+                public void onTrackResume(boolean canClick) {
+                    if (canClick) {
+                        clickPlayButton();
+                    }
                 }
 
                 @Override
@@ -248,21 +250,23 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
-    protected void clickPlayButton(boolean pause) {
+    protected void clickPlayButton() {
         ImageButton playBtn = (ImageButton)findViewById(R.id.play);
         ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
         ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
 
         try {
+            boolean playing = false;
             if (audioService != null) {
                 audioService.resume();
+                playing = audioService.playerIsPlaying();
             }
             int color = fetchColor(this, R.attr.colorAccent);
-            rewBtn.setEnabled(!pause);
-            rewBtn.setColorFilter(pause == true ? Color.GRAY : color);
-            fwdBtn.setEnabled(!pause);
-            fwdBtn.setColorFilter(pause == true ? Color.GRAY : color);
-            playBtn.setImageResource(pause == true ? R.drawable.ic_action_play : R.drawable.ic_action_pause);
+            rewBtn.setEnabled(playing);
+            rewBtn.setColorFilter(playing == true ? color :  Color.GRAY);
+            fwdBtn.setEnabled(playing);
+            fwdBtn.setColorFilter(playing == true ? color : Color.GRAY);
+            playBtn.setImageResource(playing == true ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
         }
         catch (Exception e) {
             playBtn.setEnabled(false);
@@ -332,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                clickPlayButton(audioService.playerIsPlaying());
+                clickPlayButton();
             }
         });
 

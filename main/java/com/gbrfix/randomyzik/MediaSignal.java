@@ -6,7 +6,7 @@ package com.gbrfix.randomyzik;
 
 public interface MediaSignal {
     void onTrackRead(boolean last);
-    void onTrackResume(boolean start);
+    void onTrackResume(boolean canClick);
     void onTrackSelect(int id, int duration, int total, int totalRead);
     void onTrackProgress(int position);
 }

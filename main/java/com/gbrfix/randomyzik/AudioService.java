@@ -319,11 +319,11 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
                 player.setVolume(1f, 1f);
-                mediaSignalListener.onTrackResume(true);
+                mediaSignalListener.onTrackResume(!player.isPlaying());
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
-                mediaSignalListener.onTrackResume(true);
+                mediaSignalListener.onTrackResume(!player.isPlaying());
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
                 player.setVolume(1f, 1f);
@@ -332,7 +332,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 // Permanent loss of audio focus
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
-                mediaSignalListener.onTrackResume(false);
+                mediaSignalListener.onTrackResume(player.isPlaying());
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lower the volume, keep playing
@@ -355,7 +355,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                mediaSignalListener.onTrackResume(false);
+                mediaSignalListener.onTrackResume(player.isPlaying());
             }
         }
     }

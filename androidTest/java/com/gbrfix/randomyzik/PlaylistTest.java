@@ -89,7 +89,7 @@ public class PlaylistTest {
                 }
 
                 @Override
-                public void onTrackResume(boolean start) {
+                public void onTrackResume(boolean canClick) {
                 }
 
                 @Override
