@@ -26,57 +26,13 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
-    final static int TEST_CREATE_LIST = 1;
-    final static int TEST_PLAY_ALL_TRACKS = 2;
-    final static int TEST_PLAY_ALL_ALBUMS = 3;
-    final static int TEST_PLAY_LAST_TRACK = 4;
-    final static int TEST_PLAY_ENDED_LIST = 5;
+    final static int TEST_PLAY_ALL_TRACKS = 1;
+    final static int TEST_PLAY_ALL_ALBUMS = 2;
+    final static int TEST_PLAY_LAST_TRACK = 3;
+    final static int TEST_PLAY_ENDED_LIST = 4;
 
     int currentTest, trackCount, trackTotal;
-    DbService dbService = null;
     AudioService audioService = null;
-
-    private ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            DbService.DbBinder binder = (DbService.DbBinder)iBinder;
-            dbService = binder.getService();
-            dbService.setDbSignalListener(new DbSignal() {
-                @Override
-                public void onScanCompleted(final boolean update) {
-                    switch (currentTest) {
-                        case TEST_CREATE_LIST:
-                            MediaDAO dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
-                            dao.open();
-                            SQLiteCursor cursor = dao.getAll();
-                            assertTrue(cursor.getCount() > 0);
-                            dao.close();
-                            break;
-                    }
-                    currentTest = 0;
-                }
-
-                @Override
-                public void onError(String msg) {
-                    switch (currentTest) {
-                        case TEST_CREATE_LIST:
-                            assertFalse(true);
-                            break;
-                    }
-                    currentTest = 0;
-                }
-            });
-            dbService.setBound(true);
-            if (currentTest > 0) {
-                dbService.start();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            dbService.setBound(false);
-        }
-    };
 
     private ServiceConnection audioConnection = new ServiceConnection() {
         @Override
@@ -155,32 +111,6 @@ public class PlaylistTest {
     }
 
     @Test
-    public void dropList() {
-        Context c = InstrumentationRegistry.getTargetContext();
-        MediaDAO dao = new MediaDAO(c);
-
-        dao.open();
-        dao.getDb().delete("medias", null, null);
-        SQLiteCursor cursor = dao.getAll();
-        assertEquals(0, cursor.getCount());
-        dao.close();
-    }
-
-    @Test
-    public void createList() {
-        currentTest = TEST_CREATE_LIST;
-
-        Context c = InstrumentationRegistry.getTargetContext();
-        Intent intent = new Intent(c, DbService.class);
-        c.bindService(intent, connection, Context.BIND_AUTO_CREATE);
-
-        while (currentTest != 0) {
-        }
-
-        Log.v("createList", "end");
-    }
-
-    @Test
     public void playAllTracks() {
         currentTest = TEST_PLAY_ALL_TRACKS;
 
@@ -188,6 +118,9 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
+        ContentValues values = new ContentValues();
+        values.put("flag", "unread");
+        dao.getDb().update("medias", values, null, null);
         SQLiteCursor cursor = dao.getUnread();
         trackTotal = cursor.getCount();
         dao.close();
@@ -209,6 +142,9 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
+        ContentValues values = new ContentValues();
+        values.put("flag", "unread");
+        dao.getDb().update("medias", values, null, null);
         SQLiteCursor cursor = dao.getUnread();
         trackTotal = cursor.getCount();
         dao.close();

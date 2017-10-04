@@ -61,7 +61,7 @@ public class MediaDAOTest extends MediaDAO {
 
         try {
             SQLiteCursor cursor = getFromAlbum(album, artist, "unread");
-            assertEquals(12, cursor.getCount());
+            assertEquals(10, cursor.getCount());
             //assertTrue(true);
         }
         catch (Exception e) {
@@ -99,7 +99,7 @@ public class MediaDAOTest extends MediaDAO {
     public void selectAlbumAllNull() {
         try {
             SQLiteCursor cursor = getFromAlbum(null, null, "unread");
-            assertEquals(19, cursor.getCount());
+            assertEquals(17, cursor.getCount());
             //assertTrue(true);
         }
         catch (Exception e) {
