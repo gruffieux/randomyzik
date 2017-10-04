@@ -128,10 +128,17 @@ public class MainActivity extends AppCompatActivity {
                                 adapter.changeCursor(cursor);
                                 dao.close();
                                 if (last) {
-                                    playBtn.setEnabled(false);
+                                    playBtn.setImageResource(R.drawable.ic_action_play);
                                     rewBtn.setEnabled(false);
+                                    rewBtn.setColorFilter(Color.GRAY);
                                     fwdBtn.setEnabled(false);
-                                    infoMsg(getString(R.string.info_play_end), Color.GRAY);
+                                    fwdBtn.setColorFilter(Color.GRAY);
+                                    positionLabel.setText("");
+                                    durationLabel.setText("");
+                                    progressBar.setProgress(0);
+                                    progressBar.setMax(0);
+                                    int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+                                    infoMsg(getString(R.string.info_play_end), color);
                                 }
                             }
                         });
@@ -142,8 +149,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onTrackResume(boolean canClick) {
-                    if (canClick) {
+                public void onTrackResume(boolean allowed) {
+                    if (allowed) {
                         clickPlayButton();
                     }
                 }
@@ -160,7 +167,8 @@ public class MainActivity extends AppCompatActivity {
 
                     // Titre en cours
                     String label = audioService.getTrackLabel(id);
-                    infoMsg(label, Color.BLACK);
+                    int color = fetchColor(getApplicationContext(), R.attr.colorPrimaryDark);
+                    infoMsg(label, color);
 
                     // On notifie le premier-plan
                     Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
@@ -193,7 +201,8 @@ public class MainActivity extends AppCompatActivity {
             if (audioService.playerIsActive()) {
                 positionLabel.setText(dateFormat.format(new Date(audioService.playerPosition())));
                 durationLabel.setText(dateFormat.format(new Date(audioService.playerDuration())));
-                infoMsg(audioService.getCurrentTrackLabel(), Color.BLACK);
+                int color = fetchColor(getApplicationContext(), R.attr.colorPrimaryDark);
+                infoMsg(audioService.getCurrentTrackLabel(), color);
             }
 
             int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
@@ -295,7 +304,8 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             if (perms == 1) {
-                infoMsg(getString(R.string.info_scanning), Color.GRAY);
+                int color = fetchColor(this, R.attr.colorAccent);
+                infoMsg(getString(R.string.info_scanning), color);
 
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);

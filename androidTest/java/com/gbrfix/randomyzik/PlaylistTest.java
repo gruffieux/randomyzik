@@ -1,6 +1,7 @@
 package com.gbrfix.randomyzik;
 
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -10,9 +11,10 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,8 +29,10 @@ public class PlaylistTest {
     final static int TEST_CREATE_LIST = 1;
     final static int TEST_PLAY_ALL_TRACKS = 2;
     final static int TEST_PLAY_ALL_ALBUMS = 3;
+    final static int TEST_PLAY_LAST_TRACK = 4;
+    final static int TEST_PLAY_ENDED_LIST = 5;
 
-    int currentTest = 0;
+    int currentTest, trackCount, trackTotal;
     DbService dbService = null;
     AudioService audioService = null;
 
@@ -45,7 +49,7 @@ public class PlaylistTest {
                             MediaDAO dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
                             dao.open();
                             SQLiteCursor cursor = dao.getAll();
-                            assertEquals(2231, cursor.getCount());
+                            assertTrue(cursor.getCount() > 0);
                             dao.close();
                             break;
                     }
@@ -82,14 +86,23 @@ public class PlaylistTest {
             audioService.setMediaSignalListener(new MediaSignal() {
                 @Override
                 public void onTrackRead(boolean last) {
+                    trackCount++;
                     if (last) {
-                        assertTrue(true);
+                        switch (currentTest) {
+                            case TEST_PLAY_ALL_TRACKS:
+                            case TEST_PLAY_ALL_ALBUMS:
+                            case TEST_PLAY_LAST_TRACK:
+                            case TEST_PLAY_ENDED_LIST:
+                                assertEquals(trackTotal, trackCount);
+                                assertFalse(audioService.playerIsActive());
+                                break;
+                        }
                         currentTest = 0;
                     }
                 }
 
                 @Override
-                public void onTrackResume(boolean canClick) {
+                public void onTrackResume(boolean allowed) {
                 }
 
                 @Override
@@ -109,19 +122,24 @@ public class PlaylistTest {
                     audioService.setMode(AudioService.MODE_ALBUM);
                     break;
             }
-            if (currentTest == TEST_PLAY_ALL_TRACKS || currentTest == TEST_PLAY_ALL_ALBUMS) {
-                try {
-                    audioService.setTest(true);
-                    audioService.resume();
-                }
-                catch (PlayEndException e) {
-                    assertTrue(true);
-                    currentTest = 0;
-                }
-                catch (Exception e) {
-                    assertTrue(false);
-                    currentTest = 0;
-                }
+            switch (currentTest) {
+                case TEST_PLAY_ALL_TRACKS:
+                case TEST_PLAY_ALL_ALBUMS:
+                case TEST_PLAY_LAST_TRACK:
+                case TEST_PLAY_ENDED_LIST:
+                    try {
+                        audioService.setTest(true);
+                        audioService.resume();
+                    }
+                    catch (PlayEndException e) {
+                        assertFalse(audioService.playerIsActive());
+                        currentTest = 0;
+                    }
+                    catch (Exception e) {
+                        assertTrue(false);
+                        currentTest = 0;
+                    }
+                    break;
             }
         }
 
@@ -132,6 +150,7 @@ public class PlaylistTest {
     };
 
     public PlaylistTest() {
+        currentTest = trackCount = trackTotal = 0;
         DAOBase.NAME = "playlist-test.db";
     }
 
@@ -141,7 +160,7 @@ public class PlaylistTest {
         MediaDAO dao = new MediaDAO(c);
 
         dao.open();
-        dao.dropMedias();
+        dao.getDb().delete("medias", null, null);
         SQLiteCursor cursor = dao.getAll();
         assertEquals(0, cursor.getCount());
         dao.close();
@@ -166,6 +185,13 @@ public class PlaylistTest {
         currentTest = TEST_PLAY_ALL_TRACKS;
 
         Context c = InstrumentationRegistry.getTargetContext();
+
+        MediaDAO dao = new MediaDAO(c);
+        dao.open();
+        SQLiteCursor cursor = dao.getUnread();
+        trackTotal = cursor.getCount();
+        dao.close();
+
         Intent intent = new Intent(c, AudioService.class);
         c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
 
@@ -180,6 +206,13 @@ public class PlaylistTest {
         currentTest = TEST_PLAY_ALL_ALBUMS;
 
         Context c = InstrumentationRegistry.getTargetContext();
+
+        MediaDAO dao = new MediaDAO(c);
+        dao.open();
+        SQLiteCursor cursor = dao.getUnread();
+        trackTotal = cursor.getCount();
+        dao.close();
+
         Intent intent = new Intent(c, AudioService.class);
         c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
 
@@ -187,5 +220,65 @@ public class PlaylistTest {
         }
 
         Log.v("playAllAlbums", "end");
+    }
+
+    @Test
+    public void playLastTrack() throws Exception {
+        currentTest = TEST_PLAY_LAST_TRACK;
+
+        Context c = InstrumentationRegistry.getTargetContext();
+
+        MediaDAO dao = new MediaDAO(c);
+        dao.open();
+        ContentValues values = new ContentValues();
+        values.put("flag", "read");
+        dao.getDb().update("medias", values, null, null);
+        SQLiteCursor cursor = dao.getAll();
+        Random random = new Random();
+        int total = cursor.getCount();
+
+        if (total > 1) {
+            int pos = random.nextInt(total);
+            cursor.moveToPosition(pos);
+        }
+        else if (total > 0) {
+            cursor.moveToFirst();
+        }
+        else {
+            throw new Exception("List is empty");
+        }
+
+        dao.updateFlag(cursor.getInt(0), "unread");
+        trackTotal = 1;
+        dao.close();
+
+        Intent intent = new Intent(c, AudioService.class);
+        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+
+        while (currentTest != 0) {
+        }
+
+        Log.v("playLastTrack", "end");
+    }
+
+    @Test
+    public void playEndedList() throws Exception {
+        currentTest = TEST_PLAY_ENDED_LIST;
+
+        Context c = InstrumentationRegistry.getTargetContext();
+
+        MediaDAO dao = new MediaDAO(c);
+        dao.open();
+        dao.replaceFlag("unread", "read");
+        trackTotal = 0;
+        dao.close();
+
+        Intent intent = new Intent(c, AudioService.class);
+        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+
+        while (currentTest != 0) {
+        }
+
+        Log.v("playEndedList", "end");
     }
 }

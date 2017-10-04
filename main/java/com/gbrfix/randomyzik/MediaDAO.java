@@ -121,8 +121,4 @@ public class MediaDAO extends DAOBase {
         values.put("flag", newFlag);
         this.db.update("medias", values,  "`flag`=?", new String[] {oldFlag});
     }
-
-    public void dropMedias() {
-        this.db.delete("medias", "", null);
-    }
 }

@@ -144,6 +144,11 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         SQLiteCursor cursorUnread = dao.getUnread();
         int totalUnread = cursorUnread.getCount();
 
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+
         if (mode == MODE_ALBUM) {
             if (currentId == 0 || lastOfAlbum == true) {
                 dao.replaceFlag("skip", "unread");
@@ -191,10 +196,6 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
         currentId = cursor.getInt(0);
         String path = cursor.getString(1);
-
-        if (player != null) {
-            player.release();
-        }
 
         int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
