@@ -149,9 +149,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onTrackResume(boolean allowed) {
+                public void onTrackResume(boolean allowed, boolean changeFocus) {
                     if (allowed) {
-                        clickPlayButton();
+                        clickPlayButton(changeFocus);
                     }
                 }
 
@@ -259,7 +259,7 @@ public class MainActivity extends AppCompatActivity {
         init(context, 1);
     }
 
-    protected void clickPlayButton() {
+    protected void clickPlayButton(boolean changeFocus) {
         ImageButton playBtn = (ImageButton)findViewById(R.id.play);
         ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
         ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
@@ -267,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             boolean playing = false;
             if (audioService != null) {
-                audioService.resume();
+                audioService.resume(changeFocus);
                 playing = audioService.playerIsPlaying();
             }
             int color = fetchColor(this, R.attr.colorAccent);
@@ -346,7 +346,7 @@ public class MainActivity extends AppCompatActivity {
         playBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                clickPlayButton();
+                clickPlayButton(true);
             }
         });
 

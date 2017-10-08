@@ -6,10 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.sqlite.SQLiteCursor;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -27,6 +30,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
     private MediaPlayer player;
     private AudioManager manager;
+    private AudioFocusRequest focusRequest;
     private MediaDAO dao;
     private MediaSignal mediaSignalListener;
     private int currentId;
@@ -101,6 +105,17 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         super.onCreate();
 
         manager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(attributes)
+                .build();
+        }
+
         dao = new MediaDAO(this);
     }
 
@@ -197,9 +212,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         currentId = cursor.getInt(0);
         String path = cursor.getString(1);
 
-        int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-
-        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+        if (requestAudioFocus() == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             File file = new File(path);
             player = MediaPlayer.create(this, Uri.fromFile(file));
             if (test) {
@@ -230,6 +243,22 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         }
     }
 
+    private int requestAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return manager.requestAudioFocus(focusRequest);
+        }
+
+        return manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+
+    private void abandonAudioFocus() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.abandonAudioFocusRequest(focusRequest);
+        }
+
+        manager.abandonAudioFocus(this);
+    }
+
     public void rewind() throws Exception {
         if (player != null && player.isPlaying()) {
             player.stop();
@@ -248,7 +277,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         }
     }
 
-    public void resume() throws Exception {
+    public void resume(boolean changeFocus) throws Exception {
         if (player == null) {
             selectTrack();
             registerReceiver(myNoisyAudioReceiver, intentFilter);
@@ -256,11 +285,13 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         else {
             if (player.isPlaying()) {
                 player.pause();
-                manager.abandonAudioFocus(this);
+                if (changeFocus) {
+                    abandonAudioFocus();
+                }
                 unregisterReceiver(myNoisyAudioReceiver);
             }
             else {
-                int result = manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+                int result = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                     player.start();
                     registerReceiver(myNoisyAudioReceiver, intentFilter);
@@ -320,20 +351,22 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
                 player.setVolume(1f, 1f);
-                mediaSignalListener.onTrackResume(!player.isPlaying());
+                mediaSignalListener.onTrackResume(!player.isPlaying(), true);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
-                mediaSignalListener.onTrackResume(!player.isPlaying());
+                mediaSignalListener.onTrackResume(!player.isPlaying(), false);
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
                 player.setVolume(1f, 1f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS:
                 // Permanent loss of audio focus
+                mediaSignalListener.onTrackResume(player.isPlaying(), true);
+                break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 // Pause playback
-                mediaSignalListener.onTrackResume(player.isPlaying());
+                mediaSignalListener.onTrackResume(player.isPlaying(), false);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 // Lower the volume, keep playing
@@ -356,7 +389,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                mediaSignalListener.onTrackResume(player.isPlaying());
+                mediaSignalListener.onTrackResume(player.isPlaying(), true);
             }
         }
     }

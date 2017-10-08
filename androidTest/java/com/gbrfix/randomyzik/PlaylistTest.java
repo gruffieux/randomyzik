@@ -58,7 +58,7 @@ public class PlaylistTest {
                 }
 
                 @Override
-                public void onTrackResume(boolean allowed) {
+                public void onTrackResume(boolean allowed, boolean changeFocus) {
                 }
 
                 @Override
@@ -85,7 +85,7 @@ public class PlaylistTest {
                 case TEST_PLAY_ENDED_LIST:
                     try {
                         audioService.setTest(true);
-                        audioService.resume();
+                        audioService.resume(true);
                     }
                     catch (PlayEndException e) {
                         assertFalse(audioService.playerIsActive());
