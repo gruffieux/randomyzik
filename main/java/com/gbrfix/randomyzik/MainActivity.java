@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -17,10 +18,12 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -402,6 +405,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onScroll(AbsListView absListView, int i, int i1, int i2) {
                 scrollY = i;
+            }
+        });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+                dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+                dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
+
+                return true;
             }
         });
     }
