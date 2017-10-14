@@ -5,7 +5,6 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -18,12 +17,14 @@ import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
+import android.support.v4.widget.CursorAdapter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.Adapter;
 import android.widget.AdapterView;
+import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -31,7 +32,6 @@ import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.CompoundButton;
-import android.content.res.Configuration;
 import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -412,6 +412,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+                dialog.setId((int)id);
+                dialog.setLabel(audioService.getTrackLabel((int)id));
                 dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
             }
         });
@@ -419,10 +421,17 @@ public class MainActivity extends AppCompatActivity {
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+                AllTracksDialogFragment dialog = new AllTracksDialogFragment();
                 dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
-
                 return true;
+            }
+        });
+
+        TextView trackInfo = (TextView)findViewById(R.id.infoMsg);
+        trackInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //listView.setSelection(1);
             }
         });
     }
@@ -431,20 +440,6 @@ public class MainActivity extends AppCompatActivity {
         TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
         infoMsg.setTextColor(color);
         infoMsg.setText(msg);
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
-        // Force l'UI à l'état initial
-        Configuration config=getResources().getConfiguration();
-        if(config.orientation == Configuration.ORIENTATION_PORTRAIT) {
-            //setContentView(R.layout.playlist); // Provoque des plantées
-        }
-        else if(config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            //setContentView(R.layout.playlist); // Provoque des plantées
-        }
     }
 
     @Override

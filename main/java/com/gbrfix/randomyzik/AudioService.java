@@ -41,6 +41,10 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     private final IBinder binder = new AudioService.AudioBinder();
     private boolean bound, test;
 
+    public int getCurrentId() {
+        return currentId;
+    }
+
     public boolean isBound() {
         return bound;
     }
