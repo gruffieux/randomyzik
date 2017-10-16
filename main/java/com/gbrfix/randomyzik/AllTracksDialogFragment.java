@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
@@ -22,16 +21,19 @@ public class AllTracksDialogFragment extends DialogFragment {
         final Activity activity = getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
+        final MediaDAO dao = new MediaDAO(getContext());
+        dao.open();
+        SQLiteCursor cursor = dao.getAll();
+        int total = cursor.getCount();
+        dao.close();
+
         builder.setMessage(getText(R.string.edit_all_tracks_msg))
-                .setTitle(getText(R.string.edit_all_tracks_title))
+                .setTitle(String.format(getString(R.string.edit_all_tracks_title), total))
                 .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        final MediaDAO dao = new MediaDAO(getContext());
                         dao.open();
-                        ContentValues values = new ContentValues();
-                        values.put("flag", "unread");
-                        dao.getDb().update("medias", values, null, null);
+                        dao.updateFlagAll("unread");
                         dao.close();
                         activity.runOnUiThread(new Runnable() {
                             @Override

@@ -32,8 +32,8 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
         final Activity activity = getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-        builder.setMessage(String.format(getString(R.string.edit_single_track_msg), label))
-            .setTitle(getText(R.string.edit_single_track_title))
+        builder.setMessage(getText(R.string.edit_single_track_msg))
+            .setTitle(label)
             .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
