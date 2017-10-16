@@ -107,7 +107,7 @@ public class PlaylistTest {
 
     public PlaylistTest() {
         currentTest = trackCount = trackTotal = 0;
-        DAOBase.NAME = "playlist-test.db";
+        //DAOBase.NAME = "playlist-test.db";
     }
 
     @Test
@@ -118,9 +118,7 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
-        ContentValues values = new ContentValues();
-        values.put("flag", "unread");
-        dao.getDb().update("medias", values, null, null);
+        dao.updateFlagAll("unread");
         SQLiteCursor cursor = dao.getUnread();
         trackTotal = cursor.getCount();
         dao.close();
@@ -142,9 +140,7 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
-        ContentValues values = new ContentValues();
-        values.put("flag", "unread");
-        dao.getDb().update("medias", values, null, null);
+        dao.updateFlagAll("unread");
         SQLiteCursor cursor = dao.getUnread();
         trackTotal = cursor.getCount();
         dao.close();
@@ -166,9 +162,7 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
-        ContentValues values = new ContentValues();
-        values.put("flag", "read");
-        dao.getDb().update("medias", values, null, null);
+        dao.updateFlagAll("read");
         SQLiteCursor cursor = dao.getAll();
         Random random = new Random();
         int total = cursor.getCount();
@@ -205,7 +199,7 @@ public class PlaylistTest {
 
         MediaDAO dao = new MediaDAO(c);
         dao.open();
-        dao.replaceFlag("unread", "read");
+        dao.updateFlagAll("read");
         trackTotal = 0;
         dao.close();
 
