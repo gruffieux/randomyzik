@@ -107,7 +107,7 @@ public class PlaylistTest {
 
     public PlaylistTest() {
         currentTest = trackCount = trackTotal = 0;
-        //DAOBase.NAME = "playlist-test.db";
+        DAOBase.NAME = "playlist-test.db";
     }
 
     @Test
