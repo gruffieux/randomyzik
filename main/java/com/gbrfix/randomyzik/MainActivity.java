@@ -387,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Changement du mode aléatoire
         modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -408,6 +409,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Dialogue d'édition du flag pour une piste
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -418,6 +420,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Dialogue d'édition du flag de toutes les pistes
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
@@ -427,11 +430,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Sélection de la piste en cours
         TextView trackInfo = (TextView)findViewById(R.id.infoMsg);
         trackInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //listView.setSelection(1);
+                int currentId = audioService.getCurrentId();
+                if (currentId > 0) {
+                    TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+                    int pos = adapter.findView(currentId);
+                    if (pos != -1) {
+                        listView.setSelection(pos);
+                    }
+                }
             }
         });
     }
