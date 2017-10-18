@@ -60,9 +60,9 @@
                 android:textAlignment="center"
                 android:showText="true"
                 android:splitTrack="true"
-                android:text="Random mode"
-                android:textOff="Track"
-                android:textOn="Album"
+                android:text="@string/switch_mode"
+                android:textOff="@string/switch_mode_track"
+                android:textOn="@string/switch_mode_album"
                 android:thumb="@android:drawable/btn_default_small" />
 
         </LinearLayout>

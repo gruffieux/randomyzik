@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RandoMyZik</string>
+    <string name="err_no_file">Aucun fichier audio trouvé dans le dossier music</string>
+    <string name="err_no_perms">Permissions en lecture/écriture nécessaires</string>
+    <string name="err_all_read">Il n\'y a plus rien à lire</string>
+    <string name="info_play_end">Liste de lecture terminée</string>
+    <string name="info_track_summary">Piste %1$d/%2$d, %3$.1f%% de la liste lue.</string>
+    <string name="info_scanning">Scan des fichiers audio, veuillez patienter...</string>
+    <string name="edit_single_track_title">Single track flag editor</string>
+    <string name="edit_single_track_msg">Indiquer cette piste comme non lue?</string>
+    <string name="edit_all_tracks_title">%1$d pistes</string>
+    <string name="edit_all_tracks_msg">Indiquer toutes les pistes comme non lues?</string>
+    <string name="dialog_yes">Oui</string>
+    <string name="dialog_no">Non</string>
+    <string name="switch_mode">Mode aléatoire</string>
+    <string name="switch_mode_track">Piste</string>
+    <string name="switch_mode_album">Album</string>
+</resources>
