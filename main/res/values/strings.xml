@@ -12,6 +12,7 @@
     <string name="edit_all_tracks_title">%1$d tracks</string>
     <string name="edit_all_tracks_msg">Mark all tracks as unread?</string>
     <string name="dialog_yes">Yes</string>
+    <string name="dialog_yes_play">Yes and play</string>
     <string name="dialog_no">No</string>
     <string name="switch_mode">Random mode</string>
     <string name="switch_mode_track">Track</string>

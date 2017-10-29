@@ -33,7 +33,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     private AudioFocusRequest focusRequest;
     private MediaDAO dao;
     private MediaSignal mediaSignalListener;
-    private int currentId;
+    private int currentId, selectId;
     private int mode;
     private boolean lastOfAlbum;
     private IntentFilter intentFilter;
@@ -89,6 +89,10 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         lastOfAlbum = false;
     }
 
+    public void setSelectId(int selectId) {
+        this.selectId = selectId;
+    }
+
     public void setTest(boolean test) {
         this.test = test;
     }
@@ -97,7 +101,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         super("MediaIntentService");
 
         player = null;
-        currentId = 0;
+        currentId = selectId = 0;
         mode = MODE_TRACK;
         lastOfAlbum = test = false;
         intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
@@ -168,7 +172,12 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             player = null;
         }
 
-        if (mode == MODE_ALBUM) {
+        if (selectId > 0) {
+            cursor = dao.getFromId(selectId);
+            cursor.moveToFirst();
+            selectId = 0;
+        }
+        else if (mode == MODE_ALBUM) {
             if (currentId == 0 || lastOfAlbum == true) {
                 dao.replaceFlag("skip", "unread");
                 cursor = dao.getFromFlagAlbumGrouped("unread");
@@ -211,10 +220,10 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             }
         }
 
-        dao.close();
-
         currentId = cursor.getInt(0);
         String path = cursor.getString(1);
+
+        dao.close();
 
         if (requestAudioFocus() == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             File file = new File(path);
@@ -282,7 +291,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     }
 
     public void resume(boolean changeFocus) throws Exception {
-        if (player == null) {
+        if (player == null || selectId > 0) {
             selectTrack();
             registerReceiver(myNoisyAudioReceiver, intentFilter);
         }
