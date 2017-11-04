@@ -167,17 +167,19 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         SQLiteCursor cursorUnread = dao.getUnread();
         int totalUnread = cursorUnread.getCount();
 
+        SQLiteCursor cursorSel = null;
+        if (selectId > 0) {
+            cursorSel  = dao.getFromId(selectId);
+            currentId = selectId;
+            selectId = 0;
+        }
+
         if (player != null) {
             player.release();
             player = null;
         }
 
-        if (selectId > 0) {
-            cursor = dao.getFromId(selectId);
-            cursor.moveToFirst();
-            selectId = 0;
-        }
-        else if (mode == MODE_ALBUM) {
+        if (mode == MODE_ALBUM) {
             if (currentId == 0 || lastOfAlbum == true) {
                 dao.replaceFlag("skip", "unread");
                 cursor = dao.getFromFlagAlbumGrouped("unread");
@@ -202,21 +204,29 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             String artist = cursor.getString(6);
             cursor = dao.getFromAlbum(album, artist, "unread");
             lastOfAlbum = cursor.getCount() <= 1;
+            if (cursorSel != null) {
+                cursor = cursorSel;
+            }
             cursor.moveToFirst();
         }
         else {
-            if (totalUnread == 0) {
-                currentId = 0;
-                throw new PlayEndException(getString(R.string.err_all_read));
-            }
-            cursor = cursorUnread;
-            if (totalUnread > 1) {
-                Random random = new Random();
-                int pos = random.nextInt(totalUnread);
-                cursor.moveToPosition(pos);
+            if (cursorSel != null) {
+                cursor = cursorSel;
+                cursor.moveToFirst();
             }
             else {
-                cursor.moveToFirst();
+                if (totalUnread == 0) {
+                    currentId = 0;
+                    throw new PlayEndException(getString(R.string.err_all_read));
+                }
+                cursor = cursorUnread;
+                if (totalUnread > 1) {
+                    Random random = new Random();
+                    int pos = random.nextInt(totalUnread);
+                    cursor.moveToPosition(pos);
+                } else {
+                    cursor.moveToFirst();
+                }
             }
         }
 

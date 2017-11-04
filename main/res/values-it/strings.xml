@@ -12,6 +12,7 @@
     <string name="edit_all_tracks_title">%1$d tracce</string>
     <string name="edit_all_tracks_msg">Mostra tutti traccia come non letti?</string>
     <string name="dialog_yes">Sì</string>
+    <string name="dialog_yes_play">Sì e play</string>
     <string name="dialog_no">No</string>
     <string name="switch_mode">Modalità casuale</string>
     <string name="switch_mode_track">Traccia</string>

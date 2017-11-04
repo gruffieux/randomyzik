@@ -40,7 +40,7 @@ public class PlaylistDbTest {
                             MediaDAO dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
                             dao.open();
                             SQLiteCursor cursor = dao.getAll();
-                            assertEquals(2231, cursor.getCount());
+                            assertEquals(843, cursor.getCount());
                             dao.close();
                             break;
                     }

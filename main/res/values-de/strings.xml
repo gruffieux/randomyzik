@@ -12,6 +12,7 @@
     <string name="edit_all_tracks_title">%1$d tracks</string>
     <string name="edit_all_tracks_msg">Alle Tracks als ungelesen markieren?</string>
     <string name="dialog_yes">Ya</string>
+    <string name="dialog_yes_play">Ya und play</string>
     <string name="dialog_no">Nein</string>
     <string name="switch_mode">Zufallsmodus</string>
     <string name="switch_mode_track">Track</string>

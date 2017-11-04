@@ -12,6 +12,7 @@
     <string name="edit_all_tracks_title">%1$d pistas</string>
     <string name="edit_all_tracks_msg">¿Mostrar todas las pistas como no leídas?</string>
     <string name="dialog_yes">Si</string>
+    <string name="dialog_yes_play">Si y play</string>
     <string name="dialog_no">No</string>
     <string name="switch_mode">Modo aleatorio</string>
     <string name="switch_mode_track">Pista</string>

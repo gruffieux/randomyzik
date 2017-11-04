@@ -58,13 +58,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(label)
-            .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    resetFlag(activity);
-                }
-            })
-            .setNeutralButton(R.string.dialog_yes_play, new DialogInterface.OnClickListener() {
+            .setPositiveButton(getText(R.string.dialog_yes_play), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag(activity);
@@ -73,6 +67,12 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                     }
                     activity.audioService.setSelectId(id);
                     activity.clickPlayButton(true);
+                }
+            })
+            .setNeutralButton(R.string.dialog_yes, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    resetFlag(activity);
                 }
             })
             .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
