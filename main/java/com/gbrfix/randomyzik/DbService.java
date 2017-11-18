@@ -43,8 +43,14 @@ public class DbService extends IntentService implements FilenameFilter {
             @Override
             public void onEvent(int event, String path) {
                 switch (event) {
+                    case FileObserver.MOVE_SELF:
+                    case FileObserver.MOVED_FROM:
+                    case FileObserver.MOVED_TO:
+                    case FileObserver.MODIFY:
                     case FileObserver.CLOSE_WRITE:
                     case FileObserver.DELETE:
+                    case FileObserver.DELETE_SELF:
+                    case FileObserver.CREATE:
                         scan();
                         break;
                     default:
