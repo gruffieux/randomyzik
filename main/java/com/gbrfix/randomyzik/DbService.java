@@ -43,14 +43,18 @@ public class DbService extends IntentService implements FilenameFilter {
             @Override
             public void onEvent(int event, String path) {
                 switch (event) {
-                    case FileObserver.MOVE_SELF:
-                    case FileObserver.MOVED_FROM:
-                    case FileObserver.MOVED_TO:
-                    case FileObserver.MODIFY:
-                    case FileObserver.CLOSE_WRITE:
-                    case FileObserver.DELETE:
-                    case FileObserver.DELETE_SELF:
-                    case FileObserver.CREATE:
+                    //case FileObserver.ACCESS:           // 1: Data was read from a file
+                    //case FileObserver.MODIFY:           // 2: Data was written to a file
+                    //case FileObserver.ATTRIB:           // 4: Metadata (permissions, owner, timestamp) was changed explicitly
+                    case FileObserver.CLOSE_WRITE:        // 8: Someone had a file or directory open for writing, and closed it
+                    //case FileObserver.CLOSE_NOWRITE:    // 16: Someone had a file or directory open read-only, and closed it
+                    //case FileObserver.OPEN:             // 32: A file or directory was opened
+                    case FileObserver.MOVED_FROM:         // 64: A file or subdirectory was moved from the monitored directory
+                    case FileObserver.MOVED_TO:           // 128: A file or subdirectory was moved to the monitored directory
+                    //case FileObserver.CREATE:           // 256: A new file or subdirectory was created under the monitored directory
+                    case FileObserver.DELETE:             // 512: A file was deleted from the monitored directory
+                    case FileObserver.DELETE_SELF:        // 1024: The monitored file or directory was deleted; monitoring effectively stops
+                    case FileObserver.MOVE_SELF:          // 2048: The monitored file or directory was moved; monitoring continues
                         scan();
                         break;
                     default:
@@ -137,10 +141,6 @@ public class DbService extends IntentService implements FilenameFilter {
 
     private void scanMediaFiles(File dir) throws Exception {
         File[] files = dir.listFiles();
-
-        if (files.length == 0) {
-            throw new Exception(getString(R.string.err_no_file));
-        }
 
         for (int i = 0; i < files.length; i++) {
             if (files[i].isDirectory()) {

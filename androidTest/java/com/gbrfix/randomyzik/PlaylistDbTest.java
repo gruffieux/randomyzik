@@ -136,6 +136,6 @@ public class PlaylistDbTest {
         while (currentTest != 0) {
         }
 
-        Log.v("addFiles", "end");
+        Log.v("changeFiles", "end");
     }
 }
