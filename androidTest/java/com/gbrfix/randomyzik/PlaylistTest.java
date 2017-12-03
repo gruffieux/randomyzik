@@ -50,6 +50,7 @@ public class PlaylistTest {
                             case TEST_PLAY_LAST_TRACK:
                             case TEST_PLAY_ENDED_LIST:
                                 assertEquals(trackTotal, trackCount);
+                                assertEquals(100, trackCount/trackTotal*100);
                                 assertFalse(audioService.playerIsActive());
                                 break;
                         }
@@ -63,6 +64,11 @@ public class PlaylistTest {
 
                 @Override
                 public void onTrackSelect(int id, int duration, int total, int totalRead) {
+                    switch (currentTest) {
+                        case TEST_PLAY_LAST_TRACK:
+                            assertEquals(total-1, totalRead);
+                            break;
+                    }
                 }
 
                 @Override
