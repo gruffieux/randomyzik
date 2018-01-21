@@ -5,7 +5,7 @@
     <string name="err_no_perms">Lesen/Schreiben von Speicherrechten erforderlich</string>
     <string name="err_all_read">Nichts anderes zu lesen</string>
     <string name="info_play_end">Playlist beendet</string>
-    <string name="info_track_summary">Track %1$d/%2$d, %3$.1f%% das Playlist lesen.</string>
+    <string name="info_track_summary">Track: %1$d/%2$d Playlist lesen: %3$.1f%%</string>
     <string name="info_scanning">Audiodateien scannen, bitte warten...</string>
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Markiere diesen Track als ungelesen?</string>
