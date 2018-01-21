@@ -13,12 +13,19 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -37,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
     AudioService audioService = null;
+    private MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int scrollY = 0;
 
@@ -93,6 +101,78 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             dbService.setBound(false);
+        }
+    };
+
+    private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
+        @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat state) {
+            ImageButton playBtn = findViewById(R.id.play);
+            ImageButton rewBtn = findViewById(R.id.rew);
+            ImageButton fwdBtn = findViewById(R.id.fwd);
+
+            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            playBtn.setEnabled(true);
+            playBtn.setColorFilter(color);
+            rewBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
+            rewBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+            fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
+            fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+        }
+    };
+
+    private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
+        @Override
+        public void onConnected() {
+            // Get the token for the MediaSession
+            MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+
+            // Create a MediaControllerCompat
+            try {
+                MediaControllerCompat mediaController = new MediaControllerCompat(MainActivity.this, token);
+                MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+
+            // Finish building the UI
+            buildTransportControls();
+        }
+
+        @Override
+        public void onConnectionSuspended() {
+            // The Service has crashed. Disable transport controls until it automatically reconnects
+        }
+
+        @Override
+        public void onConnectionFailed() {
+            // The Service has refused our connection
+        }
+
+        void buildTransportControls() {
+            ImageButton playBtn = findViewById(R.id.play);
+
+            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            playBtn.setEnabled(true);
+            playBtn.setColorFilter(color);
+
+            playBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(MainActivity.this);
+                    int state = mediaController.getPlaybackState().getState();
+                    if (state == PlaybackStateCompat.STATE_PLAYING) {
+                        mediaController.getTransportControls().pause();
+                    } else {
+                        mediaController.getTransportControls().play();
+                    }
+                    //startService(new Intent(MainActivity.this, MediaPlaybackService.class));
+                }
+            });
+
+            MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(MainActivity.this);
+
+            mediaController.registerCallback(controllerCallback);
         }
     };
 
@@ -228,6 +308,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return super.onKeyDown(keyCode, event);
+        }
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+                MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
+                return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case MY_PERSMISSIONS_REQUEST_STORAGE:
@@ -257,6 +350,26 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.playlist);
         init(context, 1);
+
+        mediaBrowser = new MediaBrowserCompat(context, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mediaBrowser.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
+            MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
+        }
+
+        mediaBrowser.disconnect();
     }
 
     protected void clickPlayButton(boolean changeFocus) {

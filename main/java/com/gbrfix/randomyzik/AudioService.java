@@ -36,8 +36,8 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
     private int currentId, selectId;
     private int mode;
     private boolean lastOfAlbum;
-    private IntentFilter intentFilter;
-    private AudioService.BecomingNoisyReceiver myNoisyAudioReceiver;
+    //private IntentFilter intentFilter;
+    //private AudioService.BecomingNoisyReceiver myNoisyAudioReceiver;
     private final IBinder binder = new AudioService.AudioBinder();
     private boolean bound, test;
 
@@ -104,8 +104,8 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         currentId = selectId = 0;
         mode = MODE_TRACK;
         lastOfAlbum = test = false;
-        intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-        myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
+        //intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        //myNoisyAudioReceiver = new AudioService.BecomingNoisyReceiver();
     }
 
     @Override
@@ -300,10 +300,22 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         }
     }
 
+    public void startPlay() throws Exception {
+        selectTrack();
+    }
+
+    public void play() {
+        player.start();
+    }
+
+    public void pause() {
+        player.pause();
+    }
+
     public void resume(boolean changeFocus) throws Exception {
         if (player == null || selectId > 0) {
             selectTrack();
-            registerReceiver(myNoisyAudioReceiver, intentFilter);
+            //registerReceiver(myNoisyAudioReceiver, intentFilter);
         }
         else {
             if (player.isPlaying()) {
@@ -311,13 +323,13 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
                 if (changeFocus) {
                     abandonAudioFocus();
                 }
-                unregisterReceiver(myNoisyAudioReceiver);
+                //unregisterReceiver(myNoisyAudioReceiver);
             }
             else {
                 int result = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
                 if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                     player.start();
-                    registerReceiver(myNoisyAudioReceiver, intentFilter);
+                    //registerReceiver(myNoisyAudioReceiver, intentFilter);
                 }
             }
         }
@@ -355,7 +367,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             mediaSignalListener.onTrackRead(false);
         }
         catch (PlayEndException e) {
-            unregisterReceiver(myNoisyAudioReceiver);
+            //unregisterReceiver(myNoisyAudioReceiver);
             mediaSignalListener.onTrackRead(true);
         }
         catch (Exception e) {
@@ -408,12 +420,12 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
 
     }
 
-    private class BecomingNoisyReceiver extends BroadcastReceiver {
+    /*private class BecomingNoisyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
                 mediaSignalListener.onTrackResume(player.isPlaying(), true);
             }
         }
-    }
+    }*/
 }
