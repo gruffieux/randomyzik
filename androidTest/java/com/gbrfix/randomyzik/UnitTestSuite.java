@@ -8,6 +8,6 @@ import org.junit.runners.Suite;
  */
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({MediaDAOTest.class, PlaylistDbTest.class, PlaylistTest.class})
+@Suite.SuiteClasses({PlaylistDbTest.class, MediaDAOTest.class, PlaylistTest.class})
 public class UnitTestSuite {
 }
