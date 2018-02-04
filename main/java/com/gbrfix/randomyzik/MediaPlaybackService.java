@@ -1,14 +1,13 @@
 package com.gbrfix.randomyzik;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
+import android.database.sqlite.SQLiteCursor;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.media.MediaBrowserCompat;
@@ -26,32 +25,10 @@ import java.util.List;
 public class MediaPlaybackService extends MediaBrowserServiceCompat {
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
+    private AudioManager.OnAudioFocusChangeListener afChangeListener;
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-    AudioService audioService;
-
-    private ServiceConnection audioConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
-            audioService = audioBinder.getService();
-            audioService.setBound(true);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            audioService.setBound(false);
-        }
-    };
-
-    private class BecomingNoisyReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                audioService.pause();
-            }
-        }
-    }
+    private MediaPlayer player;
 
     @Nullable
     @Override
@@ -83,10 +60,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
-
-        // On se connecte au service audio
-        Intent intent = new Intent(this, AudioService.class);
-        bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -95,36 +68,37 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private class MediaSessionCallback extends MediaSessionCompat.Callback {
+    public class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onPlay() {
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            int res = manager.requestAudioFocus(audioService, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            int res = manager.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                if (audioService.playerIsActive()) {
-                    audioService.play();
-                }
-                else {
-                    try {
-                        audioService.startPlay();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
+                MediaDAO dao = new MediaDAO(getApplicationContext());
+                dao.open();
+                SQLiteCursor cursor = dao.getAll();
+                // TODO: Créer le player
             }
         }
 
         @Override
         public void onPause() {
-            if (audioService.playerIsActive()) {
-                audioService.pause();
-            }
+            player.pause();
 
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            manager.abandonAudioFocus(audioService);
+            manager.abandonAudioFocus(afChangeListener);
             unregisterReceiver(myNoisyAudioReceiver);
+        }
+    }
+
+    private class BecomingNoisyReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+                player.pause();
+            }
         }
     }
 }
