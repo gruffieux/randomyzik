@@ -20,6 +20,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
@@ -119,6 +120,11 @@ public class MainActivity extends AppCompatActivity {
             fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
         }
+
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat metadata) {
+            super.onMetadataChanged(metadata);
+        }
     };
 
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
@@ -159,14 +165,12 @@ public class MainActivity extends AppCompatActivity {
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(MainActivity.this);
-                    int state = mediaController.getPlaybackState().getState();
+                    int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
                     if (state == PlaybackStateCompat.STATE_PLAYING) {
-                        mediaController.getTransportControls().pause();
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
                     } else {
-                        mediaController.getTransportControls().play();
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                     }
-                    //startService(new Intent(MainActivity.this, MediaPlaybackService.class));
                 }
             });
 
@@ -447,8 +451,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // On se connecte au service audio
-        final Intent intent = new Intent(this, AudioService.class);
-        bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+        //final Intent intent = new Intent(this, AudioService.class);
+        //bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On créé un intent pour les notifications
@@ -456,12 +460,12 @@ public class MainActivity extends AppCompatActivity {
         final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
 
         // On traite le changement d'état du bouton play
-        playBtn.setOnClickListener(new View.OnClickListener() {
+       /* playBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 clickPlayButton(true);
             }
-        });
+        });*/
 
         // On traite le changement d'état du bouton en arrière
         rewBtn.setOnClickListener(new View.OnClickListener() {

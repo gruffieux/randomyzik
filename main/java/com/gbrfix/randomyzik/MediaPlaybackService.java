@@ -7,15 +7,21 @@ import android.content.IntentFilter;
 import android.database.sqlite.SQLiteCursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
+import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaButtonReceiver;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -46,7 +52,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         super.onCreate();
 
         // Create a media session
-        session = new MediaSessionCompat(this, AudioService.class.getSimpleName());
+        session = new MediaSessionCompat(this, MediaPlaybackService.class.getSimpleName());
 
         // Enable callbacks from media buttons and transport controls
         session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -68,18 +74,26 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public class MediaSessionCallback extends MediaSessionCompat.Callback {
+    private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public void onPlay() {
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
             int res = manager.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                session.setActive(true);
+                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
                 MediaDAO dao = new MediaDAO(getApplicationContext());
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                // TODO: Créer le player
+                if (cursor.moveToFirst()) {
+                    String path = cursor.getString(1);
+                    File file = new File(path);
+                    player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
+                    player.start();
+                    createNotification();
+                }
             }
         }
 
@@ -91,6 +105,50 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
             manager.abandonAudioFocus(afChangeListener);
             unregisterReceiver(myNoisyAudioReceiver);
         }
+    }
+
+    public void createNotification() {
+        MediaControllerCompat controller = session.getController();
+        //MediaMetadataCompat mediaMetadata = controller.getMetadata();
+        //MediaDescriptionCompat description = mediaMetadata.getDescription();
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        builder
+            // Add the metadata for the currently playing track
+            .setContentTitle("hello world")
+            .setContentText("teste")
+            .setSubText("This is a hello world test")
+
+            // Enable launching the player by clicking the notification
+            .setContentIntent(controller.getSessionActivity())
+
+            // Stop the service when the notification is swiped away
+            .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
+
+            // Make the transport controls visible on the lockscreen
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
+            // Add an app icon and set its accent color
+            // Be careful about the color
+            .setSmallIcon(R.drawable.ic_stat_audio)
+
+            // Add a pause button
+            .addAction(new NotificationCompat.Action(
+                R.drawable.ic_action_pause, "Pause",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
+
+            // Take advantage of MediaStyle features
+            .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(session.getSessionToken())
+                .setShowActionsInCompactView(0)
+
+                // Add a cancel button
+                .setShowCancelButton(true)
+                .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)));
+
+        // Display the notification and place the service in the foreground
+        startForeground(1, builder.build());
     }
 
     private class BecomingNoisyReceiver extends BroadcastReceiver {
