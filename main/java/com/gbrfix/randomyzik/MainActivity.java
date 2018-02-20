@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             if (update) {
                                 try {
-                                    MediaDAO dao = new MediaDAO(dbService.getApplicationContext());
+                                    MediaDAO dao = new MediaDAO(MainActivity.this);
                                     dao.open();
                                     SQLiteCursor cursor = dao.getAllOrdered();
                                     ListView listView = (ListView) findViewById(R.id.playlist);
@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
             ImageButton rewBtn = findViewById(R.id.rew);
             ImageButton fwdBtn = findViewById(R.id.fwd);
 
-            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
             rewBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
@@ -123,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
-            super.onMetadataChanged(metadata);
         }
     };
 
@@ -158,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         void buildTransportControls() {
             ImageButton playBtn = findViewById(R.id.play);
 
-            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
 
@@ -171,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                     }
+                    Log.v("state", String.valueOf(MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState()));
                 }
             });
 
@@ -184,8 +184,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             // On créé un intent pour les notifications
-            final Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-            final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+            final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
+            final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
 
             final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
             final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                MediaDAO dao = new MediaDAO(audioService.getApplicationContext());
+                                MediaDAO dao = new MediaDAO(MainActivity.this);
                                 dao.open();
                                 SQLiteCursor cursor = dao.getAllOrdered();
                                 ListView listView = (ListView)findViewById(R.id.playlist);
@@ -221,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
                                     durationLabel.setText("");
                                     progressBar.setProgress(0);
                                     progressBar.setMax(0);
-                                    int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+                                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
                                     infoMsg(getString(R.string.info_play_end), color);
                                 }
                             }
@@ -251,11 +251,11 @@ public class MainActivity extends AppCompatActivity {
 
                     // Titre en cours
                     String label = audioService.getTrackLabel(id);
-                    int color = fetchColor(getApplicationContext(), R.attr.colorPrimaryDark);
+                    int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                     infoMsg(label, color);
 
                     // On notifie le premier-plan
-                    Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
+                    Notification notification = new NotificationCompat.Builder(MainActivity.this)
                         .setContentTitle(label)
                         .setContentText(audioService.getSummary(total, totalRead))
                         .setSmallIcon(R.drawable.ic_stat_audio)
@@ -285,11 +285,11 @@ public class MainActivity extends AppCompatActivity {
             if (audioService.playerIsActive()) {
                 positionLabel.setText(dateFormat.format(new Date(audioService.playerPosition())));
                 durationLabel.setText(dateFormat.format(new Date(audioService.playerDuration())));
-                int color = fetchColor(getApplicationContext(), R.attr.colorPrimaryDark);
+                int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                 infoMsg(audioService.getCurrentTrackLabel(), color);
             }
 
-            int color = fetchColor(getApplicationContext(), R.attr.colorAccent);
+            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
             rewBtn.setEnabled(audioService.playerIsPlaying());
@@ -345,17 +345,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Context context = this;
-
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERSMISSIONS_REQUEST_STORAGE);
             return;
         }
 
         setContentView(R.layout.playlist);
-        init(context, 1);
+        init(this, 1);
 
-        mediaBrowser = new MediaBrowserCompat(context, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
+        mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
     }
 
     @Override
@@ -456,8 +454,8 @@ public class MainActivity extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // On créé un intent pour les notifications
-        final Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, notificationIntent, 0);
+        final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
 
         // On traite le changement d'état du bouton play
        /* playBtn.setOnClickListener(new View.OnClickListener() {
