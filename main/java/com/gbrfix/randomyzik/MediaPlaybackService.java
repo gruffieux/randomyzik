@@ -82,7 +82,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 session.setActive(true);
-                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
+                //startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
                 MediaDAO dao = new MediaDAO(getApplicationContext());
                 dao.open();

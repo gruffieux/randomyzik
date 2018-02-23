@@ -129,15 +129,17 @@ public class MainActivity extends AppCompatActivity {
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
-            // Get the token for the MediaSession
-            MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-
-            // Create a MediaControllerCompat
             try {
+                // Get the token for the MediaSession
+                MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+
+                // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(MainActivity.this, token);
                 MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                Log.v("IllegalStateException", e.getMessage());
+            } catch (IllegalStateException e) {
+                Log.v("IllegalStateException", e.getMessage());
             }
 
             // Finish building the UI
