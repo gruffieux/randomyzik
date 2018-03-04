@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.sqlite.SQLiteCursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -14,8 +13,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
-import android.support.v4.media.MediaDescriptionCompat;
-import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -34,7 +31,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
     private AudioManager.OnAudioFocusChangeListener afChangeListener;
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
-    private MediaPlayer player;
+    private MediaPlayer player = null;
+    private MediaProvider provider;
 
     @Nullable
     @Override
@@ -66,6 +64,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
+
+        provider = new MediaProvider(this);
     }
 
     @Override
@@ -76,30 +76,55 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            int state = session.getController().getPlaybackState().getState();
+
+            if (state == PlaybackStateCompat.STATE_PLAYING) {
+                session.getController().getTransportControls().pause();
+            } else {
+                session.getController().getTransportControls().play();
+            }
+
+            return super.onMediaButtonEvent(mediaButtonEvent);
+        }
+
+        @Override
         public void onPlay() {
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
             int res = manager.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 session.setActive(true);
-                //startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
+                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
-                MediaDAO dao = new MediaDAO(getApplicationContext());
-                dao.open();
-                SQLiteCursor cursor = dao.getAll();
-                if (cursor.moveToFirst()) {
-                    String path = cursor.getString(1);
-                    File file = new File(path);
-                    player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
-                    player.start();
-                    createNotification();
+                if (player == null || provider.getSelectId() > 0) {
+                    if (player != null) {
+                        player.release();
+                        player = null;
+                    }
+                    try {
+                        String path = provider.selectTrack();
+                        File file = new File(path);
+                        player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
+                        player.start();
+                        createNotification();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
+                else {
+                    player.start();
+                }
+                stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+                session.setPlaybackState(stateBuilder.build());
             }
         }
 
         @Override
         public void onPause() {
             player.pause();
+            stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
+            session.setPlaybackState(stateBuilder.build());
 
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
             manager.abandonAudioFocus(afChangeListener);

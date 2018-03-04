@@ -115,8 +115,11 @@ public class MainActivity extends AppCompatActivity {
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
+            playBtn.setImageResource(state.getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
+
             rewBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             rewBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+
             fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
         }
@@ -136,6 +139,8 @@ public class MainActivity extends AppCompatActivity {
                 // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(MainActivity.this, token);
                 MediaControllerCompat.setMediaController(MainActivity.this, mediaController);
+
+                mediaController.registerCallback(controllerCallback);
             } catch (RemoteException e) {
                 Log.v("IllegalStateException", e.getMessage());
             } catch (IllegalStateException e) {
@@ -172,13 +177,8 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                     }
-                    Log.v("state", String.valueOf(MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState()));
                 }
             });
-
-            MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(MainActivity.this);
-
-            mediaController.registerCallback(controllerCallback);
         }
     };
 
