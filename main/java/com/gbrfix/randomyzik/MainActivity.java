@@ -127,6 +127,35 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onMetadataChanged(MediaMetadataCompat metadata) {
         }
+
+        @Override
+        public void onSessionEvent(String event, Bundle extras) {
+            final TextView positionLabel = (TextView)findViewById(R.id.position);
+            final TextView durationLabel = (TextView)findViewById(R.id.duration);
+            final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+
+            switch (event) {
+                case "selectTrack":
+                    int currentId = extras.getInt("currentId");
+                    int duration = extras.getInt("duration");
+
+                    // Libellé de position et durée
+                    positionLabel.setText(dateFormat.format(new Date(0)));
+                    durationLabel.setText(dateFormat.format(new Date(duration)));
+
+                    // Barre de progression
+                    progressBar.setProgress(0);
+                    progressBar.setMax(duration);
+
+                    // Titre en cours
+                    MediaProvider mediaProvider = new MediaProvider(MainActivity.this);
+                    String label = mediaProvider.getTrackLabel(currentId);
+                    int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                    infoMsg(label, color);
+                    break;
+            }
+            super.onSessionEvent(event, extras);
+        }
     };
 
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {

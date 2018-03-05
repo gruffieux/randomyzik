@@ -103,11 +103,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
                         player = null;
                     }
                     try {
-                        String path = provider.selectTrack();
-                        File file = new File(path);
+                        Bundle bundle = provider.selectTrack();
+                        File file = new File(bundle.getString("path"));
                         player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
                         player.start();
                         createNotification();
+                        bundle.putInt("duration", player.getDuration());
+                        session.sendSessionEvent("selectTrack", bundle);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

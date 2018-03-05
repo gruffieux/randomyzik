@@ -2,6 +2,8 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
+import android.os.Bundle;
+
 import java.util.Random;
 
 /**
@@ -35,7 +37,7 @@ public class MediaProvider {
         this.mediaSignalListener = mediaSignalListener;
     }
 
-    public String selectTrack() throws Exception {
+    public Bundle selectTrack() throws Exception {
         dao.open();
 
         SQLiteCursor cursor = dao.getAll();
@@ -107,6 +109,26 @@ public class MediaProvider {
 
         dao.close();
 
-        return path;
+        Bundle bundle = new Bundle();
+        bundle.putString("path", path);
+        bundle.putInt("currentId", currentId);
+        bundle.putInt("total", total);
+        bundle.putInt("totalUnread", totalUnread);
+
+        return bundle;
+    }
+
+    public String getTrackLabel(int id) {
+        try {
+            dao.open();
+            SQLiteCursor cursor = dao.getFromId(id);
+            cursor.moveToFirst();
+            String label = cursor.getString(4) + " - " + cursor.getString(5) + " - " + cursor.getString(6);
+            dao.close();
+            return label;
+        }
+        catch (Exception e) {
+            return "";
+        }
     }
 }
