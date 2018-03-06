@@ -15,6 +15,7 @@ public class MediaProvider {
     public final static int MODE_ALBUM = 1;
 
     private int currentId, selectId;
+    private int total, totalRead;
     private int mode;
     private boolean lastOfAlbum;
     private MediaDAO dao;
@@ -23,6 +24,7 @@ public class MediaProvider {
 
     public MediaProvider(Context context) {
         currentId = selectId = 0;
+        total = totalRead = 0;
         mode = MODE_TRACK;
         lastOfAlbum = false;
         dao = new MediaDAO(context);
@@ -33,6 +35,14 @@ public class MediaProvider {
         return selectId;
     }
 
+    public int getTotal() {
+        return total;
+    }
+
+    public int getTotalRead() {
+        return totalRead;
+    }
+
     public void setMediaSignalListener(MediaSignal mediaSignalListener) {
         this.mediaSignalListener = mediaSignalListener;
     }
@@ -41,10 +51,11 @@ public class MediaProvider {
         dao.open();
 
         SQLiteCursor cursor = dao.getAll();
-        int total = cursor.getCount();
+        total = cursor.getCount();
 
         SQLiteCursor cursorUnread = dao.getUnread();
         int totalUnread = cursorUnread.getCount();
+        totalRead =  total - totalUnread;
 
         SQLiteCursor cursorSel = null;
         if (selectId > 0) {
@@ -105,30 +116,42 @@ public class MediaProvider {
         }
 
         currentId = cursor.getInt(0);
-        String path = cursor.getString(1);
+
+        Bundle media = new Bundle();
+        media.putInt("id", currentId);
+        media.putString("path", cursor.getString(1));
+        media.putString("title", cursor.getString(4));
+        media.putString("album", cursor.getString(5));
+        media.putString("artist", cursor.getString(6));
 
         dao.close();
 
         Bundle bundle = new Bundle();
-        bundle.putString("path", path);
-        bundle.putInt("currentId", currentId);
-        bundle.putInt("total", total);
-        bundle.putInt("totalUnread", totalUnread);
+        bundle.putBundle("media", media);
 
         return bundle;
     }
 
-    public String getTrackLabel(int id) {
-        try {
-            dao.open();
-            SQLiteCursor cursor = dao.getFromId(id);
-            cursor.moveToFirst();
-            String label = cursor.getString(4) + " - " + cursor.getString(5) + " - " + cursor.getString(6);
-            dao.close();
-            return label;
+    public static String getTrackLabel(String title, String album, String artist) {
+        String label = title;
+
+        if (!album.isEmpty()) {
+            label += " - " + album;
         }
-        catch (Exception e) {
-            return "";
+
+        if (!artist.isEmpty()) {
+            label += " - " + artist;
         }
+
+        return label;
+    }
+
+    public String getSummary() {
+        float percent = (float)totalRead / (float)total * 100;
+        float f = percent * 10;
+        int n = (int)f;
+        percent = (float)n / 10;
+
+        return String.format(context.getString(R.string.info_track_summary), totalRead+1, total, percent);
     }
 }

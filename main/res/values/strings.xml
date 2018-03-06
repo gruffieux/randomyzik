@@ -5,7 +5,7 @@
     <string name="err_no_perms">Read/write storage permissions required</string>
     <string name="err_all_read">Nothing else to read</string>
     <string name="info_play_end">Playlist ended</string>
-    <string name="info_track_summary">Track %1$d/%2$d, %3$.1f%% of playlist read.</string>
+    <string name="info_track_summary">Track %1$d/%2$d, %3$.1f%% read.</string>
     <string name="info_scanning">Scanning audio files, please wait...</string>
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Mark this track as unread?</string>

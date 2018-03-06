@@ -5,7 +5,7 @@
     <string name="err_no_perms">Le autorizzazioni di archiviazione di lettura/scrittura sono necessarie</string>
     <string name="err_all_read">Niente altro da leggere</string>
     <string name="info_play_end">La playlist è terminata</string>
-    <string name="info_track_summary">Traccia %1$d/%2$d, %3$.1f%% della playlist letto.</string>
+    <string name="info_track_summary">Traccia %1$d/%2$d, %3$.1f%% letto.</string>
     <string name="info_scanning">Scansione di file audio, attendere...</string>
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Indica questa traccia come non letto?</string>

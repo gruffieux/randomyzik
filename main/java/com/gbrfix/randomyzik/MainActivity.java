@@ -135,8 +135,8 @@ public class MainActivity extends AppCompatActivity {
             final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
 
             switch (event) {
-                case "selectTrack":
-                    int currentId = extras.getInt("currentId");
+                case "onTrackSelect":
+                    Bundle media = extras.getBundle("media");
                     int duration = extras.getInt("duration");
 
                     // Libellé de position et durée
@@ -148,11 +148,24 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setMax(duration);
 
                     // Titre en cours
-                    MediaProvider mediaProvider = new MediaProvider(MainActivity.this);
-                    String label = mediaProvider.getTrackLabel(currentId);
+                    String label = MediaProvider.getTrackLabel(media.getString("title"), media.getString("album"), media.getString("artist"));
                     int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                     infoMsg(label, color);
                     break;
+                case "onTrackProgress":
+                    final int position = extras.getInt("position");
+                    try {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                positionLabel.setText(dateFormat.format(new Date(position)));
+                                progressBar.setProgress(position);
+                            }
+                        });
+                    }
+                    catch (Exception e) {
+                        Log.v("Exception", e.getMessage());
+                    }
             }
             super.onSessionEvent(event, extras);
         }

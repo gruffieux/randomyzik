@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +14,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
+import android.support.v4.media.MediaDescriptionCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -26,6 +29,7 @@ import java.util.List;
  */
 
 public class MediaPlaybackService extends MediaBrowserServiceCompat {
+    public final static int ONGOING_NOTIFICATION_ID = 1;
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
     private AudioManager.OnAudioFocusChangeListener afChangeListener;
@@ -104,12 +108,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
                     }
                     try {
                         Bundle bundle = provider.selectTrack();
-                        File file = new File(bundle.getString("path"));
+                        Bundle media = bundle.getBundle("media");
+                        String path = media.getString("path");
+                        File file = new File(path);
                         player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
                         player.start();
-                        createNotification();
+                        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
+                                .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
+                                .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
+                                .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"));
+                        session.setMetadata(metaDataBuilder.build());
                         bundle.putInt("duration", player.getDuration());
-                        session.sendSessionEvent("selectTrack", bundle);
+                        session.sendSessionEvent("onTrackSelect", bundle);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -117,8 +127,32 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
                 else {
                     player.start();
                 }
+
+                // Upddate state
                 stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
                 session.setPlaybackState(stateBuilder.build());
+
+                createNotification();
+
+                // Progress thread
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int currentPosition = 0;
+                        int total = player.getDuration();
+                        Bundle bundle = new Bundle();
+                        while (currentPosition < total) {
+                            try {
+                                Thread.sleep(1000);
+                                currentPosition = player.getCurrentPosition();
+                            } catch (Exception e) {
+                                return;
+                            }
+                            bundle.putInt("position", currentPosition);
+                            session.sendSessionEvent("onTrackProgress", bundle);
+                        }
+                    }
+                }).start();
             }
         }
 
@@ -128,24 +162,27 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
             stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
             session.setPlaybackState(stateBuilder.build());
 
+            createNotification();
+
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
             manager.abandonAudioFocus(afChangeListener);
             unregisterReceiver(myNoisyAudioReceiver);
         }
     }
 
-    public void createNotification() {
+    private void createNotification() {
         MediaControllerCompat controller = session.getController();
-        //MediaMetadataCompat mediaMetadata = controller.getMetadata();
-        //MediaDescriptionCompat description = mediaMetadata.getDescription();
+        MediaMetadataCompat mediaMetadata = controller.getMetadata();
+        MediaDescriptionCompat description = mediaMetadata.getDescription();
+        String title = MediaProvider.getTrackLabel(description.getTitle().toString(), "", description.getSubtitle().toString());
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         builder
             // Add the metadata for the currently playing track
-            .setContentTitle("hello world")
-            .setContentText("teste")
-            .setSubText("This is a hello world test")
+            .setContentTitle(title)
+            .setContentText(description.getDescription())
+            .setSubText(provider.getSummary())
 
             // Enable launching the player by clicking the notification
             .setContentIntent(controller.getSessionActivity())
@@ -162,7 +199,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
-                R.drawable.ic_action_pause, "Pause",
+                controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "PlayPause",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
 
             // Take advantage of MediaStyle features
@@ -175,7 +212,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
                 .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)));
 
         // Display the notification and place the service in the foreground
-        startForeground(1, builder.build());
+        startForeground(ONGOING_NOTIFICATION_ID, builder.build());
     }
 
     private class BecomingNoisyReceiver extends BroadcastReceiver {
