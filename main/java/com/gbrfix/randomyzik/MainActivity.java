@@ -290,6 +290,7 @@ public class MainActivity extends AppCompatActivity {
 
             final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
             audioService = audioBinder.getService();
+            //audioService.setTest(true);
             audioService.setMediaSignalListener(new MediaSignal() {
                 @Override
                 public void onTrackRead(final boolean last) {
@@ -300,6 +301,7 @@ public class MainActivity extends AppCompatActivity {
                                 MediaDAO dao = new MediaDAO(MainActivity.this);
                                 dao.open();
                                 SQLiteCursor cursor = dao.getAllOrdered();
+                                int total = cursor.getCount();
                                 ListView listView = (ListView)findViewById(R.id.playlist);
                                 TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                                 adapter.changeCursor(cursor);
@@ -316,6 +318,15 @@ public class MainActivity extends AppCompatActivity {
                                     progressBar.setMax(0);
                                     int color = fetchColor(MainActivity.this, R.attr.colorAccent);
                                     infoMsg(getString(R.string.info_play_end), color);
+
+                                    // On notifie le premier-plan
+                                    Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
+                                            .setContentTitle(getText(R.string.info_play_end))
+                                            .setContentText(audioService.getSummary(total, total))
+                                            .setSmallIcon(R.drawable.ic_stat_audio)
+                                            .setContentIntent(pendingIntent)
+                                            .build();
+                                    audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
                                 }
                             }
                         });

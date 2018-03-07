@@ -66,7 +66,7 @@ public class PlaylistTest {
                 public void onTrackSelect(int id, int duration, int total, int totalRead) {
                     switch (currentTest) {
                         case TEST_PLAY_LAST_TRACK:
-                            assertEquals(total-1, totalRead);
+                            assertEquals(total, totalRead);
                             break;
                     }
                 }

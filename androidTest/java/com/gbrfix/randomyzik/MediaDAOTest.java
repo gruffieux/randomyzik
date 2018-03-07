@@ -17,14 +17,17 @@ import static org.junit.Assert.assertTrue;
  */
 
 @RunWith(AndroidJUnit4.class)
-public class MediaDAOTest extends MediaDAO {
+public class MediaDAOTest {
+    private  MediaDAO dao;
+
     public MediaDAOTest() {
-        super(InstrumentationRegistry.getTargetContext());
+        DAOBase.NAME = "playlist-test.db";
+        dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
     }
 
     @Before
     public void init() {
-        open();
+        dao.open();
     }
 
     @Test
@@ -33,7 +36,7 @@ public class MediaDAOTest extends MediaDAO {
         String artist = "";
 
         try {
-            getFromAlbum(album, artist, "unread");
+            dao.getFromAlbum(album, artist, "unread");
             assertTrue(true);
         }
         catch (Exception e) {
@@ -46,8 +49,23 @@ public class MediaDAOTest extends MediaDAO {
         String album = "abc";
 
         try {
-            getFromAlbum(album, null, "");
+            dao.getFromAlbum(album, null, "");
             assertTrue(true);
+        }
+        catch (Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void selectAlbumArtistVarious() {
+        String album = "The Complete Stax-Volt Singles: 1959-1968 (Disc 1)";
+        String artist = "Various";
+
+        try {
+            SQLiteCursor cursor = dao.getFromAlbum(album, artist, "");
+            assertEquals(23, cursor.getCount());
+            //assertTrue(true);
         }
         catch (Exception e) {
             assertTrue(false);
@@ -60,7 +78,7 @@ public class MediaDAOTest extends MediaDAO {
         String artist = "Alpha Blondy";
 
         try {
-            SQLiteCursor cursor = getFromAlbum(album, artist, "unread");
+            SQLiteCursor cursor = dao.getFromAlbum(album, artist, "unread");
             //assertEquals(10, cursor.getCount());
             assertTrue(true);
         }
@@ -74,7 +92,7 @@ public class MediaDAOTest extends MediaDAO {
         String artist = "Alpha Blondy";
 
         try {
-            SQLiteCursor cursor = getFromAlbum(null, artist, "");
+            SQLiteCursor cursor = dao.getFromAlbum(null, artist, "");
             //assertEquals(17, cursor.getCount());
             assertTrue(true);
         }
@@ -86,7 +104,7 @@ public class MediaDAOTest extends MediaDAO {
     @Test
     public void selectAlbumAllEmpty() {
         try {
-            SQLiteCursor cursor = getFromAlbum("", "", "");
+            SQLiteCursor cursor = dao.getFromAlbum("", "", "");
             //assertEquals(25, cursor.getCount());
             assertTrue(true);
         }
@@ -98,7 +116,7 @@ public class MediaDAOTest extends MediaDAO {
     @Test
     public void selectAlbumAllNull() {
         try {
-            SQLiteCursor cursor = getFromAlbum(null, null, "unread");
+            SQLiteCursor cursor = dao.getFromAlbum(null, null, "unread");
             //assertEquals(17, cursor.getCount());
             assertTrue(true);
         }
@@ -109,6 +127,6 @@ public class MediaDAOTest extends MediaDAO {
 
     @After
     public void destroy() {
-        close();
+        dao.close();
     }
 }

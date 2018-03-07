@@ -48,20 +48,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE `medias` ADD `album` TEXT;");
                 db.execSQL("ALTER TABLE `medias` ADD `artist` TEXT;");
 
-                // On met à jour avec les meta tags
-                MediaFactory factory = new MediaFactory();
-                SQLiteCursor cursor = (SQLiteCursor) db.rawQuery("SELECT * FROM `medias`", null);
-                while (cursor.moveToNext()) {
-                    int id = cursor.getInt(0);
-                    String path = cursor.getString(1);
-                    Media media = factory.createMedia(path);
-                    ContentValues values = new ContentValues();
-                    values.put("track_nb", media.getTrackNb());
-                    values.put("title", media.getTitle());
-                    values.put("album", media.getAlbum());
-                    values.put("artist", media.getArtist());
-                    db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
-                }
+                // On corrige tous les meta tags
+                fixMediaTags(db, true, true, true, true);
             }
             catch (Exception e) {
                 Log.v("Exception", e.getMessage());
@@ -70,20 +58,45 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (oldVersion <= 4 && newVersion >= 5) {
             try {
                 // On corrige les titres
-                MediaFactory factory = new MediaFactory();
-                SQLiteCursor cursor = (SQLiteCursor) db.rawQuery("SELECT `id`, `path` FROM `medias`", null);
-                while (cursor.moveToNext()) {
-                    int id = cursor.getInt(0);
-                    String path = cursor.getString(1);
-                    Media media = factory.createMedia(path);
-                    ContentValues values = new ContentValues();
-                    values.put("title", media.getTitle());
-                    db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
-                }
+                fixMediaTags(db, false, true, false, false);
             }
             catch (Exception e) {
                 Log.v("Exception", e.getMessage());
             }
+        }
+        if (oldVersion <= 5 && newVersion >= 6) {
+            try {
+                // On corrige les artistes
+                fixMediaTags(db, false, false, false, true);
+            }
+            catch (Exception e) {
+                Log.v("Exception", e.getMessage());
+            }
+        }
+    }
+
+    private void fixMediaTags(SQLiteDatabase db, boolean trackNb, boolean title, boolean album, boolean artist) {
+        MediaFactory factory = new MediaFactory();
+        SQLiteCursor cursor = (SQLiteCursor) db.rawQuery("SELECT `id`, `path` FROM `medias`", null);
+
+        while (cursor.moveToNext()) {
+            int id = cursor.getInt(0);
+            String path = cursor.getString(1);
+            Media media = factory.createMedia(path);
+            ContentValues values = new ContentValues();
+            if (trackNb) {
+                values.put("track_nb", media.getTrackNb());
+            }
+            if (title) {
+                values.put("title", media.getTitle());
+            }
+            if (album) {
+                values.put("album", media.getAlbum());
+            }
+            if (artist) {
+                values.put("artist", media.getArtist());
+            }
+            db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
         }
     }
 

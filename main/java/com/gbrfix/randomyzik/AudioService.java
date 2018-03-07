@@ -155,7 +155,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
         int n = (int)f;
         percent = (float)n / 10;
 
-        return String.format(getString(R.string.info_track_summary), totalRead+1, total, percent);
+        return String.format(getString(R.string.info_track_summary), totalRead, total, percent);
     }
 
     private void selectTrack() throws Exception {
@@ -245,7 +245,7 @@ public class AudioService extends IntentService implements MediaPlayer.OnComplet
             player.setOnCompletionListener(this);
             player.setOnErrorListener(this);
             int totalRead = total - totalUnread;
-            mediaSignalListener.onTrackSelect(currentId, player.getDuration(), total, totalRead);
+            mediaSignalListener.onTrackSelect(currentId, player.getDuration(), total, totalRead+1);
 
             new Thread(new Runnable() {
                 @Override
