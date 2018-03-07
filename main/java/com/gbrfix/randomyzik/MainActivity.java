@@ -240,6 +240,8 @@ public class MainActivity extends AppCompatActivity {
 
         void buildTransportControls() {
             ImageButton playBtn = findViewById(R.id.play);
+            ImageButton rewBtn = findViewById(R.id.rew);
+            ImageButton fwdBtn = findViewById(R.id.fwd);
 
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
@@ -254,6 +256,18 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                     }
+                }
+            });
+
+            rewBtn.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
+                }
+            });
+
+            fwdBtn.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
                 }
             });
         }
@@ -536,48 +550,6 @@ public class MainActivity extends AppCompatActivity {
         final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
         final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
 
-        // On traite le changement d'état du bouton play
-       /* playBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                clickPlayButton(true);
-            }
-        });*/
-
-        // On traite le changement d'état du bouton en arrière
-        rewBtn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    if (audioService != null) {
-                        audioService.rewind();
-                    }
-                }
-                catch (Exception e) {
-                    playBtn.setEnabled(false);
-                    rewBtn.setEnabled(false);
-                    fwdBtn.setEnabled(false);
-                    infoMsg(e.getMessage(), Color.RED);
-                }
-            }
-        });
-
-        // On traite le changement d'état du bouton en avant
-        fwdBtn.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    if (audioService != null) {
-                        audioService.forward();
-                    }
-                }
-                catch (Exception e) {
-                    playBtn.setEnabled(false);
-                    rewBtn.setEnabled(false);
-                    fwdBtn.setEnabled(false);
-                    infoMsg(e.getMessage(), Color.RED);
-                }
-            }
-        });
-
         // Changement du mode aléatoire
         modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -646,11 +618,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        bundle.putBoolean("isPlaying", audioService != null ? audioService.playerIsPlaying() : false);
+        /*bundle.putBoolean("isPlaying", audioService != null ? audioService.playerIsPlaying() : false);
         bundle.putInt("currentPosition", audioService != null ? audioService.playerPosition() : 0);
         bundle.putInt("duration", audioService != null ? audioService.playerDuration() : 0);
         bundle.putInt("mode", audioService != null ? audioService.getMode() : AudioService.MODE_TRACK);
-        bundle.putInt("scrollY", scrollY);
+        bundle.putInt("scrollY", scrollY);*/
 
         super.onSaveInstanceState(bundle);
     }
@@ -665,7 +637,7 @@ public class MainActivity extends AppCompatActivity {
 
         super.onRestoreInstanceState(bundle);
 
-        ListView listView = (ListView)findViewById(R.id.playlist);
+        /*ListView listView = (ListView)findViewById(R.id.playlist);
         if (listView != null) {
             listView.setSelection(scrollY);
         }
@@ -686,7 +658,7 @@ public class MainActivity extends AppCompatActivity {
         Switch modeBtn = (Switch)findViewById(R.id.mode);
         if (modeBtn != null) {
             modeBtn.setChecked(mode == AudioService.MODE_ALBUM);
-        }
+        }*/
     }
 
     @Override

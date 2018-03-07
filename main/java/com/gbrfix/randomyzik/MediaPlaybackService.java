@@ -24,6 +24,7 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -140,6 +141,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         try {
             provider.updateState("read");
             startNewTrack();
+            showNotification();
             args.putBoolean("last", false);
 
         }
@@ -175,9 +177,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 player = null;
             }
 
+            AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+            manager.abandonAudioFocus(MediaPlaybackService.this);
+            unregisterReceiver(myNoisyAudioReceiver);
+
             // Upddate state
             stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
+            session.setActive(false);
 
             stopForeground(true);
             stopSelf();
@@ -209,7 +216,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
                 session.setPlaybackState(stateBuilder.build());
 
-                createNotification();
+                showNotification();
 
                 // Progress thread
                 new Thread(new Runnable() {
@@ -240,11 +247,35 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
             session.setPlaybackState(stateBuilder.build());
 
-            createNotification();
+            showNotification();
 
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
             manager.abandonAudioFocus(MediaPlaybackService.this);
             unregisterReceiver(myNoisyAudioReceiver);
+        }
+
+        @Override
+        public void onRewind() {
+            try {
+                player.stop();
+                player.prepare();
+                player.seekTo(0);
+                player.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onSkipToNext() {
+            try {
+                provider.updateState("skip");
+                player.stop();
+                startNewTrack();
+                showNotification();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -268,9 +299,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player.setOnCompletionListener(MediaPlaybackService.this);
 
         MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
-                .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
-                .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"));
+            .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
+            .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
+            .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"))
+            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()) // A tester en voiture
+            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()); // A tester en voiture
 
         session.setMetadata(metaDataBuilder.build());
 
@@ -278,7 +311,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.sendSessionEvent("onTrackSelect", bundle);
     }
 
-    private void createNotification() {
+    private void showNotification() {
         MediaControllerCompat controller = session.getController();
         MediaMetadataCompat mediaMetadata = controller.getMetadata();
         MediaDescriptionCompat description = mediaMetadata.getDescription();
