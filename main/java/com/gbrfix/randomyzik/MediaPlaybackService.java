@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +21,7 @@ import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 
 import java.io.File;
 import java.util.List;
@@ -28,11 +30,10 @@ import java.util.List;
  * Created by gab on 14.01.2018.
  */
 
-public class MediaPlaybackService extends MediaBrowserServiceCompat {
+public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
     public final static int ONGOING_NOTIFICATION_ID = 1;
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
-    private AudioManager.OnAudioFocusChangeListener afChangeListener;
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
@@ -70,12 +71,86 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         setSessionToken(session.getSessionToken());
 
         provider = new MediaProvider(this);
+        //provider.setTest(true);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction() == "STOP") {
+            session.getController().getTransportControls().stop();
+        }
+
         MediaButtonReceiver.handleIntent(session, intent);
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onCustomAction(@NonNull String action, Bundle extras, @NonNull Result<Bundle> result) {
+        if (action == "changeMode") {
+            provider.setMode(extras.getInt("mode"));
+        }
+
+        super.onCustomAction(action, extras, result);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (player != null) {
+            player.release();
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        switch (focusChange) {
+            case AudioManager.AUDIOFOCUS_GAIN: // Your app has been granted audio focus again
+                // Raise volume to normal, restart playback if necessary
+                if (player != null) {
+                    player.setVolume(1f, 1f);
+                }
+                session.getController().getTransportControls().play();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
+                session.getController().getTransportControls().play();
+                break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+                if (player != null) {
+                    player.setVolume(1f, 1f);
+                }
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS: // Permanent loss of audio focus
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT: // Pause playback
+                session.getController().getTransportControls().pause();
+                break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: // Lower the volume, keep playing
+                if (player != null) {
+                    player.setVolume(0.5f, 0.5f);
+                }
+                break;
+        }
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        Bundle args = new Bundle();
+
+        try {
+            provider.updateState("read");
+            startNewTrack();
+            args.putBoolean("last", false);
+
+        }
+        catch (PlayEndException e) {
+            args.putBoolean("last", true);
+        }
+        catch (Exception e) {
+            Log.v("Exception", e.getMessage());
+        }
+
+        session.sendSessionEvent("onTrackRead", args);
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
@@ -93,33 +168,35 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         }
 
         @Override
+        public void onStop() {
+            if (player != null) {
+                player.stop();
+                player.release();
+                player = null;
+            }
+
+            // Upddate state
+            stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
+            session.setPlaybackState(stateBuilder.build());
+
+            stopForeground(true);
+            stopSelf();
+
+            super.onStop();
+        }
+
+        @Override
         public void onPlay() {
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            int res = manager.requestAudioFocus(afChangeListener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            int res = manager.requestAudioFocus(MediaPlaybackService.this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 session.setActive(true);
                 startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
                 if (player == null || provider.getSelectId() > 0) {
-                    if (player != null) {
-                        player.release();
-                        player = null;
-                    }
                     try {
-                        Bundle bundle = provider.selectTrack();
-                        Bundle media = bundle.getBundle("media");
-                        String path = media.getString("path");
-                        File file = new File(path);
-                        player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
-                        player.start();
-                        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
-                                .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
-                                .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
-                                .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"));
-                        session.setMetadata(metaDataBuilder.build());
-                        bundle.putInt("duration", player.getDuration());
-                        session.sendSessionEvent("onTrackSelect", bundle);
+                        startNewTrack();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -154,6 +231,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
                     }
                 }).start();
             }
+
         }
 
         @Override
@@ -165,9 +243,39 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
             createNotification();
 
             AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            manager.abandonAudioFocus(afChangeListener);
+            manager.abandonAudioFocus(MediaPlaybackService.this);
             unregisterReceiver(myNoisyAudioReceiver);
         }
+    }
+
+    private void startNewTrack() throws Exception {
+        if (player != null) {
+            player.release();
+            player = null;
+        }
+
+        Bundle bundle = provider.selectTrack();
+        Bundle media = bundle.getBundle("media");
+        String path = media.getString("path");
+        File file = new File(path);
+        player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
+
+        if (provider.isTest()) {
+            player.seekTo(player.getDuration() - 10);
+        }
+
+        player.start();
+        player.setOnCompletionListener(MediaPlaybackService.this);
+
+        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
+                .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"));
+
+        session.setMetadata(metaDataBuilder.build());
+
+        bundle.putInt("duration", player.getDuration());
+        session.sendSessionEvent("onTrackSelect", bundle);
     }
 
     private void createNotification() {
@@ -175,6 +283,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
         MediaMetadataCompat mediaMetadata = controller.getMetadata();
         MediaDescriptionCompat description = mediaMetadata.getDescription();
         String title = MediaProvider.getTrackLabel(description.getTitle().toString(), "", description.getSubtitle().toString());
+
+        Intent intent = new Intent(this, MediaPlaybackService.class);
+        intent.setAction("STOP");
+        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
@@ -199,13 +311,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat {
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
-                controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "PlayPause",
+                controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
+
+                // Add a pause button
+            .addAction(new NotificationCompat.Action(
+                R.drawable.ic_action_cancel, "Stop",
+                pendingIntent))
+                //MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)))
 
             // Take advantage of MediaStyle features
             .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(session.getSessionToken())
-                .setShowActionsInCompactView(0)
+                .setShowActionsInCompactView(0, 1)
 
                 // Add a cancel button
                 .setShowCancelButton(true)

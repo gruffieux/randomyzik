@@ -19,8 +19,8 @@ public class MediaProvider {
     private int mode;
     private boolean lastOfAlbum;
     private MediaDAO dao;
-    private MediaSignal mediaSignalListener;
     private Context context;
+    private boolean test;
 
     public MediaProvider(Context context) {
         currentId = selectId = 0;
@@ -29,6 +29,7 @@ public class MediaProvider {
         lastOfAlbum = false;
         dao = new MediaDAO(context);
         this.context = context;
+        test = false;
     }
 
     public int getSelectId() {
@@ -43,8 +44,16 @@ public class MediaProvider {
         return totalRead;
     }
 
-    public void setMediaSignalListener(MediaSignal mediaSignalListener) {
-        this.mediaSignalListener = mediaSignalListener;
+    public void setMode(int mode) {
+        this.mode = mode;
+    }
+
+    public boolean isTest() {
+        return test;
+    }
+
+    public void setTest(boolean test) {
+        this.test = test;
     }
 
     public Bundle selectTrack() throws Exception {
@@ -153,5 +162,15 @@ public class MediaProvider {
         percent = (float)n / 10;
 
         return String.format(context.getString(R.string.info_track_summary), totalRead+1, total, percent);
+    }
+
+    public void updateState(String flag) {
+        dao.open();
+
+        if (!dao.getDb().isReadOnly()) {
+            dao.updateFlag(currentId, flag);
+        }
+
+        dao.close();
     }
 }

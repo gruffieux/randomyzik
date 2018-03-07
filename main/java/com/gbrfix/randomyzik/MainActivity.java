@@ -129,10 +129,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onSessionEvent(String event, Bundle extras) {
+        public void onSessionEvent(String event, final Bundle extras) {
             final TextView positionLabel = (TextView)findViewById(R.id.position);
             final TextView durationLabel = (TextView)findViewById(R.id.duration);
             final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
+            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
 
             switch (event) {
                 case "onTrackSelect":
@@ -166,6 +168,39 @@ public class MainActivity extends AppCompatActivity {
                     catch (Exception e) {
                         Log.v("Exception", e.getMessage());
                     }
+                    break;
+                case "onTrackRead":
+                    try {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                MediaDAO dao = new MediaDAO(MainActivity.this);
+                                dao.open();
+                                SQLiteCursor cursor = dao.getAllOrdered();
+                                ListView listView = (ListView)findViewById(R.id.playlist);
+                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                                adapter.changeCursor(cursor);
+                                dao.close();
+                                if (extras.getBoolean("last")) {
+                                    //playBtn.setImageResource(R.drawable.ic_action_play);
+                                    rewBtn.setEnabled(false);
+                                    rewBtn.setColorFilter(Color.GRAY);
+                                    fwdBtn.setEnabled(false);
+                                    fwdBtn.setColorFilter(Color.GRAY);
+                                    positionLabel.setText("");
+                                    durationLabel.setText("");
+                                    progressBar.setProgress(0);
+                                    progressBar.setMax(0);
+                                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                                    infoMsg(getString(R.string.info_play_end), color);
+                                }
+                            }
+                        });
+                    }
+                    catch (Exception e) {
+                        Log.v("Exception", e.getMessage());
+                    }
+                    break;
             }
             super.onSessionEvent(event, extras);
         }
@@ -547,9 +582,9 @@ public class MainActivity extends AppCompatActivity {
         modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (audioService != null) {
-                    audioService.setMode(b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
-                }
+                Bundle args = new Bundle();
+                args.putInt("mode", b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
+                mediaBrowser.sendCustomAction("changeMode", args, null);
             }
         });
 
