@@ -36,6 +36,10 @@ public class MediaProvider {
         return selectId;
     }
 
+    public void setSelectId(int selectId) {
+        this.selectId = selectId;
+    }
+
     public int getTotal() {
         return total;
     }

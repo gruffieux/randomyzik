@@ -1,8 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +16,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -29,7 +26,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -45,10 +41,9 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
-    AudioService audioService = null;
-    private MediaBrowserCompat mediaBrowser = null;
+    MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
-    int scrollY = 0;
+    int currentId = 0;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -141,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 case "onTrackSelect":
                     Bundle media = extras.getBundle("media");
                     int duration = extras.getInt("duration");
+                    currentId = media.getInt("id");
 
                     // Libellé de position et durée
                     positionLabel.setText(dateFormat.format(new Date(0)));
@@ -306,141 +302,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private ServiceConnection audioConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            // On créé un intent pour les notifications
-            final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
-            final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
-
-            final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
-
-            final TextView positionLabel = (TextView)findViewById(R.id.position);
-            final TextView durationLabel = (TextView)findViewById(R.id.duration);
-            final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-
-            final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
-            audioService = audioBinder.getService();
-            //audioService.setTest(true);
-            audioService.setMediaSignalListener(new MediaSignal() {
-                @Override
-                public void onTrackRead(final boolean last) {
-                    try {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                MediaDAO dao = new MediaDAO(MainActivity.this);
-                                dao.open();
-                                SQLiteCursor cursor = dao.getAllOrdered();
-                                int total = cursor.getCount();
-                                ListView listView = (ListView)findViewById(R.id.playlist);
-                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                                adapter.changeCursor(cursor);
-                                dao.close();
-                                if (last) {
-                                    playBtn.setImageResource(R.drawable.ic_action_play);
-                                    rewBtn.setEnabled(false);
-                                    rewBtn.setColorFilter(Color.GRAY);
-                                    fwdBtn.setEnabled(false);
-                                    fwdBtn.setColorFilter(Color.GRAY);
-                                    positionLabel.setText("");
-                                    durationLabel.setText("");
-                                    progressBar.setProgress(0);
-                                    progressBar.setMax(0);
-                                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                                    infoMsg(getString(R.string.info_play_end), color);
-
-                                    // On notifie le premier-plan
-                                    Notification notification = new NotificationCompat.Builder(audioService.getApplicationContext())
-                                            .setContentTitle(getText(R.string.info_play_end))
-                                            .setContentText(audioService.getSummary(total, total))
-                                            .setSmallIcon(R.drawable.ic_stat_audio)
-                                            .setContentIntent(pendingIntent)
-                                            .build();
-                                    audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
-                                }
-                            }
-                        });
-                    }
-                    catch (Exception e) {
-                        Log.v("Exception", e.getMessage());
-                    }
-                }
-
-                @Override
-                public void onTrackResume(boolean allowed, boolean changeFocus) {
-                    if (allowed) {
-                        clickPlayButton(changeFocus);
-                    }
-                }
-
-                @Override
-                public void onTrackSelect(int id, int duration, int total, int totalRead) {
-                    // Libellé de position et durée
-                    positionLabel.setText(dateFormat.format(new Date(0)));
-                    durationLabel.setText(dateFormat.format(new Date(duration)));
-
-                    // Barre de progression
-                    progressBar.setProgress(0);
-                    progressBar.setMax(duration);
-
-                    // Titre en cours
-                    String label = audioService.getTrackLabel(id);
-                    int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                    infoMsg(label, color);
-
-                    // On notifie le premier-plan
-                    Notification notification = new NotificationCompat.Builder(MainActivity.this)
-                        .setContentTitle(label)
-                        .setContentText(audioService.getSummary(total, totalRead))
-                        .setSmallIcon(R.drawable.ic_stat_audio)
-                        .setContentIntent(pendingIntent)
-                        .build();
-                    audioService.startForeground(AudioService.ONGOING_NOTIFICATION_ID, notification);
-                }
-
-                @Override
-                public void onTrackProgress(final int position) {
-                    try {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                positionLabel.setText(dateFormat.format(new Date(position)));
-                                progressBar.setProgress(position);
-                            }
-                        });
-                    }
-                    catch (Exception e) {
-                        Log.v("Exception", e.getMessage());
-                    }
-                }
-            });
-            audioService.setBound(true);
-
-            if (audioService.playerIsActive()) {
-                positionLabel.setText(dateFormat.format(new Date(audioService.playerPosition())));
-                durationLabel.setText(dateFormat.format(new Date(audioService.playerDuration())));
-                int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                infoMsg(audioService.getCurrentTrackLabel(), color);
-            }
-
-            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-            playBtn.setEnabled(true);
-            playBtn.setColorFilter(color);
-            rewBtn.setEnabled(audioService.playerIsPlaying());
-            rewBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : color);
-            fwdBtn.setEnabled(audioService.playerIsPlaying());
-            fwdBtn.setColorFilter(audioService.playerIsPlaying() == false ? Color.GRAY : color);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            audioService.setBound(false);
-        }
-    };
-
     public int fetchColor( Context c, int id ) {
         int[] attrs = { id };
         TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs );
@@ -511,40 +372,14 @@ public class MainActivity extends AppCompatActivity {
         mediaBrowser.disconnect();
     }
 
-    protected void clickPlayButton(boolean changeFocus) {
-        ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-        ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-        ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
-
-        try {
-            boolean playing = false;
-            if (audioService != null) {
-                audioService.resume(changeFocus);
-                playing = audioService.playerIsPlaying();
-            }
-            int color = fetchColor(this, R.attr.colorAccent);
-            rewBtn.setEnabled(playing);
-            rewBtn.setColorFilter(playing == true ? color :  Color.GRAY);
-            fwdBtn.setEnabled(playing);
-            fwdBtn.setColorFilter(playing == true ? color : Color.GRAY);
-            playBtn.setImageResource(playing == true ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
-        }
-        catch (Exception e) {
-            playBtn.setEnabled(false);
-            rewBtn.setEnabled(false);
-            fwdBtn.setEnabled(false);
-            infoMsg(e.getMessage(), Color.RED);
-        }
-    }
-
     protected void init(final Context context, int perms) {
         // On récup les éléments de l'UI
-        final ListView listView = (ListView)findViewById(R.id.playlist);
-        final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-        final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-        final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+        final ListView listView = findViewById(R.id.playlist);
+        final ImageButton playBtn = findViewById(R.id.play);
+        final ImageButton rewBtn = findViewById(R.id.rew);
+        final ImageButton fwdBtn = findViewById(R.id.fwd);
 
-        LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
+        LinearLayout controlLayout = findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
         playBtn.setEnabled(false);
         playBtn.setColorFilter(Color.GRAY);
@@ -584,26 +419,7 @@ public class MainActivity extends AppCompatActivity {
             infoMsg(e.getMessage(), Color.RED);
         }
 
-        // On se connecte au service audio
-        //final Intent intent = new Intent(this, AudioService.class);
-        //bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-
-        // On créé un intent pour les notifications
-        final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
-
-        // On mémorise la position du scroll
-        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView absListView, int i) {
-            }
-
-            @Override
-            public void onScroll(AbsListView absListView, int i, int i1, int i2) {
-                scrollY = i;
-            }
-        });
 
         // Dialogue d'édition du flag pour une piste
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -611,7 +427,6 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
                 dialog.setId((int)id);
-                dialog.setLabel(audioService.getTrackLabel((int)id));
                 dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
             }
         });
@@ -627,11 +442,10 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Sélection de la piste en cours
-        TextView trackInfo = (TextView)findViewById(R.id.infoMsg);
+        TextView trackInfo = findViewById(R.id.infoMsg);
         trackInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int currentId = audioService.getCurrentId();
                 if (currentId > 0) {
                     TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
                     int pos = adapter.findView(currentId);
@@ -651,12 +465,16 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
+        bundle.putInt("currentId", currentId);
+
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         super.onRestoreInstanceState(bundle);
+
+        currentId = bundle.getInt("currentId");
     }
 
     @Override

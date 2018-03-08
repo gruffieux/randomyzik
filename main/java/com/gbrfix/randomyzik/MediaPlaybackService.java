@@ -91,6 +91,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setMode(extras.getInt("mode"));
         }
 
+        if (action == "selectTrack") {
+            provider.setSelectId(extras.getInt("id"));
+        }
+
         super.onCustomAction(action, extras, result);
     }
 

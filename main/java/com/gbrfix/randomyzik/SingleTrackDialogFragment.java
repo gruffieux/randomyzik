@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
+import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatDialogFragment;
 import android.util.Log;
@@ -16,20 +17,14 @@ import android.widget.ListView;
  */
 
 public class SingleTrackDialogFragment extends AppCompatDialogFragment {
-    int id;
-    String label;
+    private int id;
+    private MediaDAO dao;
 
     public void setId(int id) {
         this.id = id;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
     private void resetFlag(final Activity activity) {
-        final MediaDAO dao = new MediaDAO(getContext());
-
         dao.open();
         dao.updateFlag(id, "unread");
         dao.close();
@@ -55,9 +50,16 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final MainActivity activity = (MainActivity)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        dao = new MediaDAO(getContext());
+
+        dao.open();
+        SQLiteCursor cursor = dao.getFromId(id);
+        cursor.moveToFirst();
+        String title = cursor.getString(4);
+        dao.close();
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
-            .setTitle(label)
+            .setTitle(title)
             .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -68,11 +70,10 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag(activity);
-                    if (activity.audioService.playerIsPlaying()) {
-                        activity.clickPlayButton(true);
-                    }
-                    activity.audioService.setSelectId(id);
-                    activity.clickPlayButton(true);
+                    Bundle args = new Bundle();
+                    args.putInt("id", id);
+                    activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
+                    MediaControllerCompat.getMediaController(activity).getTransportControls().play();
                 }
             })
             .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
