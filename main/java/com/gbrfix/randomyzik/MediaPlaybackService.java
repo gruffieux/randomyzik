@@ -158,13 +158,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-            int state = session.getController().getPlaybackState().getState();
-
-            if (state == PlaybackStateCompat.STATE_PLAYING) {
-                session.getController().getTransportControls().pause();
-            } else {
-                session.getController().getTransportControls().play();
-            }
+//            int state = session.getController().getPlaybackState().getState();
+//
+//            if (state == PlaybackStateCompat.STATE_PLAYING) {
+//                session.getController().getTransportControls().pause();
+//            } else {
+//                session.getController().getTransportControls().play();
+//            }
 
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
@@ -177,12 +177,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 player = null;
             }
 
-            AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            manager.abandonAudioFocus(MediaPlaybackService.this);
-            unregisterReceiver(myNoisyAudioReceiver);
+            try {
+                AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+                manager.abandonAudioFocus(MediaPlaybackService.this);
+                unregisterReceiver(myNoisyAudioReceiver);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
 
             // Upddate state
-            stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
+            stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
 
@@ -213,7 +218,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
 
                 // Upddate state
-                stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
                 session.setPlaybackState(stateBuilder.build());
 
                 showNotification();
@@ -229,6 +234,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             try {
                                 Thread.sleep(1000);
                                 currentPosition = player.getCurrentPosition();
+                                stateBuilder.setBufferedPosition(currentPosition);
+                                session.setPlaybackState(stateBuilder.build());
                             } catch (Exception e) {
                                 return;
                             }
@@ -244,7 +251,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onPause() {
             player.pause();
-            stateBuilder = new PlaybackStateCompat.Builder().setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
+            stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
             session.setPlaybackState(stateBuilder.build());
 
             showNotification();
@@ -303,7 +310,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"))
             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()) // A tester en voiture
-            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()); // A tester en voiture
+            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester en voiture
+            .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
 
         session.setMetadata(metaDataBuilder.build());
 

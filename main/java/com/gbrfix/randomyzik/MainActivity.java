@@ -13,6 +13,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -242,10 +243,32 @@ public class MainActivity extends AppCompatActivity {
             ImageButton playBtn = findViewById(R.id.play);
             ImageButton rewBtn = findViewById(R.id.rew);
             ImageButton fwdBtn = findViewById(R.id.fwd);
+            Switch modeBtn = findViewById(R.id.mode);
+            TextView positionLabel = findViewById(R.id.position);
+            TextView durationLabel = findViewById(R.id.duration);
+            ProgressBar progressBar = findViewById(R.id.progressBar);
 
+            int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
+            playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
+            rewBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
+            rewBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+            fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
+            fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+
+            if (state == PlaybackStateCompat.STATE_PLAYING) {
+                MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
+                long duration = metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
+                durationLabel.setText(dateFormat.format(new Date(duration)));
+                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
+                long position = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getBufferedPosition();
+                positionLabel.setText(dateFormat.format(new Date(position)));
+                progressBar.setMax((int)duration);
+                progressBar.setProgress((int)position);
+            }
 
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -268,6 +291,16 @@ public class MainActivity extends AppCompatActivity {
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
+                }
+            });
+
+            // Changement du mode aléatoire
+            modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    Bundle args = new Bundle();
+                    args.putInt("mode", b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK);
+                    mediaBrowser.sendCustomAction("changeMode", args, null);
                 }
             });
         }
@@ -510,7 +543,6 @@ public class MainActivity extends AppCompatActivity {
         final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
         final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
         final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
-        Switch modeBtn = (Switch)findViewById(R.id.mode);
 
         LinearLayout controlLayout = (LinearLayout)findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
@@ -560,16 +592,6 @@ public class MainActivity extends AppCompatActivity {
         // On créé un intent pour les notifications
         final Intent notificationIntent = new Intent(MainActivity.this, MainActivity.class);
         final PendingIntent pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, notificationIntent, 0);
-
-        // Changement du mode aléatoire
-        modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                Bundle args = new Bundle();
-                args.putInt("mode", b == true ? AudioService.MODE_ALBUM : AudioService.MODE_TRACK);
-                mediaBrowser.sendCustomAction("changeMode", args, null);
-            }
-        });
 
         // On mémorise la position du scroll
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
@@ -629,47 +651,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        /*bundle.putBoolean("isPlaying", audioService != null ? audioService.playerIsPlaying() : false);
-        bundle.putInt("currentPosition", audioService != null ? audioService.playerPosition() : 0);
-        bundle.putInt("duration", audioService != null ? audioService.playerDuration() : 0);
-        bundle.putInt("mode", audioService != null ? audioService.getMode() : AudioService.MODE_TRACK);
-        bundle.putInt("scrollY", scrollY);*/
-
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
-        boolean isPlaying = bundle.getBoolean("isPlaying");
-        int currentPosition = bundle.getInt("currentPosition");
-        int duration = bundle.getInt("duration");
-        int mode = bundle.getInt("mode");
-        scrollY = bundle.getInt("scrollY");
-
         super.onRestoreInstanceState(bundle);
-
-        /*ListView listView = (ListView)findViewById(R.id.playlist);
-        if (listView != null) {
-            listView.setSelection(scrollY);
-        }
-
-        ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-        if (progressBar != null) {
-            progressBar.setMax(duration);
-            progressBar.setProgress(currentPosition);
-        }
-
-        ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-        if (playBtn != null) {
-            if (isPlaying) {
-                playBtn.setImageResource(R.drawable.ic_action_pause);
-            }
-        }
-
-        Switch modeBtn = (Switch)findViewById(R.id.mode);
-        if (modeBtn != null) {
-            modeBtn.setChecked(mode == AudioService.MODE_ALBUM);
-        }*/
     }
 
     @Override
