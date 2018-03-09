@@ -5,10 +5,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -39,6 +42,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
     private MediaProvider provider;
+    private AudioFocusRequest focusRequest;
+    private  boolean changeFocus = true;
 
     @Nullable
     @Override
@@ -73,6 +78,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         provider = new MediaProvider(this);
         //provider.setTest(true);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                .setAudioAttributes(attributes)
+                .build();
+        }
     }
 
     @Override
@@ -95,6 +110,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setSelectId(extras.getInt("id"));
         }
 
+        if (action == "test") {
+            provider.setTest(true);
+        }
+
         super.onCustomAction(action, extras, result);
     }
 
@@ -115,10 +134,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 if (player != null) {
                     player.setVolume(1f, 1f);
                 }
+                changeFocus = true;
                 session.getController().getTransportControls().play();
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_EXCLUSIVE:
+                changeFocus = false;
                 session.getController().getTransportControls().play();
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
@@ -127,7 +148,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
                 break;
             case AudioManager.AUDIOFOCUS_LOSS: // Permanent loss of audio focus
+                changeFocus = true;
+                session.getController().getTransportControls().pause();
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT: // Pause playback
+                changeFocus = false;
                 session.getController().getTransportControls().pause();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: // Lower the volume, keep playing
@@ -136,6 +160,34 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
                 break;
         }
+    }
+
+    private int requestAudioFocus() {
+        if (!changeFocus) {
+            return AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        }
+
+        AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return manager.requestAudioFocus(focusRequest);
+        }
+
+        return manager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+    }
+
+    private void abandonAudioFocus() {
+        if (!changeFocus) {
+            return;
+        }
+
+        AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manager.abandonAudioFocusRequest(focusRequest);
+        }
+
+        manager.abandonAudioFocus(this);
     }
 
     @Override
@@ -162,14 +214,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-//            int state = session.getController().getPlaybackState().getState();
-//
-//            if (state == PlaybackStateCompat.STATE_PLAYING) {
-//                session.getController().getTransportControls().pause();
-//            } else {
-//                session.getController().getTransportControls().play();
-//            }
-
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
 
@@ -182,8 +226,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
 
             try {
-                AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-                manager.abandonAudioFocus(MediaPlaybackService.this);
+                abandonAudioFocus();
                 unregisterReceiver(myNoisyAudioReceiver);
             }
             catch (Exception e) {
@@ -203,8 +246,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlay() {
-            AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            int res = manager.requestAudioFocus(MediaPlaybackService.this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 session.setActive(true);
@@ -259,9 +301,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             session.setPlaybackState(stateBuilder.build());
 
             showNotification();
-
-            AudioManager manager = (AudioManager)getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
-            manager.abandonAudioFocus(MediaPlaybackService.this);
+            abandonAudioFocus();
             unregisterReceiver(myNoisyAudioReceiver);
         }
 
@@ -310,16 +350,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player.setOnCompletionListener(MediaPlaybackService.this);
 
         MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
+            .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getInt("id")))
             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"))
-            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()) // A tester en voiture
-            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester en voiture
+            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()) // A tester
+            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
             .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
 
         session.setMetadata(metaDataBuilder.build());
 
         bundle.putInt("duration", player.getDuration());
+        bundle.putInt("total", provider.getTotal());
+        bundle.putInt("totalRead", provider.getTotalRead());
         session.sendSessionEvent("onTrackSelect", bundle);
     }
 
@@ -382,7 +425,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
-                player.pause();
+                session.getController().getTransportControls().pause();
             }
         }
     }

@@ -48,9 +48,9 @@ public class MainActivity extends AppCompatActivity {
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            final ImageButton playBtn = (ImageButton)findViewById(R.id.play);
-            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+            final ImageButton playBtn = findViewById(R.id.play);
+            final ImageButton rewBtn = findViewById(R.id.rew);
+            final ImageButton fwdBtn = findViewById(R.id.fwd);
 
             // Service de scanning
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             playBtn.setEnabled(true);
-                            TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
+                            TextView infoMsg = findViewById(R.id.infoMsg);
                             if (infoMsg.getText().equals(getText(R.string.info_scanning))) {
                                 infoMsg.setText("");
                             }
@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                                     MediaDAO dao = new MediaDAO(MainActivity.this);
                                     dao.open();
                                     SQLiteCursor cursor = dao.getAllOrdered();
-                                    ListView listView = (ListView) findViewById(R.id.playlist);
+                                    ListView listView = findViewById(R.id.playlist);
                                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                                     adapter.changeCursor(cursor);
                                     dao.close();
@@ -126,11 +126,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            final TextView positionLabel = (TextView)findViewById(R.id.position);
-            final TextView durationLabel = (TextView)findViewById(R.id.duration);
-            final ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
-            final ImageButton rewBtn = (ImageButton)findViewById(R.id.rew);
-            final ImageButton fwdBtn = (ImageButton)findViewById(R.id.fwd);
+            final TextView positionLabel = findViewById(R.id.position);
+            final TextView durationLabel = findViewById(R.id.duration);
+            final ProgressBar progressBar = findViewById(R.id.progressBar);
+            final ImageButton rewBtn = findViewById(R.id.rew);
+            final ImageButton fwdBtn = findViewById(R.id.fwd);
 
             switch (event) {
                 case "onTrackSelect":
@@ -246,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
 
             int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
             playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
@@ -254,16 +255,18 @@ public class MainActivity extends AppCompatActivity {
             fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
 
-            if (state == PlaybackStateCompat.STATE_PLAYING) {
+            if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
+                currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 long duration = metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
-                durationLabel.setText(dateFormat.format(new Date(duration)));
-                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
                 long position = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getBufferedPosition();
+                durationLabel.setText(dateFormat.format(new Date(duration)));
                 positionLabel.setText(dateFormat.format(new Date(position)));
                 progressBar.setMax((int)duration);
                 progressBar.setProgress((int)position);
+                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
+
             }
 
             playBtn.setOnClickListener(new View.OnClickListener() {
@@ -315,6 +318,8 @@ public class MainActivity extends AppCompatActivity {
             return super.onKeyDown(keyCode, event);
         }
         switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_REWIND:
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
             case KeyEvent.KEYCODE_MEDIA_PLAY:
                 MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
                 return true;
@@ -465,16 +470,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        bundle.putInt("currentId", currentId);
-
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         super.onRestoreInstanceState(bundle);
-
-        currentId = bundle.getInt("currentId");
     }
 
     @Override
