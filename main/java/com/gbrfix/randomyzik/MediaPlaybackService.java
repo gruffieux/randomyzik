@@ -202,6 +202,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         }
         catch (PlayEndException e) {
+            session.getController().getTransportControls().stop();
             args.putBoolean("last", true);
         }
         catch (Exception e) {
@@ -249,47 +250,48 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                session.setActive(true);
-                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
-                registerReceiver(myNoisyAudioReceiver, intentFilter);
-                if (player == null || provider.getSelectId() > 0) {
-                    try {
+                try {
+                    session.setActive(true);
+                    startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
+                    registerReceiver(myNoisyAudioReceiver, intentFilter);
+                    if (player == null || provider.getSelectId() > 0) {
                         startNewTrack();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } else {
+                        player.start();
                     }
-                }
-                else {
-                    player.start();
-                }
 
-                // Upddate state
-                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
-                session.setPlaybackState(stateBuilder.build());
+                    // Upddate state
+                    stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+                    session.setPlaybackState(stateBuilder.build());
 
-                showNotification();
+                    showNotification();
 
-                // Progress thread
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        int currentPosition = 0;
-                        int total = player.getDuration();
-                        Bundle bundle = new Bundle();
-                        while (currentPosition < total) {
-                            try {
-                                Thread.sleep(1000);
-                                currentPosition = player.getCurrentPosition();
-                                stateBuilder.setBufferedPosition(currentPosition);
-                                session.setPlaybackState(stateBuilder.build());
-                            } catch (Exception e) {
-                                return;
+                    // Progress thread
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int currentPosition = 0;
+                            int total = player.getDuration();
+                            Bundle bundle = new Bundle();
+                            while (currentPosition < total) {
+                                try {
+                                    Thread.sleep(1000);
+                                    currentPosition = player.getCurrentPosition();
+                                    stateBuilder.setBufferedPosition(currentPosition);
+                                    session.setPlaybackState(stateBuilder.build());
+                                } catch (Exception e) {
+                                    return;
+                                }
+                                bundle.putInt("position", currentPosition);
+                                session.sendSessionEvent("onTrackProgress", bundle);
                             }
-                            bundle.putInt("position", currentPosition);
-                            session.sendSessionEvent("onTrackProgress", bundle);
                         }
-                    }
-                }).start();
+                    }).start();
+                } catch (Exception e) {
+                    Bundle args = new Bundle();
+                    args.putString("message", e.getMessage());
+                    session.sendSessionEvent("onError", args);
+                }
             }
 
         }

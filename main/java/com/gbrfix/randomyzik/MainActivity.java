@@ -129,8 +129,6 @@ public class MainActivity extends AppCompatActivity {
             final TextView positionLabel = findViewById(R.id.position);
             final TextView durationLabel = findViewById(R.id.duration);
             final ProgressBar progressBar = findViewById(R.id.progressBar);
-            final ImageButton rewBtn = findViewById(R.id.rew);
-            final ImageButton fwdBtn = findViewById(R.id.fwd);
 
             switch (event) {
                 case "onTrackSelect":
@@ -153,50 +151,28 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case "onTrackProgress":
                     final int position = extras.getInt("position");
-                    try {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                positionLabel.setText(dateFormat.format(new Date(position)));
-                                progressBar.setProgress(position);
-                            }
-                        });
-                    }
-                    catch (Exception e) {
-                        Log.v("Exception", e.getMessage());
-                    }
+                    positionLabel.setText(dateFormat.format(new Date(position)));
+                    progressBar.setProgress(position);
                     break;
                 case "onTrackRead":
-                    try {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                MediaDAO dao = new MediaDAO(MainActivity.this);
-                                dao.open();
-                                SQLiteCursor cursor = dao.getAllOrdered();
-                                ListView listView = (ListView)findViewById(R.id.playlist);
-                                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                                adapter.changeCursor(cursor);
-                                dao.close();
-                                if (extras.getBoolean("last")) {
-                                    //playBtn.setImageResource(R.drawable.ic_action_play);
-                                    rewBtn.setEnabled(false);
-                                    rewBtn.setColorFilter(Color.GRAY);
-                                    fwdBtn.setEnabled(false);
-                                    fwdBtn.setColorFilter(Color.GRAY);
-                                    positionLabel.setText("");
-                                    durationLabel.setText("");
-                                    progressBar.setProgress(0);
-                                    progressBar.setMax(0);
-                                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                                    infoMsg(getString(R.string.info_play_end), color);
-                                }
-                            }
-                        });
+                    MediaDAO dao = new MediaDAO(MainActivity.this);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAllOrdered();
+                    ListView listView = findViewById(R.id.playlist);
+                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                    adapter.changeCursor(cursor);
+                    dao.close();
+                    if (extras.getBoolean("last")) {
+                        positionLabel.setText("");
+                        durationLabel.setText("");
+                        progressBar.setProgress(0);
+                        progressBar.setMax(0);
+                        color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                        infoMsg(getString(R.string.info_play_end), color);
                     }
-                    catch (Exception e) {
-                        Log.v("Exception", e.getMessage());
-                    }
+                    break;
+                case "onError":
+                    infoMsg(extras.getString("message"), Color.RED);
                     break;
             }
             super.onSessionEvent(event, extras);
@@ -247,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
             int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
+            // Set media button state
             playBtn.setEnabled(true);
             playBtn.setColorFilter(color);
             playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
@@ -255,6 +232,10 @@ public class MainActivity extends AppCompatActivity {
             fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
 
+            // Set mode switcher state
+            changeMode(modeBtn.isChecked());
+
+            // Set controls info with current track
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
@@ -266,9 +247,9 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.setProgress((int)position);
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                 infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
-
             }
 
+            // Handle play button
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -281,27 +262,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
                 }
             });
 
+            // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
                 }
             });
 
-            // Changement du mode aléatoire
+            // Handle mode switcher
             modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    Bundle args = new Bundle();
-                    args.putInt("mode", b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK);
-                    mediaBrowser.sendCustomAction("changeMode", args, null);
+                    changeMode(b);
                 }
             });
+        }
+
+        void changeMode(boolean b) {
+            Bundle args = new Bundle();
+            args.putInt("mode", b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK);
+            mediaBrowser.sendCustomAction("changeMode", args, null);
         }
     };
 
@@ -470,12 +457,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
+        Switch modeBtn = findViewById(R.id.mode);
+
+        bundle.putBoolean("mode", modeBtn.isChecked());
+
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         super.onRestoreInstanceState(bundle);
+
+        Switch modeBtn = findViewById(R.id.mode);
+
+        modeBtn.setChecked(bundle.getBoolean("mode"));
     }
 
     @Override
