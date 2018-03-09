@@ -1,16 +1,23 @@
 package com.gbrfix.randomyzik;
 
+import android.app.Activity;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.database.sqlite.SQLiteCursor;
-import android.os.IBinder;
+import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.rule.ServiceTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -18,7 +25,6 @@ import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * Created by gab on 01.10.2017.
@@ -32,18 +38,24 @@ public class PlaylistTest {
     final static int TEST_PLAY_ENDED_LIST = 4;
 
     int currentTest, trackCount, trackTotal;
-    AudioService audioService = null;
+    MediaBrowserCompat mediaBrowser = null;
 
-    private ServiceConnection audioConnection = new ServiceConnection() {
+    private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            final AudioService.AudioBinder audioBinder = (AudioService.AudioBinder)iBinder;
-            audioService = audioBinder.getService();
-            audioService.setMediaSignalListener(new MediaSignal() {
-                @Override
-                public void onTrackRead(boolean last) {
+        public void onSessionEvent(String event, final Bundle extras) {
+            switch (event) {
+                case "onTrackSelect":
+                    switch (currentTest) {
+                        case TEST_PLAY_LAST_TRACK:
+                            assertEquals(extras.getInt("total"), extras.getInt("totalRead"));
+                            break;
+                    }
+                    break;
+                case "onTrackProgress":
+                    break;
+                case "onTrackRead":
                     trackCount++;
-                    if (last) {
+                    if (extras.getBoolean("last")) {
                         switch (currentTest) {
                             case TEST_PLAY_ALL_TRACKS:
                             case TEST_PLAY_ALL_ALBUMS:
@@ -51,63 +63,63 @@ public class PlaylistTest {
                             case TEST_PLAY_ENDED_LIST:
                                 assertEquals(trackTotal, trackCount);
                                 assertEquals(100, trackCount/trackTotal*100);
-                                assertFalse(audioService.playerIsActive());
                                 break;
                         }
                         currentTest = 0;
                     }
-                }
-
-                @Override
-                public void onTrackResume(boolean allowed, boolean changeFocus) {
-                }
-
-                @Override
-                public void onTrackSelect(int id, int duration, int total, int totalRead) {
-                    switch (currentTest) {
-                        case TEST_PLAY_LAST_TRACK:
-                            assertEquals(total, totalRead);
-                            break;
-                    }
-                }
-
-                @Override
-                public void onTrackProgress(int position) {
-                }
-            });
-            audioService.setBound(true);
-            switch (currentTest) {
-                case TEST_PLAY_ALL_TRACKS:
-                    audioService.setMode(AudioService.MODE_TRACK);
-                    break;
-                case TEST_PLAY_ALL_ALBUMS:
-                    audioService.setMode(AudioService.MODE_ALBUM);
                     break;
             }
-            switch (currentTest) {
-                case TEST_PLAY_ALL_TRACKS:
-                case TEST_PLAY_ALL_ALBUMS:
-                case TEST_PLAY_LAST_TRACK:
-                case TEST_PLAY_ENDED_LIST:
-                    try {
-                        audioService.setTest(true);
-                        audioService.resume(true);
-                    }
-                    catch (PlayEndException e) {
-                        assertFalse(audioService.playerIsActive());
-                        currentTest = 0;
-                    }
-                    catch (Exception e) {
-                        assertTrue(false);
-                        currentTest = 0;
-                    }
-                    break;
+            super.onSessionEvent(event, extras);
+        }
+    };
+
+    private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
+        @Override
+        public void onConnected() {
+            try {
+                // Get the token for the MediaSession
+                MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+
+                // Create a MediaControllerCompat
+                MediaControllerCompat mediaController = new MediaControllerCompat(InstrumentationRegistry.getContext(), token);
+
+                mediaController.registerCallback(controllerCallback);
+
+                Bundle args = new Bundle();
+                switch (currentTest) {
+                    case TEST_PLAY_ALL_TRACKS:
+                        args.putInt("mode", MediaProvider.MODE_TRACK);
+                        mediaBrowser.sendCustomAction("changeMode", args, null);
+                        break;
+                    case TEST_PLAY_ALL_ALBUMS:
+                        args.putInt("mode", MediaProvider.MODE_ALBUM);
+                        mediaBrowser.sendCustomAction("changeMode", args, null);
+                        break;
+                }
+                switch (currentTest) {
+                    case TEST_PLAY_ALL_TRACKS:
+                    case TEST_PLAY_ALL_ALBUMS:
+                    case TEST_PLAY_LAST_TRACK:
+                    case TEST_PLAY_ENDED_LIST:
+                        mediaBrowser.sendCustomAction("test", null, null);
+                        mediaController.getTransportControls().play();
+                        break;
+                }
+            } catch (RemoteException e) {
+                Log.v("IllegalStateException", e.getMessage());
+            } catch (IllegalStateException e) {
+                Log.v("IllegalStateException", e.getMessage());
             }
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            audioService.setBound(false);
+        public void onConnectionSuspended() {
+            // The Service has crashed. Disable transport controls until it automatically reconnects
+        }
+
+        @Override
+        public void onConnectionFailed() {
+            // The Service has refused our connection
         }
     };
 
@@ -129,9 +141,6 @@ public class PlaylistTest {
         trackTotal = cursor.getCount();
         dao.close();
 
-        Intent intent = new Intent(c, AudioService.class);
-        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
-
         while (currentTest != 0) {
         }
 
@@ -150,9 +159,6 @@ public class PlaylistTest {
         SQLiteCursor cursor = dao.getUnread();
         trackTotal = cursor.getCount();
         dao.close();
-
-        Intent intent = new Intent(c, AudioService.class);
-        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
 
         while (currentTest != 0) {
         }
@@ -188,8 +194,8 @@ public class PlaylistTest {
         trackTotal = 1;
         dao.close();
 
-        Intent intent = new Intent(c, AudioService.class);
-        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
+        mediaBrowser = new MediaBrowserCompat(c, new ComponentName(c, MediaPlaybackService.class), browserConnection, null);
+        mediaBrowser.connect();
 
         while (currentTest != 0) {
         }
@@ -208,9 +214,6 @@ public class PlaylistTest {
         dao.updateFlagAll("read");
         trackTotal = 0;
         dao.close();
-
-        Intent intent = new Intent(c, AudioService.class);
-        c.bindService(intent, audioConnection, Context.BIND_AUTO_CREATE);
 
         while (currentTest != 0) {
         }
