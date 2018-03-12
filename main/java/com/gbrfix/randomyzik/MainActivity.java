@@ -305,8 +305,6 @@ public class MainActivity extends AppCompatActivity {
             return super.onKeyDown(keyCode, event);
         }
         switch (keyCode) {
-            case KeyEvent.KEYCODE_MEDIA_REWIND:
-            case KeyEvent.KEYCODE_MEDIA_NEXT:
             case KeyEvent.KEYCODE_MEDIA_PLAY:
                 MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
                 return true;
@@ -342,15 +340,15 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.playlist);
         init(this, 1);
-
-        mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        mediaBrowser.connect();
+        if (mediaBrowser != null) {
+            mediaBrowser.connect();
+        }
     }
 
     @Override
@@ -361,7 +359,9 @@ public class MainActivity extends AppCompatActivity {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
         }
 
-        mediaBrowser.disconnect();
+        if (mediaBrowser != null) {
+            mediaBrowser.disconnect();
+        }
     }
 
     protected void init(final Context context, int perms) {
@@ -382,6 +382,8 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             if (perms == 1) {
+                mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
+
                 int color = fetchColor(this, R.attr.colorAccent);
                 infoMsg(getString(R.string.info_scanning), color);
 
@@ -459,7 +461,9 @@ public class MainActivity extends AppCompatActivity {
     public void onSaveInstanceState(Bundle bundle) {
         Switch modeBtn = findViewById(R.id.mode);
 
-        bundle.putBoolean("mode", modeBtn.isChecked());
+        if (modeBtn != null) {
+            bundle.putBoolean("mode", modeBtn.isChecked());
+        }
 
         super.onSaveInstanceState(bundle);
     }
@@ -470,7 +474,9 @@ public class MainActivity extends AppCompatActivity {
 
         Switch modeBtn = findViewById(R.id.mode);
 
-        modeBtn.setChecked(bundle.getBoolean("mode"));
+        if (modeBtn != null) {
+            modeBtn.setChecked(bundle.getBoolean("mode"));
+        }
     }
 
     @Override
