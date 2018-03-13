@@ -126,9 +126,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            final TextView positionLabel = findViewById(R.id.position);
-            final TextView durationLabel = findViewById(R.id.duration);
-            final ProgressBar progressBar = findViewById(R.id.progressBar);
+            TextView positionLabel = findViewById(R.id.position);
+            TextView durationLabel = findViewById(R.id.duration);
+            ProgressBar progressBar = findViewById(R.id.progressBar);
 
             switch (event) {
                 case "onTrackSelect":
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
                     infoMsg(label, color);
                     break;
                 case "onTrackProgress":
-                    final int position = extras.getInt("position");
+                    int position = extras.getInt("position");
                     positionLabel.setText(dateFormat.format(new Date(position)));
                     progressBar.setProgress(position);
                     break;
@@ -319,12 +319,15 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission was granted, app can run
                     setContentView(R.layout.playlist);
-                    init(this, 1);
+                    init(1);
+                    if (mediaBrowser != null && !mediaBrowser.isConnected()) {
+                        mediaBrowser.connect();
+                    }
                 }
                 else {
                     // Permission denied, display info
                     setContentView(R.layout.playlist);
-                    init(this, 0);
+                    init(0);
                 }
         }
     }
@@ -339,12 +342,22 @@ public class MainActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.playlist);
-        init(this, 1);
+        init(1);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        if (dbService != null && dbService.isBound()) {
+            MediaDAO dao = new MediaDAO(this);
+            dao.open();
+            SQLiteCursor cursor = dao.getAllOrdered();
+            ListView listView = findViewById(R.id.playlist);
+            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+            adapter.changeCursor(cursor);
+            dao.close();
+        }
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -364,12 +377,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected void init(final Context context, int perms) {
+    protected void init(int perms) {
         // On récup les éléments de l'UI
         final ListView listView = findViewById(R.id.playlist);
-        final ImageButton playBtn = findViewById(R.id.play);
-        final ImageButton rewBtn = findViewById(R.id.rew);
-        final ImageButton fwdBtn = findViewById(R.id.fwd);
+        ImageButton playBtn = findViewById(R.id.play);
+        ImageButton rewBtn = findViewById(R.id.rew);
+        ImageButton fwdBtn = findViewById(R.id.fwd);
 
         LinearLayout controlLayout = findViewById(R.id.control);
         controlLayout.setHorizontalGravity(1);
@@ -390,14 +403,14 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-                MediaDAO dao = new MediaDAO(context);
+                MediaDAO dao = new MediaDAO(this);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();
 
                 // Cursor adapter pour la listeView
                 String[] fromColumns = {"track_nb", "title", "album", "artist"};
                 int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-                TrackCursorAdapter adapter = new TrackCursorAdapter(context, R.layout.track, cursor, fromColumns, toViews);
+                TrackCursorAdapter adapter = new TrackCursorAdapter(this, R.layout.track, cursor, fromColumns, toViews);
                 listView.setAdapter(adapter);
 
                 dao.close();
@@ -452,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void infoMsg(String msg, int color) {
-        TextView infoMsg = (TextView)findViewById(R.id.infoMsg);
+        TextView infoMsg = findViewById(R.id.infoMsg);
         infoMsg.setTextColor(color);
         infoMsg.setText(msg);
     }

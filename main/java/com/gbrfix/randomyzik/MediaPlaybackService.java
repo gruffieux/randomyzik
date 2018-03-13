@@ -77,7 +77,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         setSessionToken(session.getSessionToken());
 
         provider = new MediaProvider(this);
-        //provider.setTest(true);
+        provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -199,17 +199,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             startNewTrack();
             showNotification();
             args.putBoolean("last", false);
-
+            session.sendSessionEvent("onTrackRead", args);
         }
         catch (PlayEndException e) {
             session.getController().getTransportControls().stop();
             args.putBoolean("last", true);
+            session.sendSessionEvent("onTrackRead", args);
         }
         catch (Exception e) {
             Log.v("Exception", e.getMessage());
         }
-
-        session.sendSessionEvent("onTrackRead", args);
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
@@ -345,7 +344,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
 
         if (provider.isTest()) {
-            player.seekTo(player.getDuration() - 10);
+            player.seekTo(player.getDuration() - 10000);
         }
 
         player.start();
