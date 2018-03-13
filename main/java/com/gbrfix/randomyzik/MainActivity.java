@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.database.SQLException;
@@ -286,8 +287,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         void changeMode(boolean b) {
+            int mode =  b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+
+            // Save mode as preferences
+            SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+            editor.putInt("mode", mode);
+            editor.commit();
+
+            // Send action to browser service
             Bundle args = new Bundle();
-            args.putInt("mode", b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK);
+            args.putInt("mode", mode);
             mediaBrowser.sendCustomAction("changeMode", args, null);
         }
     };
@@ -393,6 +402,12 @@ public class MainActivity extends AppCompatActivity {
         fwdBtn.setEnabled(false);
         fwdBtn.setColorFilter(Color.GRAY);
 
+        // Read preferences
+        Switch modeBtn = findViewById(R.id.mode);
+        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
+        modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
+
         try {
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
@@ -472,24 +487,12 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle bundle) {
-        Switch modeBtn = findViewById(R.id.mode);
-
-        if (modeBtn != null) {
-            bundle.putBoolean("mode", modeBtn.isChecked());
-        }
-
         super.onSaveInstanceState(bundle);
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         super.onRestoreInstanceState(bundle);
-
-        Switch modeBtn = findViewById(R.id.mode);
-
-        if (modeBtn != null) {
-            modeBtn.setChecked(bundle.getBoolean("mode"));
-        }
     }
 
     @Override
