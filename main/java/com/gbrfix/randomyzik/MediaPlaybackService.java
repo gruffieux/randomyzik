@@ -77,7 +77,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         setSessionToken(session.getSessionToken());
 
         provider = new MediaProvider(this);
-        provider.setTest(true);
+        //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -344,7 +344,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
 
         if (provider.isTest()) {
-            player.seekTo(player.getDuration() - 10000);
+            player.seekTo(player.getDuration() - 10);
         }
 
         player.start();
