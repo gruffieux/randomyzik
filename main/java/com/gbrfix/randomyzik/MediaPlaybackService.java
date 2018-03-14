@@ -77,7 +77,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         setSessionToken(session.getSessionToken());
 
         provider = new MediaProvider(this);
-        //provider.setTest(true);
+        provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -355,15 +355,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"))
-            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()) // A tester
+            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
             .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
 
         session.setMetadata(metaDataBuilder.build());
 
         bundle.putInt("duration", player.getDuration());
-        bundle.putInt("total", provider.getTotal());
-        bundle.putInt("totalRead", provider.getTotalRead());
         session.sendSessionEvent("onTrackSelect", bundle);
     }
 

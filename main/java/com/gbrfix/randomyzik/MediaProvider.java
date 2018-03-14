@@ -160,12 +160,13 @@ public class MediaProvider {
     }
 
     public String getSummary() {
-        float percent = (float)totalRead / (float)total * 100;
+        int current = totalRead + 1;
+        float percent = (float)current / (float)total * 100;
         float f = percent * 10;
         int n = (int)f;
         percent = (float)n / 10;
 
-        return String.format(context.getString(R.string.info_track_summary), totalRead+1, total, percent);
+        return String.format(context.getString(R.string.info_track_summary), current, total, percent);
     }
 
     public void updateState(String flag) {
