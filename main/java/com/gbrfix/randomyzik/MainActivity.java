@@ -119,6 +119,22 @@ public class MainActivity extends AppCompatActivity {
 
             fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+
+            if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
+                TextView infoMsg = findViewById(R.id.infoMsg);
+                TextView positionLabel = findViewById(R.id.position);
+                TextView durationLabel = findViewById(R.id.duration);
+                ProgressBar progressBar = findViewById(R.id.progressBar);
+
+                if (!infoMsg.getText().equals(getText(R.string.info_play_end))) {
+                    infoMsg.setText("");
+                }
+
+                positionLabel.setText("");
+                durationLabel.setText("");
+                progressBar.setProgress(0);
+                progressBar.setMax(0);
+            }
         }
 
         @Override
@@ -164,10 +180,6 @@ public class MainActivity extends AppCompatActivity {
                     adapter.changeCursor(cursor);
                     dao.close();
                     if (extras.getBoolean("last")) {
-                        positionLabel.setText("");
-                        durationLabel.setText("");
-                        progressBar.setProgress(0);
-                        progressBar.setMax(0);
                         color = fetchColor(MainActivity.this, R.attr.colorAccent);
                         infoMsg(getString(R.string.info_play_end), color);
                     }
@@ -176,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
                     infoMsg(extras.getString("message"), Color.RED);
                     break;
             }
+
             super.onSessionEvent(event, extras);
         }
     };
