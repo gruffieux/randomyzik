@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -77,7 +78,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         setSessionToken(session.getSessionToken());
 
         provider = new MediaProvider(this);
-        provider.setTest(true);
+        //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -253,6 +254,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.setActive(true);
                     startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                     registerReceiver(myNoisyAudioReceiver, intentFilter);
+
                     if (player == null || provider.getSelectId() > 0) {
                         startNewTrack();
                     } else {
@@ -264,28 +266,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.setPlaybackState(stateBuilder.build());
 
                     showNotification();
-
-                    // Progress thread
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            int currentPosition = 0;
-                            int total = player.getDuration();
-                            Bundle bundle = new Bundle();
-                            while (currentPosition < total) {
-                                try {
-                                    Thread.sleep(1000);
-                                    currentPosition = player.getCurrentPosition();
-                                    stateBuilder.setBufferedPosition(currentPosition);
-                                    session.setPlaybackState(stateBuilder.build());
-                                } catch (Exception e) {
-                                    return;
-                                }
-                                bundle.putInt("position", currentPosition);
-                                session.sendSessionEvent("onTrackProgress", bundle);
-                            }
-                        }
-                    }).start();
                 } catch (Exception e) {
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
@@ -349,6 +329,29 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         player.start();
         player.setOnCompletionListener(MediaPlaybackService.this);
+        //player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
+
+        // Progress thread
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int currentPosition = 0;
+                int total = player.getDuration();
+                Bundle bundle = new Bundle();
+                while (currentPosition < total) {
+                    try {
+                        Thread.sleep(1000);
+                        currentPosition = player.getCurrentPosition();
+                        stateBuilder.setBufferedPosition(currentPosition);
+                        session.setPlaybackState(stateBuilder.build());
+                    } catch (Exception e) {
+                        return;
+                    }
+                    bundle.putInt("position", currentPosition);
+                    session.sendSessionEvent("onTrackProgress", bundle);
+                }
+            }
+        }).start();
 
         MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
             .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getInt("id")))
