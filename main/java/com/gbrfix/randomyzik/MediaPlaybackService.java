@@ -328,7 +328,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         player.start();
         player.setOnCompletionListener(MediaPlaybackService.this);
-        //player.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
 
         // Progress thread
         new Thread(new Runnable() {
@@ -373,10 +372,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         MediaDescriptionCompat description = mediaMetadata.getDescription();
         String title = MediaProvider.getTrackLabel(description.getTitle().toString(), "", description.getSubtitle().toString());
 
-        Intent intent = new Intent(this, MediaPlaybackService.class);
-        intent.setAction("STOP");
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, 0);
+        // Create an explicit intent for an Activity in your app
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
 
+        // Create an action intent for stopping the service
+        Intent stopIntent = new Intent(this, MediaPlaybackService.class);
+        stopIntent.setAction("STOP");
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        // Build notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         builder
@@ -385,10 +390,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             .setContentText(description.getDescription())
             .setSubText(provider.getSummary())
 
-            // Enable launching the player by clicking the notification
-            .setContentIntent(controller.getSessionActivity())
+            // Enable launching the app by clicking the notification
+            .setContentIntent(pendingIntent)
 
-            // Stop the service when the notification is swiped away
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+                // Stop the service when the notification is swiped away
             .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
 
             // Make the transport controls visible on the lockscreen
@@ -403,20 +411,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
 
-                // Add a pause button
+            // Add a cancel button
             .addAction(new NotificationCompat.Action(
-                R.drawable.ic_action_cancel, "Stop",
-                pendingIntent))
-                //MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)))
+                R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
 
             // Take advantage of MediaStyle features
             .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(session.getSessionToken())
-                .setShowActionsInCompactView(0, 1)
-
-                // Add a cancel button
-                .setShowCancelButton(true)
-                .setCancelButtonIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)));
+                .setShowActionsInCompactView(0, 1));
 
         // Display the notification and place the service in the foreground
         startForeground(ONGOING_NOTIFICATION_ID, builder.build());
