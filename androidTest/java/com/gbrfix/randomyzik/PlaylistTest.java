@@ -21,11 +21,6 @@ import static junit.framework.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
-    final static int TEST_PLAY_ALL_TRACKS = 1;
-    final static int TEST_PLAY_ALL_ALBUMS = 2;
-    final static int TEST_PLAY_LAST_TRACK = 3;
-    final static int TEST_PLAY_ENDED_LIST = 4;
-
     PlaylistActivity activity;
 
     @Rule
@@ -44,7 +39,7 @@ public class PlaylistTest {
 
     @Test
     public void playAllTracks() throws Exception {
-        activity.currentTest = TEST_PLAY_ALL_TRACKS;
+        activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_TRACKS;
 
         Context c = InstrumentationRegistry.getTargetContext();
 
@@ -65,7 +60,7 @@ public class PlaylistTest {
 
     @Test
     public void playAllAlbums() throws Exception {
-        activity.currentTest = TEST_PLAY_ALL_ALBUMS;
+        activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_ALBUMS;
 
         Context c = InstrumentationRegistry.getTargetContext();
 
@@ -86,7 +81,7 @@ public class PlaylistTest {
 
     @Test
     public void playLastTrack() throws Exception {
-        activity.currentTest = TEST_PLAY_LAST_TRACK;
+        activity.currentTest = PlaylistActivity.TEST_PLAY_LAST_TRACK;
 
         Context c = InstrumentationRegistry.getTargetContext();
 
@@ -122,7 +117,7 @@ public class PlaylistTest {
 
     @Test
     public void playEndedList() throws Exception {
-        activity.currentTest = TEST_PLAY_ENDED_LIST;
+        activity.currentTest = PlaylistActivity.TEST_PLAY_ENDED_LIST;
 
         Context c = InstrumentationRegistry.getTargetContext();
 

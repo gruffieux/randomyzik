@@ -16,6 +16,11 @@ import static junit.framework.Assert.assertTrue;
  */
 
 public class PlaylistActivity extends AppCompatActivity {
+    final static int TEST_PLAY_ALL_TRACKS = 1;
+    final static int TEST_PLAY_ALL_ALBUMS = 2;
+    final static int TEST_PLAY_LAST_TRACK = 3;
+    final static int TEST_PLAY_ENDED_LIST = 4;
+
     int currentTest, trackCount, trackTotal;
     MediaBrowserCompat mediaBrowser = null;
 
@@ -33,7 +38,7 @@ public class PlaylistActivity extends AppCompatActivity {
             switch (event) {
                 case "onTrackSelect":
                     switch (currentTest) {
-                        case PlaylistTest.TEST_PLAY_LAST_TRACK:
+                        case TEST_PLAY_LAST_TRACK:
                             assertEquals(extras.getInt("total"), extras.getInt("totalRead"));
                             break;
                     }
@@ -44,10 +49,10 @@ public class PlaylistActivity extends AppCompatActivity {
                     trackCount++;
                     if (extras.getBoolean("last")) {
                         switch (currentTest) {
-                            case PlaylistTest.TEST_PLAY_ALL_TRACKS:
-                            case PlaylistTest.TEST_PLAY_ALL_ALBUMS:
-                            case PlaylistTest.TEST_PLAY_LAST_TRACK:
-                            case PlaylistTest.TEST_PLAY_ENDED_LIST:
+                            case TEST_PLAY_ALL_TRACKS:
+                            case TEST_PLAY_ALL_ALBUMS:
+                            case TEST_PLAY_LAST_TRACK:
+                            case TEST_PLAY_ENDED_LIST:
                                 assertEquals(trackTotal, trackCount);
                                 assertEquals(100, trackCount/trackTotal*100);
                                 break;
@@ -57,7 +62,7 @@ public class PlaylistActivity extends AppCompatActivity {
                     break;
                 case "onError":
                     switch (currentTest) {
-                        case PlaylistTest.TEST_PLAY_ENDED_LIST:
+                        case TEST_PLAY_ENDED_LIST:
                             assertTrue(true);
                             break;
                         default:
@@ -83,20 +88,20 @@ public class PlaylistActivity extends AppCompatActivity {
 
                 Bundle args = new Bundle();
                 switch (currentTest) {
-                    case PlaylistTest.TEST_PLAY_ALL_TRACKS:
+                    case TEST_PLAY_ALL_TRACKS:
                         args.putInt("mode", MediaProvider.MODE_TRACK);
                         mediaBrowser.sendCustomAction("changeMode", args, null);
                         break;
-                    case PlaylistTest.TEST_PLAY_ALL_ALBUMS:
+                    case TEST_PLAY_ALL_ALBUMS:
                         args.putInt("mode", MediaProvider.MODE_ALBUM);
                         mediaBrowser.sendCustomAction("changeMode", args, null);
                         break;
                 }
                 switch (currentTest) {
-                    case PlaylistTest.TEST_PLAY_ALL_TRACKS:
-                    case PlaylistTest.TEST_PLAY_ALL_ALBUMS:
-                    case PlaylistTest.TEST_PLAY_LAST_TRACK:
-                    case PlaylistTest.TEST_PLAY_ENDED_LIST:
+                    case TEST_PLAY_ALL_TRACKS:
+                    case TEST_PLAY_ALL_ALBUMS:
+                    case TEST_PLAY_LAST_TRACK:
+                    case TEST_PLAY_ENDED_LIST:
                         mediaBrowser.sendCustomAction("test", null, null);
                         mediaController.getTransportControls().play();
                         break;
