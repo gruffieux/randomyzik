@@ -4,8 +4,10 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 
 import static junit.framework.Assert.assertEquals;
@@ -32,7 +34,26 @@ public class PlaylistActivity extends AppCompatActivity {
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
     }
 
+    @Override
+    protected void onDestroy() {
+        if (MediaControllerCompat.getMediaController(this) != null) {
+            MediaControllerCompat.getMediaController(this).unregisterCallback(controllerCallback);
+        }
+
+        super.onDestroy();
+    }
+
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
+        @Override
+        public void onPlaybackStateChanged(PlaybackStateCompat state) {
+            super.onPlaybackStateChanged(state);
+        }
+
+        @Override
+        public void onMetadataChanged(MediaMetadataCompat metadata) {
+            super.onMetadataChanged(metadata);
+        }
+
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
             switch (event) {
@@ -83,6 +104,7 @@ public class PlaylistActivity extends AppCompatActivity {
 
                 // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(PlaylistActivity.this, token);
+                MediaControllerCompat.setMediaController(PlaylistActivity.this, mediaController);
 
                 mediaController.registerCallback(controllerCallback);
 
