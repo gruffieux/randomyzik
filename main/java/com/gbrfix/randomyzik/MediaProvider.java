@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
-import android.os.Bundle;
 
 import java.util.Random;
 
@@ -60,7 +59,7 @@ public class MediaProvider {
         this.test = test;
     }
 
-    public Bundle selectTrack() throws Exception {
+    public Media selectTrack() throws Exception {
         dao.open();
 
         SQLiteCursor cursor = dao.getAll();
@@ -130,19 +129,16 @@ public class MediaProvider {
 
         currentId = cursor.getInt(0);
 
-        Bundle media = new Bundle();
-        media.putInt("id", currentId);
-        media.putString("path", cursor.getString(1));
-        media.putString("title", cursor.getString(4));
-        media.putString("album", cursor.getString(5));
-        media.putString("artist", cursor.getString(6));
+        Media media = new Media();
+        media.setId(currentId);
+        media.setPath(cursor.getString(1));
+        media.setTitle(cursor.getString(4));
+        media.setAlbum(cursor.getString(5));
+        media.setArtist(cursor.getString(6));
 
         dao.close();
 
-        Bundle bundle = new Bundle();
-        bundle.putBundle("media", media);
-
-        return bundle;
+        return media;
     }
 
     public static String getTrackLabel(String title, String album, String artist) {

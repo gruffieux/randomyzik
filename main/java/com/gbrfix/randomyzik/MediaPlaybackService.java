@@ -316,10 +316,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             player = null;
         }
 
-        Bundle bundle = provider.selectTrack();
-        Bundle media = bundle.getBundle("media");
-        String path = media.getString("path");
-        File file = new File(path);
+        Media media = provider.selectTrack();
+        File file = new File(media.getPath());
         player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
 
         if (provider.isTest()) {
@@ -352,16 +350,21 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }).start();
 
         MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
-            .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getInt("id")))
-            .putString(MediaMetadata.METADATA_KEY_TITLE, media.getString("title"))
-            .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getString("album"))
-            .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getString("artist"))
+            .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
+            .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
+            .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
+            .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
             .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
 
         session.setMetadata(metaDataBuilder.build());
 
+        Bundle bundle = new Bundle();
+        bundle.putInt("id", media.getId());
+        bundle.putString("title", media.getTitle());
+        bundle.putString("album", media.getAlbum());
+        bundle.putString("artist", media.getArtist());
         bundle.putInt("duration", player.getDuration());
         session.sendSessionEvent("onTrackSelect", bundle);
     }

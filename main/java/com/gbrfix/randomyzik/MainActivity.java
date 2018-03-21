@@ -149,9 +149,8 @@ public class MainActivity extends AppCompatActivity {
 
             switch (event) {
                 case "onTrackSelect":
-                    Bundle media = extras.getBundle("media");
+                    currentId = extras.getInt("id");
                     int duration = extras.getInt("duration");
-                    currentId = media.getInt("id");
 
                     // Libellé de position et durée
                     positionLabel.setText(dateFormat.format(new Date(0)));
@@ -162,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setMax(duration);
 
                     // Titre en cours
-                    String label = MediaProvider.getTrackLabel(media.getString("title"), media.getString("album"), media.getString("artist"));
+                    String label = MediaProvider.getTrackLabel(extras.getString("title"), extras.getString("album"), extras.getString("artist"));
                     int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                     infoMsg(label, color);
                     break;

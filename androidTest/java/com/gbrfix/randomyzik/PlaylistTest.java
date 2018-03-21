@@ -13,8 +13,6 @@ import org.junit.runner.RunWith;
 
 import java.util.Random;
 
-import static junit.framework.Assert.assertTrue;
-
 /**
  * Created by gab on 01.10.2017.
  */

@@ -73,7 +73,6 @@ public class PlaylistActivity extends AppCompatActivity {
                             case TEST_PLAY_ALL_TRACKS:
                             case TEST_PLAY_ALL_ALBUMS:
                             case TEST_PLAY_LAST_TRACK:
-                            case TEST_PLAY_ENDED_LIST:
                                 assertEquals(trackTotal, trackCount);
                                 assertEquals(100, trackCount/trackTotal*100);
                                 break;
