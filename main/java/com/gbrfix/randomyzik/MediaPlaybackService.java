@@ -373,7 +373,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         MediaControllerCompat controller = session.getController();
         MediaMetadataCompat mediaMetadata = controller.getMetadata();
         MediaDescriptionCompat description = mediaMetadata.getDescription();
-        String title = MediaProvider.getTrackLabel(description.getTitle().toString(), "", description.getSubtitle().toString());
+        String title = description.getTitle() != null ? description.getTitle().toString() : "";
+        String artist = description.getSubtitle() != null ? description.getSubtitle().toString() : "";
+        String contentTitle = MediaProvider.getTrackLabel(title, "", artist);
+        String contentText = description.getDescription() != null ? description.getDescription().toString() : "";
 
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
@@ -389,8 +392,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         builder
             // Add the metadata for the currently playing track
-            .setContentTitle(title)
-            .setContentText(description.getDescription())
+            .setContentTitle(contentTitle)
+            .setContentText(contentText)
             .setSubText(provider.getSummary())
 
             // Enable launching the app by clicking the notification

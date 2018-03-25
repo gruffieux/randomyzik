@@ -144,11 +144,11 @@ public class MediaProvider {
     public static String getTrackLabel(String title, String album, String artist) {
         String label = title;
 
-        if (!album.isEmpty()) {
+        if (album != null && !album.isEmpty()) {
             label += " - " + album;
         }
 
-        if (!artist.isEmpty()) {
+        if (artist != null && !artist.isEmpty()) {
             label += " - " + artist;
         }
 
