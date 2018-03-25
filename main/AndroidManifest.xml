@@ -30,12 +30,12 @@
             </intent-filter>
         </receiver>
         <!--FIXME Only use during test-->
-        <!--<activity android:name=".PlaylistActivity">
+        <activity android:name=".PlaylistActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.TEST" />
             </intent-filter>
-        </activity>-->
+        </activity>
     </application>
 
 </manifest>
