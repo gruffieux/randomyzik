@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -35,7 +37,8 @@ import java.util.List;
  */
 
 public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
-    public final static int ONGOING_NOTIFICATION_ID = 1;
+    public final static int NOTIFICATION_ID = 1;
+    public final static String NOTIFICATION_CHANNEL = "Randomyzik channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
@@ -87,6 +90,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(attributes)
                 .build();
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.createNotificationChannel(channel);
         }
     }
 
@@ -121,6 +127,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onDestroy() {
         if (player != null) {
             player.release();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }
 
         super.onDestroy();
@@ -388,7 +399,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
 
         // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL);
 
         builder
             // Add the metadata for the currently playing track
@@ -399,14 +410,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Enable launching the app by clicking the notification
             .setContentIntent(pendingIntent)
 
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-
-                // Stop the service when the notification is swiped away
-            .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
+            // Stop the service when the notification is swiped away
+            //.setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
+            .setDeleteIntent(stopPendingIntent)
 
             // Make the transport controls visible on the lockscreen
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
             // Add an app icon and set its accent color
             // Be careful about the color
@@ -427,7 +437,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .setShowActionsInCompactView(0, 1));
 
         // Display the notification and place the service in the foreground
-        startForeground(ONGOING_NOTIFICATION_ID, builder.build());
+        startForeground(NOTIFICATION_ID, builder.build());
     }
 
     private class BecomingNoisyReceiver extends BroadcastReceiver {

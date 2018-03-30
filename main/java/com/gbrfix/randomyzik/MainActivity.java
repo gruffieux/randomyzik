@@ -36,6 +36,8 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.CompoundButton;
 import android.util.Log;
+
+import java.security.Key;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -326,6 +328,8 @@ public class MainActivity extends AppCompatActivity {
             return super.onKeyDown(keyCode, event);
         }
         switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_NEXT:
+            case KeyEvent.KEYCODE_MEDIA_REWIND:
             case KeyEvent.KEYCODE_MEDIA_PLAY:
                 MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
                 return true;
