@@ -27,6 +27,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,6 +92,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .setAudioAttributes(attributes)
                 .build();
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
             NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
             manager.createNotificationChannel(channel);
         }
@@ -225,6 +228,21 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+
+            if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
+                switch (ke.getKeyCode()) {
+                    case KeyEvent.KEYCODE_MEDIA_NEXT:
+                    case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
+                        session.getController().getTransportControls().skipToNext();
+                        return true;
+                    case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                    case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
+                        session.getController().getTransportControls().rewind();
+                        return true;
+                }
+            }
+
             return super.onMediaButtonEvent(mediaButtonEvent);
         }
 

@@ -29,7 +29,6 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-        <!--FIXME Only use during test-->
         <activity android:name=".PlaylistActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
