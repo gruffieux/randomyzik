@@ -74,55 +74,52 @@ public class DbService extends IntentService implements FilenameFilter {
     // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
     // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
     private void scan() {
-        try {
-            mediaObserver.stopWatching();
-            scanMediaFiles(mediaDir);
-            boolean updated = false;
-            MediaFactory factory = new MediaFactory();
-            MediaDAO dao = new MediaDAO(this);
-            dao.open();
-            SQLiteCursor cursor = dao.getAll();
-            if (cursor.getCount() == 0) {
-                for (int i = 0; i < mediaFiles.size(); i++) {
-                    Media media = factory.createMedia(mediaFiles.get(i).getPath());
+        mediaObserver.stopWatching();
+        scanMediaFiles(mediaDir);
+        boolean updated = false;
+        MediaFactory factory = new MediaFactory();
+        MediaDAO dao = new MediaDAO(this);
+        dao.open();
+        SQLiteCursor cursor = dao.getAll();
+
+        if (cursor.getCount() == 0) {
+            for (int i = 0; i < mediaFiles.size(); i++) {
+                Media media = factory.createMedia(mediaFiles.get(i).getPath());
+                if (media != null) {
                     dao.insert(media);
                     updated = true;
                 }
-            } else {
-                while (cursor.moveToNext()) {
-                    int id = cursor.getInt(0);
-                    String path = cursor.getString(1);
-                    int i = 0;
-                    for (i = 0; i < mediaFiles.size(); i++) {
-                        if (mediaFiles.get(i).getPath().equals(path)) {
-                            break;
-                        }
-                    }
-                    if (i >= mediaFiles.size()) {
-                        dao.remove(id);
-                        updated = true;
-                    }
-                    else {
-                        mediaFiles.remove(i);
+            }
+        } else {
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(0);
+                String path = cursor.getString(1);
+                int i = 0;
+                for (i = 0; i < mediaFiles.size(); i++) {
+                    if (mediaFiles.get(i).getPath().equals(path)) {
+                        break;
                     }
                 }
-                for (int i = 0; i < mediaFiles.size(); i++) {
-                    Media media = factory.createMedia(mediaFiles.get(i).getPath());
-                    if (dao.getFromPath(mediaFiles.get(i).getPath()).getCount() == 0) {
-                        dao.insert(media);
-                        updated = true;
-                    }
+                if (i >= mediaFiles.size()) {
+                    dao.remove(id);
+                    updated = true;
+                }
+                else {
+                    mediaFiles.remove(i);
                 }
             }
-            dao.close();
-            dbSignalListener.onScanCompleted(updated);
+            for (int i = 0; i < mediaFiles.size(); i++) {
+                Media media = factory.createMedia(mediaFiles.get(i).getPath());
+                if (media != null && dao.getFromPath(mediaFiles.get(i).getPath()).getCount() == 0) {
+                    dao.insert(media);
+                    updated = true;
+                }
+            }
         }
-        catch (Exception e) {
-            dbSignalListener.onError(e.getMessage());
-        }
-        finally {
-            mediaObserver.startWatching();
-        }
+
+        dao.close();
+        dbSignalListener.onScanCompleted(updated);
+        mediaObserver.startWatching();
     }
 
     @Override
@@ -139,14 +136,17 @@ public class DbService extends IntentService implements FilenameFilter {
         return false;
     }
 
-    private void scanMediaFiles(File dir) throws Exception {
+    private void scanMediaFiles(File dir) {
         File[] files = dir.listFiles();
+
+        if (files == null) {
+            return;
+        }
 
         for (int i = 0; i < files.length; i++) {
             if (files[i].isDirectory()) {
                 scanMediaFiles(files[i]);
-            }
-            else if (files[i].isFile() && accept(files[i], files[i].getName())) {
+            } else if (files[i].isFile() && accept(files[i], files[i].getName())) {
                 mediaFiles.add(files[i]);
             }
         }
