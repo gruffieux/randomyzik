@@ -164,6 +164,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             case AudioManager.AUDIOFOCUS_LOSS: // Permanent loss of audio focus
                 changeFocus = true;
                 session.getController().getTransportControls().pause();
+                break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT: // Pause playback
                 changeFocus = false;
                 session.getController().getTransportControls().pause();
