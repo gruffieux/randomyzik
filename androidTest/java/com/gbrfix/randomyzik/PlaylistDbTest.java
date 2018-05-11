@@ -33,7 +33,7 @@ public class PlaylistDbTest {
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
-            final int expected = 727;
+            final int expected = 887;
             final Context context = InstrumentationRegistry.getTargetContext();
             final MediaDAO dao = new MediaDAO(context);
             dbService.setDbSignalListener(new DbSignal() {
