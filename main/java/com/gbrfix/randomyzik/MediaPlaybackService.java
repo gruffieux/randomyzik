@@ -20,7 +20,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaBrowserServiceCompat;
-import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -42,6 +41,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public final static String NOTIFICATION_CHANNEL = "Randomyzik channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
+    private MediaMetadataCompat.Builder metaDataBuilder;
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
@@ -73,6 +73,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set an initial playback state with ACTION_PLAY, so media buttons can start the player
         stateBuilder = new PlaybackStateCompat.Builder().setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
         session.setPlaybackState(stateBuilder.build());
+
+        // Set metadata builder
+        metaDataBuilder = new MediaMetadataCompat.Builder();
 
         // Set session callback methods
         session.setCallback(new MediaSessionCallback());
@@ -379,8 +382,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
         }).start();
 
-        MediaMetadataCompat.Builder metaDataBuilder = new MediaMetadataCompat.Builder()
-            .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
+        metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
@@ -402,11 +404,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private void showNotification() {
         MediaControllerCompat controller = session.getController();
         MediaMetadataCompat mediaMetadata = controller.getMetadata();
-        MediaDescriptionCompat description = mediaMetadata.getDescription();
-        String title = description.getTitle() != null ? description.getTitle().toString() : "";
-        String artist = description.getSubtitle() != null ? description.getSubtitle().toString() : "";
-        String contentTitle = MediaProvider.getTrackLabel(title, "", artist);
-        String contentText = description.getDescription() != null ? description.getDescription().toString() : "";
+        String title = mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE);
+        String album = mediaMetadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
+        String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+        String contentTitle = MediaProvider.getTrackLabel(title, "", "");
+        String contentText = MediaProvider.getTrackLabel("", album, artist);
 
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);

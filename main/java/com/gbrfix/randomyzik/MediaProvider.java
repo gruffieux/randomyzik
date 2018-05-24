@@ -145,11 +145,17 @@ public class MediaProvider {
         String label = title;
 
         if (album != null && !album.isEmpty()) {
-            label += " - " + album;
+            if (!label.isEmpty()) {
+                label += " - ";
+            }
+            label += album;
         }
 
         if (artist != null && !artist.isEmpty()) {
-            label += " - " + artist;
+            if (!label.isEmpty()) {
+                label += " - ";
+            }
+            label += artist;
         }
 
         return label;
