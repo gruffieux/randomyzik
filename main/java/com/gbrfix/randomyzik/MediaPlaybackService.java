@@ -370,14 +370,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 while (currentPosition < total) {
                     try {
                         Thread.sleep(1000);
-                        currentPosition = player.getCurrentPosition();
-                        stateBuilder.setBufferedPosition(currentPosition);
-                        session.setPlaybackState(stateBuilder.build());
                     } catch (Exception e) {
                         return;
                     }
+                    currentPosition = player.getCurrentPosition();
                     bundle.putInt("position", currentPosition);
                     session.sendSessionEvent("onTrackProgress", bundle);
+                    session.setExtras(bundle);
                 }
             }
         }).start();

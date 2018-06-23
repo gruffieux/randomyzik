@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 long duration = metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
-                long position = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getBufferedPosition();
+                long position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
                 durationLabel.setText(dateFormat.format(new Date(duration)));
                 positionLabel.setText(dateFormat.format(new Date(position)));
                 progressBar.setMax((int)duration);
