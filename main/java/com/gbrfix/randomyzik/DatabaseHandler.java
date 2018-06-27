@@ -16,7 +16,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     public static final String MEDIAS_TABLE_CREATE = "CREATE TABLE `medias` (" +
             "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "`path` TEXT, `flag` TEXT, " +
-            "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT);";
+            "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT, " +
+            "`media_id` INTEGER);";
     public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
 
     public DatabaseHandler(Context context, String name, CursorFactory factory, int version) {
@@ -68,6 +69,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             try {
                 // On corrige les artistes
                 fixMediaTags(db, false, false, false, true);
+            }
+            catch (Exception e) {
+                Log.v("Exception", e.getMessage());
+            }
+        }
+        if (oldVersion <= 6 && newVersion >= 7) {
+            try {
+                db.execSQL("ALTER TABLE `medias` ADD `media_id` INTEGER;");
             }
             catch (Exception e) {
                 Log.v("Exception", e.getMessage());

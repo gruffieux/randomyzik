@@ -17,7 +17,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAll() {
-        String sql = "SELECT `id`, `path` FROM `medias`;";
+        String sql = "SELECT `id`, `path`, `media_id` FROM `medias`;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, null);
     }
@@ -31,6 +31,7 @@ public class MediaDAO extends DAOBase {
     public long insert(Media media) {
         ContentValues values = new ContentValues();
 
+        values.put("media_id", media.getMediaId());
         values.put("path", media.getPath());
         values.put("flag", media.getFlag());
         values.put("track_nb", media.getTrackNb());
@@ -41,12 +42,29 @@ public class MediaDAO extends DAOBase {
         return this.db.insert("medias", null, values);
     }
 
+    public long update(Media media, int id) {
+        ContentValues values = new ContentValues();
+
+        values.put("media_id", media.getMediaId());
+        values.put("path", media.getPath());
+        values.put("track_nb", media.getTrackNb());
+        values.put("title", media.getTitle());
+        values.put("album", media.getAlbum());
+        values.put("artist", media.getArtist());
+
+        return this.db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
+    }
+
     public void remove(int id) {
         this.db.delete("medias", "`id`=?", new String[] {String.valueOf(id)});
     }
 
     public SQLiteCursor getFromId(int id) {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `id`=?;", new String[] {String.valueOf(id)});
+    }
+
+    public SQLiteCursor getFromMediaId(int media_id) {
+        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `media_id`=?;", new String[] {String.valueOf(media_id)});
     }
 
     public SQLiteCursor getFromPath(String path) {

@@ -1,27 +1,28 @@
 package com.gbrfix.randomyzik;
 
 import android.app.IntentService;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
+import android.net.Uri;
 import android.os.Binder;
-import android.os.Environment;
-import android.os.FileObserver;
+import android.os.Handler;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
 
 /**
  * Created by gab on 27.08.2017.
  */
 
-public class DbService extends IntentService implements FilenameFilter {
+public class DbService extends IntentService {
     private final IBinder binder = new DbBinder();
     private DbSignal dbSignalListener;
-    private ArrayList<File> mediaFiles;
-    private RecursiveFileObserver mediaObserver;
-    File mediaDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+    private ContentResolver contentResolver;
+    private ContentObserver mediaObserver;
+    Uri mediaUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     private boolean bound;
 
     public boolean isBound() {
@@ -34,36 +35,24 @@ public class DbService extends IntentService implements FilenameFilter {
 
     public DbService() {
         super("DbIntentService");
-
-        mediaFiles = new ArrayList<File>();
     }
 
     public void start() {
-        mediaObserver = new RecursiveFileObserver(mediaDir.getPath()) {
+        contentResolver = getContentResolver();
+
+        mediaObserver = new ContentObserver(new Handler()) {
             @Override
-            public void onEvent(int event, String path) {
-                switch (event) {
-                    //case FileObserver.ACCESS:           // 1: Data was read from a file
-                    //case FileObserver.MODIFY:           // 2: Data was written to a file
-                    //case FileObserver.ATTRIB:           // 4: Metadata (permissions, owner, timestamp) was changed explicitly
-                    case FileObserver.CLOSE_WRITE:        // 8: Someone had a file or directory open for writing, and closed it
-                    //case FileObserver.CLOSE_NOWRITE:    // 16: Someone had a file or directory open read-only, and closed it
-                    //case FileObserver.OPEN:             // 32: A file or directory was opened
-                    case FileObserver.MOVED_FROM:         // 64: A file or subdirectory was moved from the monitored directory
-                    case FileObserver.MOVED_TO:           // 128: A file or subdirectory was moved to the monitored directory
-                    //case FileObserver.CREATE:           // 256: A new file or subdirectory was created under the monitored directory
-                    case FileObserver.DELETE:             // 512: A file was deleted from the monitored directory
-                    case FileObserver.DELETE_SELF:        // 1024: The monitored file or directory was deleted; monitoring effectively stops
-                    case FileObserver.MOVE_SELF:          // 2048: The monitored file or directory was moved; monitoring continues
-                        scan();
-                        break;
-                    default:
-                }
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                contentResolver.unregisterContentObserver(this);
+                scan();
+                contentResolver.registerContentObserver(mediaUri, true, this);
             }
         };
 
+
         scan();
-        mediaObserver.startWatching();
+        contentResolver.registerContentObserver(mediaUri, true, mediaObserver);
     }
 
     public void setDbSignalListener(DbSignal listener) {
@@ -74,82 +63,76 @@ public class DbService extends IntentService implements FilenameFilter {
     // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
     // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
     private void scan() {
-        mediaObserver.stopWatching();
-        scanMediaFiles(mediaDir);
         boolean updated = false;
-        MediaFactory factory = new MediaFactory();
         MediaDAO dao = new MediaDAO(this);
         dao.open();
         SQLiteCursor cursor = dao.getAll();
 
         if (cursor.getCount() == 0) {
-            for (int i = 0; i < mediaFiles.size(); i++) {
-                Media media = factory.createMedia(mediaFiles.get(i).getPath());
-                if (media != null) {
+            Cursor c = contentResolver.query(mediaUri, null, null, null, null);
+            if (c.moveToFirst()) {
+                int idColumn = c.getColumnIndex(MediaStore.Audio.Media._ID);
+                int pathColumn = c.getColumnIndex(MediaStore.Audio.Media.DATA);
+                int trackColumn = c.getColumnIndex(MediaStore.Audio.Media.TRACK);
+                int titleColumn = c.getColumnIndex(MediaStore.Audio.Media.TITLE);
+                int albumColumn = c.getColumnIndex(MediaStore.Audio.Media.ALBUM);
+                int artistColumn = c.getColumnIndex(MediaStore.Audio.Media.ARTIST);
+                do {
+                    Media media = new Media();
+                    media.setMediaId(c.getInt(idColumn));
+                    media.setPath(c.getString(pathColumn));
+                    media.setFlag("unread");
+                    media.setTrackNb(c.getString(trackColumn));
+                    media.setTitle(c.getString(titleColumn));
+                    media.setAlbum(c.getString(albumColumn));
+                    media.setArtist(c.getString(artistColumn));
                     dao.insert(media);
                     updated = true;
-                }
+                } while (c.moveToNext());
             }
         } else {
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(0);
                 String path = cursor.getString(1);
-                int i = 0;
-                for (i = 0; i < mediaFiles.size(); i++) {
-                    if (mediaFiles.get(i).getPath().equals(path)) {
-                        break;
-                    }
-                }
-                if (i >= mediaFiles.size()) {
-                    dao.remove(id);
-                    updated = true;
+                int media_id = cursor.getInt(2);
+                Cursor c;
+                if (media_id == 0) {
+                    c = contentResolver.query(
+                            mediaUri,
+                            new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST},
+                            "`_data`=?",
+                            new String[]{path},
+                            null
+                    );
                 }
                 else {
-                    mediaFiles.remove(i);
+                    c = contentResolver.query(
+                            mediaUri,
+                            new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST},
+                            "`_id`=?",
+                            new String[]{String.valueOf(media_id)},
+                            null
+                    );
                 }
-            }
-            for (int i = 0; i < mediaFiles.size(); i++) {
-                Media media = factory.createMedia(mediaFiles.get(i).getPath());
-                if (media != null && dao.getFromPath(mediaFiles.get(i).getPath()).getCount() == 0) {
-                    dao.insert(media);
-                    updated = true;
+                if (c == null) {
+                    dao.remove(id);
+                } else {
+                    Media media = new Media();
+                    c.moveToFirst();
+                    media.setMediaId(c.getInt(0));
+                    media.setPath(c.getString(1));
+                    media.setTrackNb(c.getString(2));
+                    media.setTitle(c.getString(3));
+                    media.setAlbum(c.getString(4));
+                    media.setArtist(c.getString(5));
+                    dao.update(media, id);
                 }
+                updated = true;
             }
         }
 
         dao.close();
         dbSignalListener.onScanCompleted(updated);
-        mediaObserver.startWatching();
-    }
-
-    @Override
-    public boolean accept(File file, String s) {
-        int lastIndex = s.lastIndexOf('.');
-
-        if (lastIndex > 0) {
-            String ext = s.substring(lastIndex);
-            if (ext.matches("\\.mp3|\\.flac|\\.ogg")) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void scanMediaFiles(File dir) {
-        File[] files = dir.listFiles();
-
-        if (files == null) {
-            return;
-        }
-
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].isDirectory()) {
-                scanMediaFiles(files[i]);
-            } else if (files[i].isFile() && accept(files[i], files[i].getName())) {
-                mediaFiles.add(files[i]);
-            }
-        }
     }
 
     public class DbBinder extends Binder {

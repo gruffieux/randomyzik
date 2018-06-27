@@ -6,6 +6,7 @@ package com.gbrfix.randomyzik;
 
 public class Media {
     private int id;
+    private int media_id;
     private String path;
     private String flag;
     private String track_nb;
@@ -28,6 +29,14 @@ public class Media {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public int getMediaId() {
+        return media_id;
+    }
+
+    public void setMediaId(int media_id) {
+        this.media_id = media_id;
     }
 
     public String getPath() {
