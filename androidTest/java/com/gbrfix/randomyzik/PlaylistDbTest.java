@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(AndroidJUnit4.class)
 public class PlaylistDbTest {
     final static int TEST_CREATE_LIST = 1;
+    final static int MEDIA_TOTAL_EXCEPTED = 887;
 
     int currentTest;
     DbService dbService = null;
@@ -31,7 +32,6 @@ public class PlaylistDbTest {
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
-            final int expected = 887;
             final Context context = InstrumentationRegistry.getTargetContext();
             final MediaDAO dao = new MediaDAO(context);
             dbService.setDbSignalListener(new DbSignal() {
@@ -47,7 +47,7 @@ public class PlaylistDbTest {
                         case TEST_CREATE_LIST:
                             dao.open();
                             cursor = dao.getAll();
-                            assertEquals(expected, cursor.getCount());
+                            assertEquals(MEDIA_TOTAL_EXCEPTED, cursor.getCount());
                             dao.close();
                             currentTest = 0;
                             break;

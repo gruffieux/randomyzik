@@ -125,6 +125,23 @@ public class MediaDAOTest {
         }
     }
 
+    @Test
+    public void selectAllMediaId() {
+        try {
+            SQLiteCursor cursor = dao.getAll();
+            int count = 0;
+            while (cursor.moveToNext()) {
+                if (cursor.getInt(cursor.getColumnIndex("media_id")) != 0) {
+                    count++;
+                }
+            }
+            assertEquals(PlaylistDbTest.MEDIA_TOTAL_EXCEPTED, count);
+        }
+        catch (Exception e) {
+            assertTrue(false);
+        }
+    }
+
     @After
     public void destroy() {
         dao.close();
