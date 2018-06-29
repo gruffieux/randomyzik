@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
  */
 
 public class DbService extends IntentService {
-    public final static Uri MEDIA_URI = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     private final IBinder binder = new DbBinder();
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
@@ -43,9 +41,9 @@ public class DbService extends IntentService {
         dbSignalListener = listener;
     }
 
-    // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant le chemin du fichier et un flag read/unread.
-    // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
-    // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
+    // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
+    // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
+    // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
     private void scan() {
         dbSignalListener.onScanStart();
 
@@ -54,7 +52,7 @@ public class DbService extends IntentService {
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
-        Cursor c = contentResolver.query(MEDIA_URI, new String[]{
+        Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.TRACK,
@@ -139,6 +137,6 @@ public class DbService extends IntentService {
         };
 
         scan();
-        contentResolver.registerContentObserver(MEDIA_URI, true, mediaObserver);
+        contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
     }
 }

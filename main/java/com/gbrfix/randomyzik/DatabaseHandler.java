@@ -91,7 +91,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     private void fixMediaTags(SQLiteDatabase db, boolean trackNb, boolean title, boolean album, boolean artist) {
-        Cursor cursor = context.getContentResolver().query(DbService.MEDIA_URI, new String[]{
+        Cursor cursor = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
                 MediaStore.Audio.Media._ID,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.TRACK,

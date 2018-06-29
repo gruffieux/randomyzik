@@ -18,11 +18,6 @@ public class Media {
         id = 0;
     }
 
-    public Media(String path, String flag) {
-        this.path = path;
-        this.flag = flag;
-    }
-
     public int getId() {
         return id;
     }

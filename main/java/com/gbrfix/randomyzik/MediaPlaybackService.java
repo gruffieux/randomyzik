@@ -352,7 +352,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         Media media = provider.selectTrack();
-        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,  media.getMediaId());
+        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
         player = MediaPlayer.create(getApplicationContext(), uri);
 
         if (provider.isTest()) {
