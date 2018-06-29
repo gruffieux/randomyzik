@@ -59,6 +59,17 @@ public class MainActivity extends AppCompatActivity {
             dbService = binder.getService();
             dbService.setDbSignalListener(new DbSignal() {
                 @Override
+                public void onScanStart() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                            infoMsg(getString(R.string.info_scanning), color);
+                        }
+                    });
+                }
+
+                @Override
                 public void onScanCompleted(final boolean update) {
                     runOnUiThread(new Runnable() {
                         @Override
@@ -93,8 +104,10 @@ public class MainActivity extends AppCompatActivity {
                     fwdBtn.setEnabled(false);
                 }
             });
+
             dbService.setBound(true);
-            dbService.start();
+            Intent intent = new Intent(dbService, DbService.class);
+            startService(intent);
         }
 
         @Override
@@ -427,9 +440,6 @@ public class MainActivity extends AppCompatActivity {
         try {
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
-
-                int color = fetchColor(this, R.attr.colorAccent);
-                infoMsg(getString(R.string.info_scanning), color);
 
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);

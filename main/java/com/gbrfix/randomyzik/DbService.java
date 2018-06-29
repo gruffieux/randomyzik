@@ -20,11 +20,11 @@ import java.util.ArrayList;
  */
 
 public class DbService extends IntentService {
+    public final static Uri MEDIA_URI = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     private final IBinder binder = new DbBinder();
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
-    Uri mediaUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     private boolean bound;
 
     public boolean isBound() {
@@ -39,24 +39,6 @@ public class DbService extends IntentService {
         super("DbIntentService");
     }
 
-    public void start() {
-        contentResolver = getContentResolver();
-
-        mediaObserver = new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-                contentResolver.unregisterContentObserver(this);
-                scan();
-                contentResolver.registerContentObserver(mediaUri, true, this);
-            }
-        };
-
-
-        scan();
-        contentResolver.registerContentObserver(mediaUri, true, mediaObserver);
-    }
-
     public void setDbSignalListener(DbSignal listener) {
         dbSignalListener = listener;
     }
@@ -65,26 +47,30 @@ public class DbService extends IntentService {
     // Si la liste n'existe pas, la créer en y ajoutant tous les fichiers du dossier Music.
     // Sinon vérifier que chaque fichier de la liste est toujours présent dans le dossier Music, le supprimer si ce n'est pas le cas, puis ajouter les fichiers pas encore présents dans la liste.
     private void scan() {
+        dbSignalListener.onScanStart();
+
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
-        Cursor c = contentResolver.query(mediaUri,
-                new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST},
+        Cursor c = contentResolver.query(MEDIA_URI,
+                new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.IS_MUSIC},
                 null, null, null);
 
         if (c.moveToFirst()) {
             do {
-                Media media = new Media();
-                media.setMediaId(c.getInt(0));
-                media.setPath(c.getString(1));
-                media.setFlag("unread");
-                media.setTrackNb(c.getString(2));
-                media.setTitle(c.getString(3));
-                media.setAlbum(c.getString(4));
-                media.setArtist(c.getString(5));
-                list.add(media);
+                if (c.getInt(6) != 0) {
+                    Media media = new Media();
+                    media.setMediaId(c.getInt(0));
+                    media.setPath(c.getString(1));
+                    media.setFlag("unread");
+                    media.setTrackNb(c.getString(2));
+                    media.setTitle(c.getString(3));
+                    media.setAlbum(c.getString(4));
+                    media.setArtist(c.getString(5));
+                    list.add(media);
+                }
             } while (c.moveToNext());
         }
 
@@ -121,6 +107,7 @@ public class DbService extends IntentService {
         }
 
         dao.close();
+
         dbSignalListener.onScanCompleted(updated);
     }
 
@@ -137,6 +124,17 @@ public class DbService extends IntentService {
 
     @Override
     protected void onHandleIntent(@Nullable Intent intent) {
-        start();
+        contentResolver = getContentResolver();
+
+        mediaObserver = new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+               super.onChange(selfChange);
+               scan();
+            }
+        };
+
+        scan();
+        contentResolver.registerContentObserver(MEDIA_URI, true, mediaObserver);
     }
 }

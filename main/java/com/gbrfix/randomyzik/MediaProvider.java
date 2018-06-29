@@ -135,6 +135,7 @@ public class MediaProvider {
         media.setTitle(cursor.getString(4));
         media.setAlbum(cursor.getString(5));
         media.setArtist(cursor.getString(6));
+        media.setMediaId(cursor.getInt(7));
 
         dao.close();
 

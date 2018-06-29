@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -15,6 +16,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -350,8 +352,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         Media media = provider.selectTrack();
-        File file = new File(media.getPath());
-        player = MediaPlayer.create(getApplicationContext(), Uri.fromFile(file));
+        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,  media.getMediaId());
+        player = MediaPlayer.create(getApplicationContext(), uri);
 
         if (provider.isTest()) {
             player.seekTo(player.getDuration() - 10);
