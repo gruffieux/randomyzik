@@ -54,9 +54,15 @@ public class DbService extends IntentService {
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
-        Cursor c = contentResolver.query(MEDIA_URI,
-                new String[]{MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DATA, MediaStore.Audio.Media.TRACK, MediaStore.Audio.Media.TITLE, MediaStore.Audio.Media.ALBUM, MediaStore.Audio.Media.ARTIST, MediaStore.Audio.Media.IS_MUSIC},
-                null, null, null);
+        Cursor c = contentResolver.query(MEDIA_URI, new String[]{
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.TRACK,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.IS_MUSIC
+            },null, null, null);
 
         if (c.moveToFirst()) {
             do {
@@ -80,13 +86,11 @@ public class DbService extends IntentService {
             }
         } else {
             while (cursor.moveToNext()) {
-                int id = cursor.getInt(0);
-                String path = cursor.getString(1);
-                int media_id = cursor.getInt(2);
+                int id = cursor.getInt(cursor.getColumnIndex("id"));
+                int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
                 int i;
                 for (i = 0; i < list.size(); i++) {
-                    boolean found = list.get(i).getMediaId() != 0 ? list.get(i).getMediaId() == media_id : list.get(i).getPath().equals(path);
-                    if (found) {
+                    if (list.get(i).getMediaId() == media_id) {
                         dao.update(list.get(i), id);
                         updated = true;
                         break;

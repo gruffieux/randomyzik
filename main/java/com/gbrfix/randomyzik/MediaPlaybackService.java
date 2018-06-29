@@ -30,7 +30,6 @@ import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -47,6 +46,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
+    private Thread progress = null;
     private MediaProvider provider;
     private AudioFocusRequest focusRequest;
     private  boolean changeFocus = true;
@@ -362,8 +362,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player.start();
         player.setOnCompletionListener(MediaPlaybackService.this);
 
+        if (progress != null) {
+            progress.interrupt();
+            progress = null;
+        }
+
         // Progress thread
-        new Thread(new Runnable() {
+        progress = new Thread(new Runnable() {
             @Override
             public void run() {
                 int currentPosition = 0;
@@ -372,16 +377,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 while (currentPosition < total) {
                     try {
                         Thread.sleep(1000);
+                        currentPosition = player.getCurrentPosition();
+                        bundle.putInt("position", currentPosition);
+                        session.sendSessionEvent("onTrackProgress", bundle);
+                        session.setExtras(bundle);
                     } catch (Exception e) {
                         return;
                     }
-                    currentPosition = player.getCurrentPosition();
-                    bundle.putInt("position", currentPosition);
-                    session.sendSessionEvent("onTrackProgress", bundle);
-                    session.setExtras(bundle);
                 }
             }
-        }).start();
+        });
+        progress.start();
 
         metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())

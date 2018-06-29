@@ -18,10 +18,10 @@ public class TrackCursorAdapter extends SimpleCursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         super.bindView(view, context, cursor);
 
-        int id = cursor.getInt(0);
+        int id = cursor.getInt(cursor.getColumnIndex("_id"));
         view.setId(id);
 
-        if (cursor.getString(2).equals("read")) {
+        if (cursor.getString(cursor.getColumnIndex("flag")).equals("read")) {
             view.setAlpha(0.5f);
         }
         else {

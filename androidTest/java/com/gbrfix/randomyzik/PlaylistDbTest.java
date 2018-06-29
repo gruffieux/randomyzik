@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 /**
  * Created by gab on 01.10.2017.
@@ -23,7 +22,6 @@ import static org.junit.Assert.assertFalse;
 @RunWith(AndroidJUnit4.class)
 public class PlaylistDbTest {
     final static int TEST_CREATE_LIST = 1;
-    final static int TEST_CHANGE_FILES = 2;
 
     int currentTest;
     DbService dbService = null;
@@ -38,6 +36,11 @@ public class PlaylistDbTest {
             final MediaDAO dao = new MediaDAO(context);
             dbService.setDbSignalListener(new DbSignal() {
                 @Override
+                public void onScanStart() {
+
+                }
+
+                @Override
                 public void onScanCompleted(final boolean update) {
                     SQLiteCursor cursor;
                     switch (currentTest) {
@@ -48,24 +51,6 @@ public class PlaylistDbTest {
                             dao.close();
                             currentTest = 0;
                             break;
-                        case TEST_CHANGE_FILES:
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        Thread.currentThread().sleep(30000); // Copiez, déplacez, supprimez des fichiers pendant le temps de pause.
-                                        dao.open();
-                                        SQLiteCursor cursor = dao.getAll();
-                                        assertEquals(expected, cursor.getCount()); // Modifiez en fonction de ce que vous voulez obtenir
-                                        dao.close();
-                                        currentTest = 0;
-                                    }
-                                    catch (Exception e) {
-                                        assertFalse(true);
-                                    }
-                                }
-                            }).start();
-                            break;
                     }
 
                 }
@@ -74,20 +59,13 @@ public class PlaylistDbTest {
                 public void onError(String msg) {
                     switch (currentTest) {
                         case TEST_CREATE_LIST:
-                        case TEST_CHANGE_FILES:
-                            assertFalse(true);
-                            break;
                     }
                     currentTest = 0;
                 }
             });
             dbService.setBound(true);
-            switch (currentTest) {
-                case TEST_CREATE_LIST:
-                case TEST_CHANGE_FILES:
-                    dbService.start();
-                    break;
-            }
+            Intent intent = new Intent(dbService, DbService.class);
+            InstrumentationRegistry.getContext().startService(intent);
         }
 
         @Override
@@ -122,20 +100,5 @@ public class PlaylistDbTest {
         }
 
         Log.v("createList", "end");
-    }
-
-    @Test
-    public void changeFiles() {
-        currentTest = TEST_CHANGE_FILES;
-
-        Context c = InstrumentationRegistry.getTargetContext();
-
-        Intent intent = new Intent(c, DbService.class);
-        c.bindService(intent, connection, Context.BIND_AUTO_CREATE);
-
-        while (currentTest != 0) {
-        }
-
-        Log.v("changeFiles", "end");
     }
 }

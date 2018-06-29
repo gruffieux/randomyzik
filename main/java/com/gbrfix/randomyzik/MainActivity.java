@@ -63,8 +63,11 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                            infoMsg(getString(R.string.info_scanning), color);
+                            TextView infoMsg = findViewById(R.id.infoMsg);
+                            if (infoMsg.getText().equals("")) {
+                                int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                                infoMsg(getString(R.string.info_scanning), color);
+                            }
                         }
                     });
                 }

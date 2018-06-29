@@ -83,7 +83,7 @@ public class MediaDAO extends DAOBase {
 
     public SQLiteCursor getFromAlbum(String album, String artist, String flag) {
         ArrayList<String> args = new ArrayList<String>();
-        String query = "SELECT `id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist` FROM `medias` WHERE (";
+        String query = "SELECT `id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist`, `media_id` FROM `medias` WHERE (";
 
         if (album != null && !album.isEmpty()) {
             query += " `album`=?";
