@@ -212,23 +212,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        Bundle args = new Bundle();
+        provider.updateState("read");
 
-        try {
-            provider.updateState("read");
-            startNewTrack();
-            showNotification();
-            args.putBoolean("last", false);
-            session.sendSessionEvent("onTrackRead", args);
+        player.stop();
+        player.release();
+        player = null;
+
+        boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+        if (!last) {
+            session.getController().getTransportControls().play();
         }
-        catch (PlayEndException e) {
-            session.getController().getTransportControls().stop();
-            args.putBoolean("last", true);
-            session.sendSessionEvent("onTrackRead", args);
-        }
-        catch (Exception e) {
-            Log.v("Exception", e.getMessage());
-        }
+
+        Bundle args = new Bundle();
+        args.putBoolean("last", last);
+        session.sendSessionEvent("onTrackRead", args);
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
@@ -281,6 +278,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlay() {
+            Bundle args = new Bundle();
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -300,8 +298,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.setPlaybackState(stateBuilder.build());
 
                     showNotification();
+                } catch (PlayEndException e) {
+                    args.putString("message", e.getMessage());
+                    session.getController().getTransportControls().stop();
+                    session.sendSessionEvent("onError", args);
                 } catch (Exception e) {
-                    Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
                 }
@@ -334,14 +335,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onSkipToNext() {
-            try {
-                provider.updateState("skip");
-                player.stop();
-                startNewTrack();
-                showNotification();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            provider.updateState("skip");
+            player.stop();
+            player.release();
+            player = null;
+            session.getController().getTransportControls().play();
         }
     }
 

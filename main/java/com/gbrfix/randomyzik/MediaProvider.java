@@ -67,7 +67,7 @@ public class MediaProvider {
 
         SQLiteCursor cursorUnread = dao.getUnread();
         int totalUnread = cursorUnread.getCount();
-        totalRead =  total - totalUnread;
+        totalRead = total - totalUnread;
 
         SQLiteCursor cursorSel = null;
         if (selectId > 0) {
