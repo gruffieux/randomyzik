@@ -46,7 +46,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
-    private Thread progress = null;
+    private ProgressThread progress = null;
     private MediaProvider provider;
     private AudioFocusRequest focusRequest;
     private  boolean changeFocus = true;
@@ -257,6 +257,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 player = null;
             }
 
+            if (progress != null) {
+                progress.stop();
+                progress = null;
+            }
+
             try {
                 abandonAudioFocus();
                 unregisterReceiver(myNoisyAudioReceiver);
@@ -288,9 +293,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     registerReceiver(myNoisyAudioReceiver, intentFilter);
 
                     if (player == null || provider.getSelectId() > 0) {
+                        if (progress != null) {
+                            progress.stop();
+                            progress = null;
+                        }
+                        progress = new ProgressThread();
                         startNewTrack();
+                        progress.start();
                     } else {
                         player.start();
+                        if (progress != null && progress.isThreadSuspended()) {
+                            progress.resume();
+                        }
                     }
 
                     // Upddate state
@@ -313,6 +327,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onPause() {
             player.pause();
+            progress.suspend();
             stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
             session.setPlaybackState(stateBuilder.build());
 
@@ -359,33 +374,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         player.start();
         player.setOnCompletionListener(MediaPlaybackService.this);
-
-        if (progress != null) {
-            progress.interrupt();
-            progress = null;
-        }
-
-        // Progress thread
-        progress = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int currentPosition = 0;
-                int total = player.getDuration();
-                Bundle bundle = new Bundle();
-                while (currentPosition < total) {
-                    try {
-                        Thread.sleep(1000);
-                        currentPosition = player.getCurrentPosition();
-                        bundle.putInt("position", currentPosition);
-                        session.sendSessionEvent("onTrackProgress", bundle);
-                        session.setExtras(bundle);
-                    } catch (Exception e) {
-                        return;
-                    }
-                }
-            }
-        });
-        progress.start();
 
         metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
@@ -471,6 +459,65 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onReceive(Context context, Intent intent) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
                 session.getController().getTransportControls().pause();
+            }
+        }
+    }
+
+    private class ProgressThread implements Runnable {
+        private Thread blinker;
+        private boolean threadSuspended;
+        private int currentPosition;
+        private int total;
+
+        public void start() {
+            currentPosition = 0;
+            total = player.getDuration();
+            threadSuspended = false;
+            blinker = new Thread(this);
+            blinker.start();
+        }
+
+        public void suspend() {
+            threadSuspended = true;
+        }
+
+        public void resume() {
+            threadSuspended = false;
+            synchronized (blinker) {
+                blinker.notify();
+            }
+        }
+
+        public void stop() {
+            blinker = null;
+        }
+
+        public boolean isThreadSuspended() {
+            return threadSuspended;
+        }
+
+        @Override
+        public void run() {
+            Thread thisThread = Thread.currentThread();
+            Bundle bundle = new Bundle();
+
+            while (currentPosition < total && blinker == thisThread) {
+                try {
+                    Thread.sleep(1000);
+                    currentPosition = player.getCurrentPosition();
+                    bundle.putInt("position", currentPosition);
+                    session.sendSessionEvent("onTrackProgress", bundle);
+                    session.setExtras(bundle);
+                    if (threadSuspended) {
+                        synchronized (blinker) {
+                            while (threadSuspended) {
+                                blinker.wait();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    return;
+                }
             }
         }
     }
