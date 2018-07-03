@@ -343,6 +343,8 @@ public class MainActivity extends AppCompatActivity {
             return super.onKeyDown(keyCode, event);
         }
         switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
             case KeyEvent.KEYCODE_MEDIA_NEXT:
             case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
             case KeyEvent.KEYCODE_MEDIA_PREVIOUS:

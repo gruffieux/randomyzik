@@ -110,6 +110,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         MediaButtonReceiver.handleIntent(session, intent);
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -234,6 +235,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
             if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
                 switch (ke.getKeyCode()) {
+                    case KeyEvent.KEYCODE_MEDIA_PLAY:
+                        session.getController().getTransportControls().play();
+                        return true;
+                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                        session.getController().getTransportControls().pause();
+                        return true;
                     case KeyEvent.KEYCODE_MEDIA_NEXT:
                     case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
                         session.getController().getTransportControls().skipToNext();
