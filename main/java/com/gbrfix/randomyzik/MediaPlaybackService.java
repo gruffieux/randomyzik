@@ -27,7 +27,6 @@ import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -286,42 +285,75 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             Bundle args = new Bundle();
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
-            if (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                try {
-                    session.setActive(true);
-                    startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
-                    registerReceiver(myNoisyAudioReceiver, intentFilter);
-
-                    if (player == null || provider.getSelectId() > 0) {
-                        if (progress != null) {
-                            progress.stop();
-                            progress = null;
-                        }
-                        progress = new ProgressThread();
-                        startNewTrack();
-                        progress.start();
-                    } else {
-                        player.start();
-                        if (progress != null && progress.isThreadSuspended()) {
-                            progress.resume();
-                        }
-                    }
-
-                    // Upddate state
-                    stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
-                    session.setPlaybackState(stateBuilder.build());
-
-                    showNotification();
-                } catch (PlayEndException e) {
-                    args.putString("message", e.getMessage());
-                    session.getController().getTransportControls().stop();
-                    session.sendSessionEvent("onError", args);
-                } catch (Exception e) {
-                    args.putString("message", e.getMessage());
-                    session.sendSessionEvent("onError", args);
-                }
+            if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                return;
             }
 
+            try {
+                session.setActive(true);
+                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
+                registerReceiver(myNoisyAudioReceiver, intentFilter);
+
+                if (player == null || provider.getSelectId() > 0) {
+                    if (progress != null) {
+                        progress.stop();
+                        progress = null;
+                    }
+
+                    if (player != null) {
+                        player.release();
+                        player = null;
+                    }
+
+                    progress = new ProgressThread();
+                    Media media = provider.selectTrack();
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                    player = MediaPlayer.create(getApplicationContext(), uri);
+
+                    if (provider.isTest()) {
+                        player.seekTo(player.getDuration() - 10);
+                    }
+
+                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
+                            .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
+                            .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
+                            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
+                            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
+                    session.setMetadata(metaDataBuilder.build());
+
+                    progress.start();
+                    player.setOnCompletionListener(MediaPlaybackService.this);
+                    player.start();
+
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("id", media.getId());
+                    bundle.putString("title", media.getTitle());
+                    bundle.putString("album", media.getAlbum());
+                    bundle.putString("artist", media.getArtist());
+                    bundle.putInt("duration", player.getDuration());
+                    session.sendSessionEvent("onTrackSelect", bundle);
+                } else {
+                    player.start();
+                    if (progress != null && progress.isThreadSuspended()) {
+                        progress.resume();
+                    }
+                }
+
+                // Upddate state
+                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+                session.setPlaybackState(stateBuilder.build());
+
+                showNotification();
+            } catch (PlayEndException e) {
+                args.putString("message", e.getMessage());
+                session.getController().getTransportControls().stop();
+                session.sendSessionEvent("onError", args);
+            } catch (Exception e) {
+                args.putString("message", e.getMessage());
+                session.sendSessionEvent("onError", args);
+            }
         }
 
         @Override
@@ -356,42 +388,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             player = null;
             session.getController().getTransportControls().play();
         }
-    }
-
-    private void startNewTrack() throws Exception {
-        if (player != null) {
-            player.release();
-            player = null;
-        }
-
-        Media media = provider.selectTrack();
-        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-        player = MediaPlayer.create(getApplicationContext(), uri);
-
-        if (provider.isTest()) {
-            player.seekTo(player.getDuration() - 10);
-        }
-
-        player.start();
-        player.setOnCompletionListener(MediaPlaybackService.this);
-
-        metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
-            .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
-            .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
-            .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
-            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
-            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
-            .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
-
-        session.setMetadata(metaDataBuilder.build());
-
-        Bundle bundle = new Bundle();
-        bundle.putInt("id", media.getId());
-        bundle.putString("title", media.getTitle());
-        bundle.putString("album", media.getAlbum());
-        bundle.putString("artist", media.getArtist());
-        bundle.putInt("duration", player.getDuration());
-        session.sendSessionEvent("onTrackSelect", bundle);
     }
 
     private void showNotification() {
