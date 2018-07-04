@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
                 TextView durationLabel = findViewById(R.id.duration);
                 ProgressBar progressBar = findViewById(R.id.progressBar);
 
-                if (!infoMsg.getText().equals(getText(R.string.info_play_end))) {
+                if (!infoMsg.getText().equals(getText(R.string.info_play_end)) && !infoMsg.getText().equals(getText(R.string.err_all_read))) {
                     infoMsg.setText("");
                 }
 
@@ -201,7 +201,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 case "onError":
-                    infoMsg(extras.getString("message"), Color.RED);
+                    TextView infoMsg = findViewById(R.id.infoMsg);
+                    if (!infoMsg.getText().equals(getText(R.string.info_play_end))) {
+                        infoMsg(extras.getString("message"), Color.RED);
+                    }
                     break;
             }
 
@@ -212,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
+            //mediaBrowser.sendCustomAction("test", null, null);
             try {
                 // Get the token for the MediaSession
                 MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
