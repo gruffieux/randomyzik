@@ -382,9 +382,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onRewind() {
             try {
+                progress.stop();
+                progress = new ProgressThread();
                 player.stop();
                 player.prepare();
                 player.seekTo(0);
+                progress.start();
                 player.start();
             } catch (IOException e) {
                 e.printStackTrace();
