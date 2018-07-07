@@ -198,13 +198,13 @@ public class MainActivity extends AppCompatActivity {
                     if (extras.getBoolean("last")) {
                         color = fetchColor(MainActivity.this, R.attr.colorAccent);
                         infoMsg(getString(R.string.info_play_end), color);
+                        if (mediaBrowser != null && mediaBrowser.isConnected()) {
+                            mediaBrowser.sendCustomAction("stop", null, null);
+                        }
                     }
                     break;
                 case "onError":
-                    TextView infoMsg = findViewById(R.id.infoMsg);
-                    if (!infoMsg.getText().equals(getText(R.string.info_play_end))) {
-                        infoMsg(extras.getString("message"), Color.RED);
-                    }
+                    infoMsg(extras.getString("message"), Color.RED);
                     break;
             }
 

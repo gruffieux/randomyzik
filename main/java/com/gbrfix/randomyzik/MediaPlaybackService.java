@@ -128,6 +128,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setTest(true);
         }
 
+        if (action == "stop") {
+            session.getController().getTransportControls().stop();
+        }
+
         super.onCustomAction(action, extras, result);
     }
 
@@ -219,7 +223,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = null;
 
         boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-        session.getController().getTransportControls().play();
+        if (!last) {
+            session.getController().getTransportControls().play();
+        }
 
         Bundle args = new Bundle();
         args.putBoolean("last", last);
