@@ -21,7 +21,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAllOrdered() {
-        String sql = "SELECT `id` AS `_id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist` FROM `medias` ORDER BY `album`, `artist`, `track_nb`;";
+        String sql = "SELECT `id` AS `_id`, `path`, `flag`, PRINTF(\"%2d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist` FROM `medias` ORDER BY `album`, `track_nb`, `artist`;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, null);
     }
@@ -78,7 +78,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getFromFlagAlbumGrouped(String flag) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album` ORDER BY `album`, `artist`, `track_nb`;", new String[] {flag});
+        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album` ORDER BY `album`, `track_nb`, `artist`;", new String[] {flag});
     }
 
     public SQLiteCursor getFromAlbum(String album, String artist, String flag) {
@@ -108,7 +108,7 @@ public class MediaDAO extends DAOBase {
             args.add(flag);
         }
 
-        query += " ORDER BY `album`, `artist`, `track_nb`;";
+        query += " ORDER BY `album`, `track_nb`, `artist`;";
         String[] arr = null;
 
         switch (args.size()) {
