@@ -39,6 +39,10 @@ public class MediaProvider {
         this.selectId = selectId;
     }
 
+    public int getCurrentId() {
+        return currentId;
+    }
+
     public int getTotal() {
         return total;
     }
