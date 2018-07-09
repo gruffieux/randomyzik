@@ -7,12 +7,12 @@ package com.gbrfix.randomyzik;
 public class Media {
     private int id;
     private int media_id;
-    private String path;
     private String flag;
     private String track_nb;
     private String title;
     private String album;
     private String artist;
+    private String album_key;
 
     public Media() {
         id = 0;
@@ -32,14 +32,6 @@ public class Media {
 
     public void setMediaId(int media_id) {
         this.media_id = media_id;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public String getFlag() {
@@ -80,5 +72,13 @@ public class Media {
 
     public void setArtist(String artist) {
         this.artist = artist;
+    }
+
+    public String getAlbumKey() {
+        return album_key;
+    }
+
+    public void setAlbumKey(String album_key) {
+        this.album_key = album_key;
     }
 }

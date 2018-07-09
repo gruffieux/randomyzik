@@ -53,29 +53,27 @@ public class DbService extends IntentService {
         SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
         Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
+                MediaStore.Audio.Media.IS_MUSIC,
                 MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.TRACK,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.IS_MUSIC
+                MediaStore.Audio.Media.ALBUM_KEY
             },null, null, null);
 
-        if (c.moveToFirst()) {
-            do {
-                if (c.getInt(6) != 0) {
-                    Media media = new Media();
-                    media.setMediaId(c.getInt(0));
-                    media.setPath(c.getString(1));
-                    media.setFlag("unread");
-                    media.setTrackNb(c.getString(2));
-                    media.setTitle(c.getString(3));
-                    media.setAlbum(c.getString(4));
-                    media.setArtist(c.getString(5));
-                    list.add(media);
-                }
-            } while (c.moveToNext());
+        while (c.moveToNext()) {
+            if (c.getInt(0) != 0) {
+                Media media = new Media();
+                media.setMediaId(c.getInt(1));
+                media.setFlag("unread");
+                media.setTrackNb(c.getString(2));
+                media.setTitle(c.getString(3));
+                media.setAlbum(c.getString(4));
+                media.setArtist(c.getString(5));
+                media.setAlbumKey(c.getString(6));
+                list.add(media);
+            }
         }
 
         if (cursor.getCount() == 0) {

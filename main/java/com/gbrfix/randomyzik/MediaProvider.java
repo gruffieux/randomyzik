@@ -101,9 +101,8 @@ public class MediaProvider {
             else {
                 cursor.moveToFirst();
             }
-            String album = cursor.getString(cursor.getColumnIndex("album"));
-            String artist = cursor.getString(cursor.getColumnIndex("artist"));
-            cursor = dao.getFromAlbum(album, artist, "unread");
+            String albumKey = cursor.getString(cursor.getColumnIndex("album_key"));
+            cursor = dao.getFromAlbum(albumKey, "unread");
             lastOfAlbum = cursor.getCount() <= 1;
             if (cursorSel != null) {
                 cursor = cursorSel;
@@ -135,7 +134,7 @@ public class MediaProvider {
 
         Media media = new Media();
         media.setId(currentId);
-        media.setPath(cursor.getString(cursor.getColumnIndex("path")));
+        media.setAlbumKey(cursor.getString(cursor.getColumnIndex("album_key")));
         media.setTitle(cursor.getString(cursor.getColumnIndex("title")));
         media.setAlbum(cursor.getString(cursor.getColumnIndex("album")));
         media.setArtist(cursor.getString(cursor.getColumnIndex("artist")));

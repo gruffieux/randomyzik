@@ -16,7 +16,7 @@ import android.util.Log;
 public class DatabaseHandler extends SQLiteOpenHelper {
     public static final String MEDIAS_TABLE_CREATE = "CREATE TABLE `medias` (" +
             "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
-            "`path` TEXT, `flag` TEXT, " +
+            "`album_key` TEXT, `flag` TEXT, " +
             "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT, " +
             "`media_id` INTEGER);";
     public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
@@ -88,6 +88,18 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 Log.v("Exception", e.getMessage());
             }
         }
+        if (oldVersion <= 7 && newVersion >= 8) {
+            try {
+                db.execSQL("ALTER TABLE `medias` RENAME TO `temp_medias`;");
+                db.execSQL(MEDIAS_TABLE_CREATE);
+                db.execSQL("INSERT INTO `medias` SELECT * FROM `temp_medias`");
+                db.execSQL("DROP TABLE `temp_medias`");
+                fixMediaTags(db, false, false, true, false);
+            }
+            catch (Exception e) {
+                Log.v("Exception", e.getMessage());
+            }
+        }
     }
 
     private void fixMediaTags(SQLiteDatabase db, boolean trackNb, boolean title, boolean album, boolean artist) {
@@ -97,7 +109,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 MediaStore.Audio.Media.TRACK,
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.ARTIST
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.ALBUM_KEY
             }, null, null, null);
 
         while (cursor.moveToNext()) {
@@ -117,10 +130,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 values.put("artist", cursor.getString(5));
             }
             if (DAOBase.VERSION > 7) {
+                values.put("album_key", cursor.getString(6));
                 db.update("medias", values, "`media_id`=?", new String[] {String.valueOf(mediaId)});
             } else {
                 values.put("media_id", mediaId);
-                db.update("medias", values, "`path`=?", new String[]{path});
+                db.update("medias", values, "`path`=?", new String[]{path}); // Rétro-compatibilité
             }
         }
     }
