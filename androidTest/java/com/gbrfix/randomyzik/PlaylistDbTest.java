@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.database.sqlite.SQLiteCursor;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -22,9 +24,9 @@ import static org.junit.Assert.assertEquals;
 @RunWith(AndroidJUnit4.class)
 public class PlaylistDbTest {
     final static int TEST_CREATE_LIST = 1;
-    final static int MEDIA_TOTAL_EXCEPTED = 887;
 
     int currentTest;
+    int mediaTotalExcepted;
     DbService dbService = null;
 
     private ServiceConnection connection = new ServiceConnection() {
@@ -47,7 +49,7 @@ public class PlaylistDbTest {
                         case TEST_CREATE_LIST:
                             dao.open();
                             cursor = dao.getAll();
-                            assertEquals(MEDIA_TOTAL_EXCEPTED, cursor.getCount());
+                            assertEquals(mediaTotalExcepted, cursor.getCount());
                             dao.close();
                             currentTest = 0;
                             break;
@@ -75,6 +77,8 @@ public class PlaylistDbTest {
     };
 
     public PlaylistDbTest() {
+        Context c = InstrumentationRegistry.getTargetContext();
+        mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
         currentTest = 0;
         DAOBase.NAME = "playlist-test.db";
     }

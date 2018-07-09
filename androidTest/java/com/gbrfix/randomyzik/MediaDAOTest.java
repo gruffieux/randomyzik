@@ -1,6 +1,8 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
+import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -18,11 +20,14 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaDAOTest {
+    private int mediaTotalExcepted;
     private  MediaDAO dao;
 
     public MediaDAOTest() {
+        Context c = InstrumentationRegistry.getTargetContext();
+        mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
         DAOBase.NAME = "playlist-test.db";
-        dao = new MediaDAO(InstrumentationRegistry.getTargetContext());
+        dao = new MediaDAO(c);
     }
 
     @Before
@@ -31,55 +36,9 @@ public class MediaDAOTest {
     }
 
     @Test
-    public void selectAlbumArtistEmpty() {
-        String album = "Scorching Beauty";
-        String artist = "";
-
-        try {
-            dao.getFromAlbum(album, artist, "unread");
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAlbumArtistNull() {
-        String album = "abc";
-
-        try {
-            dao.getFromAlbum(album, null, "");
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAlbumArtistVarious() {
-        String album = "The Complete Stax-Volt Singles: 1959-1968 (Disc 1)";
-        String artist = "Various";
-
-        try {
-            SQLiteCursor cursor = dao.getFromAlbum(album, artist, "");
-            //assertEquals(23, cursor.getCount());
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
     public void selectAlbumEmpty() {
-        String album = "";
-        String artist = "Alpha Blondy";
-
         try {
-            SQLiteCursor cursor = dao.getFromAlbum(album, artist, "unread");
-            //assertEquals(10, cursor.getCount());
+            SQLiteCursor cursor = dao.getFromAlbum("", "unread");
             assertTrue(true);
         }
         catch (Exception e) {
@@ -89,11 +48,8 @@ public class MediaDAOTest {
 
     @Test
     public void selectAlbumNull() {
-        String artist = "Alpha Blondy";
-
         try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, artist, "");
-            //assertEquals(17, cursor.getCount());
+            SQLiteCursor cursor = dao.getFromAlbum(null, "");
             assertTrue(true);
         }
         catch (Exception e) {
@@ -104,8 +60,7 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumAllEmpty() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum("", "", "");
-            //assertEquals(25, cursor.getCount());
+            SQLiteCursor cursor = dao.getFromAlbum("", "");
             assertTrue(true);
         }
         catch (Exception e) {
@@ -116,8 +71,7 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumAllNull() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, null, "unread");
-            //assertEquals(17, cursor.getCount());
+            SQLiteCursor cursor = dao.getFromAlbum(null, "unread");
             assertTrue(true);
         }
         catch (Exception e) {
@@ -135,7 +89,24 @@ public class MediaDAOTest {
                     count++;
                 }
             }
-            assertEquals(PlaylistDbTest.MEDIA_TOTAL_EXCEPTED, count);
+            assertEquals(mediaTotalExcepted, count);
+        }
+        catch (Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    public void selectAllAlbumKey() {
+        try {
+            SQLiteCursor cursor = dao.getAll();
+            int count = 0;
+            while (cursor.moveToNext()) {
+                if (!cursor.getString(cursor.getColumnIndex("album_key")).isEmpty()) {
+                    count++;
+                }
+            }
+            assertEquals(mediaTotalExcepted, count);
         }
         catch (Exception e) {
             assertTrue(false);

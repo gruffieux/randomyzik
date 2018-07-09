@@ -15,7 +15,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAll() {
-        String sql = "SELECT `id`, `media_id` FROM `medias`;";
+        String sql = "SELECT `id`, `media_id`, `album_key` FROM `medias`;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, null);
     }
