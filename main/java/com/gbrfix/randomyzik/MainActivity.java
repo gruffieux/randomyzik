@@ -215,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
-            //mediaBrowser.sendCustomAction("test", null, null);
             try {
                 // Get the token for the MediaSession
                 MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
