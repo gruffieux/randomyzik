@@ -79,6 +79,7 @@ public class DbService extends IntentService {
         if (cursor.getCount() == 0) {
             for (int i = 0; i < list.size(); i++) {
                 dao.insert(list.get(i));
+                updated = true;
             }
         } else {
             while (cursor.moveToNext()) {
