@@ -29,7 +29,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.KeyEvent;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -88,13 +87,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Audiofocus compatibility
             AudioAttributes attributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build();
             focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                 .setAudioAttributes(attributes)
+                .setOnAudioFocusChangeListener(this)
                 .build();
+
+            // Notifications compatibility
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
             channel.setShowBadge(false);
