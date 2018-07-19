@@ -9,6 +9,9 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+
+import java.util.ArrayList;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -86,6 +89,7 @@ public class PlaylistActivity extends AppCompatActivity {
                             assertTrue(true);
                             break;
                         default:
+                            Log.v("trackPath", extras.getString("trackPath"));
                             assertTrue(false);
                     }
                     currentTest = 0;

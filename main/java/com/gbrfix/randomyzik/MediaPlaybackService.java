@@ -367,6 +367,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
+                args.putString("trackPath", provider.getTrackPath(provider.getCurrentId()));
                 session.sendSessionEvent("onError", args);
             }
         }

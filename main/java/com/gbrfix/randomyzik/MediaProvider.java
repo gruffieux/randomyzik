@@ -1,7 +1,9 @@
 package com.gbrfix.randomyzik;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
+import android.provider.MediaStore;
 
 import java.util.Random;
 
@@ -163,6 +165,26 @@ public class MediaProvider {
         }
 
         return label;
+    }
+
+    public String getTrackPath(int id) {
+        String path = "";
+        dao.open();
+
+        SQLiteCursor cursor = dao.getFromId(id);
+
+        if (cursor.moveToFirst()) {
+            Cursor c = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
+                    MediaStore.Audio.Media.DATA
+            }, "_id=?", new String[] {String.valueOf(cursor.getInt(cursor.getColumnIndex("media_id")))}, null);
+            if (c.moveToFirst()) {
+                path = c.getString(0);
+            }
+        }
+
+        dao.close();
+
+        return path;
     }
 
     public String getSummary() {
