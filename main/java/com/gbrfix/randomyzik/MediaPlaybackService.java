@@ -296,7 +296,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlay() {
-            Bundle args = new Bundle();
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -361,10 +360,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 showNotification();
             } catch (PlayEndException e) {
+                Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.getController().getTransportControls().stop();
                 session.sendSessionEvent("onError", args);
             } catch (Exception e) {
+                Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
             }
@@ -391,9 +392,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onSkipToNext() {
             provider.updateState("skip");
-            player.stop();
-            player.release();
-            player = null;
+            if (player != null) {
+                player.stop();
+                player.release();
+                player = null;
+            }
             session.getController().getTransportControls().play();
         }
     }
