@@ -296,6 +296,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlay() {
+            Media media = null;
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -319,7 +320,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     progress = new ProgressThread();
-                    Media media = provider.selectTrack();
+                    media = provider.selectTrack();
                     Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                     player = MediaPlayer.create(getApplicationContext(), uri);
 
@@ -367,7 +368,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
-                args.putString("trackPath", provider.getTrackPath(provider.getCurrentId()));
+                if (media != null) {
+                    args.putInt("media_id", media.getMediaId());
+                }
                 session.sendSessionEvent("onError", args);
             }
         }

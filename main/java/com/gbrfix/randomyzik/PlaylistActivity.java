@@ -1,7 +1,9 @@
 package com.gbrfix.randomyzik;
 
 import android.content.ComponentName;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -10,8 +12,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
-import java.util.ArrayList;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -89,7 +89,12 @@ public class PlaylistActivity extends AppCompatActivity {
                             assertTrue(true);
                             break;
                         default:
-                            Log.v("trackPath", extras.getString("trackPath"));
+                            Cursor cursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
+                                    MediaStore.Audio.Media.DATA
+                            }, "_id=?", new String[] {String.valueOf(extras.getInt("media_id"))}, null);
+                            if (cursor.moveToFirst()) {
+                                Log.i("trackPath", cursor.getString(0));
+                            }
                             assertTrue(false);
                     }
                     currentTest = 0;
