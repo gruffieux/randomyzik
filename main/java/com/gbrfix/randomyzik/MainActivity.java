@@ -492,6 +492,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 AllTracksDialogFragment dialog = new AllTracksDialogFragment();
+                dialog.setId((int)id);
                 dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
                 return true;
             }

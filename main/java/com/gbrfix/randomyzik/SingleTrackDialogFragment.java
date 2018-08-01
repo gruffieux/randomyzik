@@ -1,6 +1,5 @@
 package com.gbrfix.randomyzik;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.database.SQLException;
@@ -17,18 +16,22 @@ import android.widget.ListView;
  */
 
 public class SingleTrackDialogFragment extends AppCompatDialogFragment {
-    private int id;
-    private MediaDAO dao;
+    protected int id;
+    protected MediaDAO dao;
+    protected MainActivity activity;
 
     public void setId(int id) {
         this.id = id;
     }
 
-    private void resetFlag(final Activity activity) {
+    private void resetFlag() {
         dao.open();
         dao.updateFlag(id, "unread");
         dao.close();
+        updateUi();
+    }
 
+    protected void updateUi() {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -48,7 +51,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final MainActivity activity = (MainActivity)getActivity();
+        activity = (MainActivity)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         dao = new MediaDAO(getContext());
 
@@ -63,13 +66,13 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
             .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    resetFlag(activity);
+                    resetFlag();
                 }
             })
             .setNeutralButton(R.string.dialog_yes_play, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    resetFlag(activity);
+                    resetFlag();
                     Bundle args = new Bundle();
                     args.putInt("id", id);
                     activity.mediaBrowser.sendCustomAction("selectTrack", args, null);

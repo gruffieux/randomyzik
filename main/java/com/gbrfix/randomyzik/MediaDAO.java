@@ -116,6 +116,12 @@ public class MediaDAO extends DAOBase {
         this.db.update("medias", values,  "`id`=?", new String[] {String.valueOf(id)});
     }
 
+    public void updateFlagAlbum(String albumKey, String flag) {
+        ContentValues values = new ContentValues();
+        values.put("flag", flag);
+        this.db.update("medias", values,  "`album_key`=?", new String[] {albumKey});
+    }
+
     public void updateFlagAll(String flag) {
         ContentValues values = new ContentValues();
         values.put("flag", flag);

@@ -8,11 +8,12 @@
     <string name="info_track_summary">Pista: %1$d/%2$d Playlist lectura: %3$.1f%%</string>
     <string name="info_scanning">Escaneando archivos de audio, espere...</string>
     <string name="edit_single_track_title">Single track flag editor</string>
-    <string name="edit_single_track_msg">Indica esta pista como no leída?</string>
+    <string name="edit_single_track_msg">¿Indica esta pista como no leída?</string>
     <string name="edit_all_tracks_title">%1$d pistas</string>
-    <string name="edit_all_tracks_msg">¿Mostrar todas las pistas como no leídas?</string>
+    <string name="edit_all_tracks_msg">¿Indica todas pistas como no leídas?</string>
     <string name="dialog_yes">Si</string>
     <string name="dialog_yes_play">Si y play</string>
+    <string name="dialog_album">Solo este álbum</string>
     <string name="dialog_no">No</string>
     <string name="switch_mode">Modo aleatorio</string>
     <string name="switch_mode_track">Pista</string>

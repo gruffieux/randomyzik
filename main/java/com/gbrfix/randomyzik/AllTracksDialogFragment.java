@@ -1,27 +1,22 @@
 package com.gbrfix.randomyzik;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
-import android.widget.ListView;
 
 /**
  * Created by gab on 14.10.2017.
  */
 
-public class AllTracksDialogFragment extends DialogFragment {
+public class AllTracksDialogFragment extends SingleTrackDialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final Activity activity = getActivity();
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        activity = (MainActivity)getActivity();
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        dao = new MediaDAO(getContext());
 
-        final MediaDAO dao = new MediaDAO(getContext());
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         int total = cursor.getCount();
@@ -35,21 +30,19 @@ public class AllTracksDialogFragment extends DialogFragment {
                         dao.open();
                         dao.updateFlagAll("unread");
                         dao.close();
-                        activity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    dao.open();
-                                    SQLiteCursor cursor = dao.getAllOrdered();
-                                    ListView listView = activity.findViewById(R.id.playlist);
-                                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                                    adapter.changeCursor(cursor);
-                                    dao.close();
-                                } catch (SQLException e) {
-                                    Log.v("SQLException", e.getMessage());
-                                }
-                            }
-                        });
+                        updateUi();
+                    }
+                })
+                .setNeutralButton(R.string.dialog_album, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dao.open();
+                        SQLiteCursor cursor = dao.getFromId((int)id);
+                        cursor.moveToFirst();
+                        String albumKey = cursor.getString(cursor.getColumnIndex("album_key"));
+                        dao.updateFlagAlbum(albumKey, "unread");
+                        dao.close();
+                        updateUi();
                     }
                 })
                 .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {

@@ -10,9 +10,10 @@
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Indica questa traccia come non letto?</string>
     <string name="edit_all_tracks_title">%1$d tracce</string>
-    <string name="edit_all_tracks_msg">Mostra tutti traccia come non letti?</string>
+    <string name="edit_all_tracks_msg">Indica tutti traccia come non letti?</string>
     <string name="dialog_yes">Sì</string>
     <string name="dialog_yes_play">Sì e play</string>
+    <string name="dialog_album">Solo questo album</string>
     <string name="dialog_no">No</string>
     <string name="switch_mode">Modalità casuale</string>
     <string name="switch_mode_track">Traccia</string>
