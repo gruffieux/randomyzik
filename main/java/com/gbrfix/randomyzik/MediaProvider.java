@@ -78,6 +78,7 @@ public class MediaProvider {
             cursorSel  = dao.getFromId(selectId);
             currentId = selectId;
             selectId = 0;
+            lastOfAlbum = false;
         }
 
         if (mode == MODE_ALBUM) {
