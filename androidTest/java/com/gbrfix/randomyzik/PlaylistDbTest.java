@@ -7,8 +7,8 @@ import android.content.ServiceConnection;
 import android.database.sqlite.SQLiteCursor;
 import android.os.IBinder;
 import android.provider.MediaStore;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import org.junit.Before;

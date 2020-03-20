@@ -6,8 +6,8 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatDialogFragment;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDialogFragment;
 import android.util.Log;
 import android.widget.ListView;
 
