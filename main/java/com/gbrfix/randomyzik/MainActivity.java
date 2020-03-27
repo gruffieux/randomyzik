@@ -198,9 +198,6 @@ public class MainActivity extends AppCompatActivity {
                     if (extras.getBoolean("last")) {
                         color = fetchColor(MainActivity.this, R.attr.colorAccent);
                         infoMsg(getString(R.string.info_play_end), color);
-                        if (mediaBrowser != null && mediaBrowser.isConnected()) {
-                            mediaBrowser.sendCustomAction("stop", null, null);
-                        }
                     }
                     break;
                 case "onError":
@@ -414,9 +411,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
+        // BUG: Cause un bug lors de la dernière piste lue car l'event onTrackRead n'est pas reçu par l'activité
+        /*if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
-        }
+        }*/
 
         if (mediaBrowser != null) {
             mediaBrowser.disconnect();
@@ -452,6 +450,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
+                //DAOBase.NAME = "playlist-test.db";
                 MediaDAO dao = new MediaDAO(this);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();

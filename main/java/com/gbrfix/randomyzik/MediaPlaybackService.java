@@ -226,13 +226,15 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = null;
 
         boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-        if (!last) {
-            session.getController().getTransportControls().play();
-        }
-
         Bundle args = new Bundle();
         args.putBoolean("last", last);
         session.sendSessionEvent("onTrackRead", args);
+
+        if (!last) {
+            session.getController().getTransportControls().play();
+        } else {
+            session.getController().getTransportControls().stop();
+        }
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
