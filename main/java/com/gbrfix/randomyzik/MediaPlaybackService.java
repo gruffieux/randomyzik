@@ -127,6 +127,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setSelectId(extras.getInt("id"));
         }
 
+        if (action == "restoreTrack") {
+            provider.setSelectId(extras.getInt("id"));
+            provider.setPosition(extras.getInt("position"));
+        }
+
         if (action == "test") {
             provider.setTest(true);
         }
@@ -293,6 +298,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             stopForeground(true);
             stopSelf();
 
+            // On annule la sauvegarde de piste en cours
+            Bundle args = new Bundle();
+            args.putInt("id", 0);
+            args.putInt("position", 0);
+            session.sendSessionEvent("onTrackSave", args);
+
             super.onStop();
         }
 
@@ -325,9 +336,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     media = provider.selectTrack();
                     Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                     player = MediaPlayer.create(getApplicationContext(), uri);
+                    int position = provider.getPosition();
 
                     if (provider.isTest()) {
                         player.seekTo(player.getDuration() - 10);
+                    } else if (position > 0) {
+                        player.seekTo(position);
+                        provider.setPosition(0);
                     }
 
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))

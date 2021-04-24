@@ -182,6 +182,13 @@ public class MainActivity extends AppCompatActivity {
                     int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                     infoMsg(label, color);
                     break;
+                case "onTrackSave":
+                    // Sauvegarde piste en cours
+                    SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+                    editor.putInt("currentId", extras.getInt("id"));
+                    editor.putInt("position", extras.getInt("position"));
+                    editor.commit();
+                    break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
                     positionLabel.setText(dateFormat.format(new Date(position)));
@@ -229,6 +236,23 @@ public class MainActivity extends AppCompatActivity {
 
             // Finish building the UI
             buildTransportControls();
+
+            // Récup piste en cours
+            if (currentId == 0) {
+                SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+                int id = prefs.getInt("currentId", 0);
+                int position = prefs.getInt("position", 0);
+                if (id > 0) {
+                    Bundle args = new Bundle();
+                    args.putInt("id", id);
+                    args.putInt("position", position);
+                    mediaBrowser.sendCustomAction("restoreTrack", args, null);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putInt("currentId", 0);
+                    editor.putInt("position", 0);
+                    editor.commit();
+                }
+            }
         }
 
         @Override
@@ -522,6 +546,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
+
+        // Sauvegarde piste en cours
+        if (currentId > 0) {
+            SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+            editor.putInt("currentId", currentId);
+            ProgressBar progressBar = findViewById(R.id.progressBar);
+            int position = progressBar.getProgress();
+            editor.putInt("position", position);
+            editor.commit();
+        }
     }
 
     @Override

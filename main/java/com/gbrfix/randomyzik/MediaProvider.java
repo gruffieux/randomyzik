@@ -13,7 +13,7 @@ public class MediaProvider {
     public final static int MODE_TRACK = 0;
     public final static int MODE_ALBUM = 1;
 
-    private int currentId, selectId;
+    private int currentId, selectId, position;
     private int total, totalRead;
     private int mode;
     private boolean lastOfAlbum;
@@ -22,7 +22,7 @@ public class MediaProvider {
     private boolean test;
 
     public MediaProvider(Context context) {
-        currentId = selectId = 0;
+        currentId = selectId = position = 0;
         total = totalRead = 0;
         mode = MODE_TRACK;
         lastOfAlbum = false;
@@ -30,6 +30,10 @@ public class MediaProvider {
         this.context = context;
         test = false;
     }
+
+    public int getPosition() { return position; }
+
+    public void setPosition(int position) { this.position = position; }
 
     public int getSelectId() {
         return selectId;
