@@ -185,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // Sauvegarde piste en cours
                     editor.putInt("currentId", currentId);
+                    editor.putInt("position", 0);
                     editor.commit();
                     break;
                 case "onTrackSave":
@@ -195,10 +196,13 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
+                    boolean save = extras.getBoolean("save");
                     positionLabel.setText(dateFormat.format(new Date(position)));
                     progressBar.setProgress(position);
-                    editor.putInt("position", position);
-                    editor.commit();
+                    if (save) {
+                        editor.putInt("position", position);
+                        editor.commit();
+                    }
                     break;
                 case "onTrackRead":
                     MediaDAO dao = new MediaDAO(MainActivity.this);
