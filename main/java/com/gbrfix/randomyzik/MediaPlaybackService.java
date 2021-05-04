@@ -402,6 +402,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             showNotification();
             abandonAudioFocus();
             unregisterReceiver(myNoisyAudioReceiver);
+
+            // On sauvegarde la position de piste en cours
+            Bundle args = new Bundle();
+            args.putInt("id", provider.getCurrentId());
+            args.putInt("position", player.getCurrentPosition());
+            session.sendSessionEvent("onTrackSave", args);
         }
 
         @Override
@@ -528,17 +534,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void run() {
             Thread thisThread = Thread.currentThread();
             Bundle bundle = new Bundle();
-            int counter = 0;
 
             while (currentPosition < total && blinker == thisThread) {
                 try {
-                    if (counter < 60) {
-                        bundle.putBoolean("save", false);
-                        counter++;
-                    } else {
-                        bundle.putBoolean("save", true);
-                        counter = 0;
-                    }
                     Thread.sleep(1000);
                     currentPosition = player.getCurrentPosition();
                     bundle.putInt("position", currentPosition);

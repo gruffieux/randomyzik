@@ -196,13 +196,8 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
-                    boolean save = extras.getBoolean("save");
                     positionLabel.setText(dateFormat.format(new Date(position)));
                     progressBar.setProgress(position);
-                    if (save) {
-                        editor.putInt("position", position);
-                        editor.commit();
-                    }
                     break;
                 case "onTrackRead":
                     MediaDAO dao = new MediaDAO(MainActivity.this);
@@ -253,14 +248,16 @@ public class MainActivity extends AppCompatActivity {
                 int id = prefs.getInt("currentId", 0);
                 int position = prefs.getInt("position", 0);
                 if (id > 0) {
-                    Bundle args = new Bundle();
-                    args.putInt("id", id);
-                    args.putInt("position", position);
-                    mediaBrowser.sendCustomAction("restoreTrack", args, null);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putInt("currentId", 0);
-                    editor.putInt("position", 0);
-                    editor.commit();
+                    MediaDAO dao = new MediaDAO(MainActivity.this);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getFromId(id);
+                    if (cursor.moveToFirst()) {
+                        Bundle args = new Bundle();
+                        args.putInt("id", id);
+                        args.putInt("position", position);
+                        mediaBrowser.sendCustomAction("restoreTrack", args, null);
+                    }
+                    dao.close();
                 }
             }
         }
