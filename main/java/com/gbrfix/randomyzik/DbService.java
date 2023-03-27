@@ -3,16 +3,22 @@ package com.gbrfix.randomyzik;
 import android.app.IntentService;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 27.08.2017.
@@ -47,32 +53,45 @@ public class DbService extends IntentService {
     private void scan() {
         dbSignalListener.onScanStart();
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int db = prefs.getInt("db", 2);
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
-        Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
-                MediaStore.Audio.Media.IS_MUSIC,
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TRACK,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.ALBUM,
-                MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM_KEY
-            },null, null, null);
 
-        while (c.moveToNext()) {
-            if (c.getInt(0) != 0) {
-                Media media = new Media();
-                media.setMediaId(c.getInt(1));
-                media.setFlag("unread");
-                media.setTrackNb(c.getString(2));
-                media.setTitle(c.getString(3));
-                media.setAlbum(c.getString(4));
-                media.setArtist(c.getString(5));
-                media.setAlbumKey(c.getString(6));
-                list.add(media);
+        if (db == 2) {
+            AmpRepository amp = new AmpRepository(new AmpXmlParser(), Executors.newSingleThreadExecutor());
+            try {
+                String authToken = amp.handshake();
+                list = (ArrayList<Media>)amp.advanced_search(authToken);
+            } catch (IOException | XmlPullParserException e) {
+                dbSignalListener.onError(e.getMessage());
+                return;
+            }
+        } else {
+            Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
+                    MediaStore.Audio.Media.IS_MUSIC,
+                    MediaStore.Audio.Media._ID,
+                    MediaStore.Audio.Media.TRACK,
+                    MediaStore.Audio.Media.TITLE,
+                    MediaStore.Audio.Media.ALBUM,
+                    MediaStore.Audio.Media.ARTIST,
+                    MediaStore.Audio.Media.ALBUM_KEY
+            }, null, null, null);
+            while (c.moveToNext()) {
+                if (c.getInt(0) != 0) {
+                    Media media = new Media();
+                    media.setMediaId(c.getInt(1));
+                    media.setFlag("unread");
+                    media.setTrackNb(c.getString(2));
+                    media.setTitle(c.getString(3));
+                    media.setAlbum(c.getString(4));
+                    media.setArtist(c.getString(5));
+                    media.setAlbumKey(c.getString(6));
+                    list.add(media);
+                }
             }
         }
 

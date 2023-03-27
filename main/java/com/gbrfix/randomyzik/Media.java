@@ -7,6 +7,7 @@ package com.gbrfix.randomyzik;
 public class Media {
     private int id;
     private int media_id;
+    private int duration;
     private String flag;
     private String track_nb;
     private String title;
@@ -33,6 +34,10 @@ public class Media {
     public void setMediaId(int media_id) {
         this.media_id = media_id;
     }
+
+    public int getDuration() { return duration; }
+
+    public void setDuration(int duration) { this.duration = duration; }
 
     public String getFlag() {
         return flag;

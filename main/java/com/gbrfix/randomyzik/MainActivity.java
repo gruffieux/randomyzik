@@ -473,6 +473,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
+        int db = prefs.getInt("db", 2);
 
         try {
             if (perms == 1) {
@@ -481,7 +482,16 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-                //DAOBase.NAME = "playlist-test.db";
+                switch (db) {
+                    case 2:
+                        DAOBase.NAME = "playlist-amp.db";
+                        break;
+                    case 1:
+                        DAOBase.NAME = "playlist-test.db";
+                        break;
+                    default:
+                        DAOBase.NAME = "playlist.db";
+                }
                 MediaDAO dao = new MediaDAO(this);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();
