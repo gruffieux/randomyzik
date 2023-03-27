@@ -18,7 +18,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             "`id` INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "`album_key` TEXT, `flag` TEXT, " +
             "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT, " +
-            "`media_id` INTEGER);";
+            "`media_id` INTEGER, `duration` INTEGER);";
     public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
 
     private Context context;
@@ -98,6 +98,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             }
             catch (Exception e) {
                 Log.v("Exception", e.getMessage());
+            }
+        }
+        if (oldVersion <= 8 && newVersion >= 9) {
+            try {
+                db.execSQL("ALTER TABLE `medias` ADD `duration` INTEGER;");
+            }
+            catch (SQLiteException e) {
+                Log.v("SQLiteException", e.getMessage());
             }
         }
     }

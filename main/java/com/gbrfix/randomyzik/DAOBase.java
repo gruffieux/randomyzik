@@ -7,7 +7,7 @@ import android.content.Context;
  * Created by gab on 16.07.2017.
  */
 public abstract class DAOBase {
-    protected final static int VERSION = 8;
+    protected final static int VERSION = 9;
     public static String NAME = "playlist.db";
     protected SQLiteDatabase db = null;
     protected DatabaseHandler dbHandler = null;
