@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int currentId = 0;
+    AmpRepository amp = null;
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -316,9 +317,16 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
                     if (state == PlaybackStateCompat.STATE_PLAYING) {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
+                        if (amp != null) {
+                        } else {
+                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
+                        }
                     } else {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                        if (amp != null) {
+                            amp.localplay_addAndPlay();
+                        } else {
+                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
+                        }
                     }
                 }
             });
@@ -473,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
-        int db = prefs.getInt("db", 2);
+        int db = prefs.getInt("db", DAOBase.DB_TYPE);
 
         try {
             if (perms == 1) {
@@ -485,6 +493,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (db) {
                     case 2:
                         DAOBase.NAME = "playlist-amp.db";
+                        amp = new AmpRepository(new AmpXmlParser(), this);
                         break;
                     case 1:
                         DAOBase.NAME = "playlist-test.db";

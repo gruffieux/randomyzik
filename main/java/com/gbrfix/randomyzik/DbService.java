@@ -18,7 +18,6 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 27.08.2017.
@@ -54,7 +53,7 @@ public class DbService extends IntentService {
         dbSignalListener.onScanStart();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        int db = prefs.getInt("db", 2);
+        int db = prefs.getInt("db", DAOBase.DB_TYPE);
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
@@ -62,7 +61,7 @@ public class DbService extends IntentService {
         ArrayList<Media> list = new ArrayList<Media>();
 
         if (db == 2) {
-            AmpRepository amp = new AmpRepository(new AmpXmlParser(), Executors.newSingleThreadExecutor());
+            AmpRepository amp = new AmpRepository(new AmpXmlParser(), getApplicationContext());
             try {
                 String authToken = amp.handshake();
                 list = (ArrayList<Media>)amp.advanced_search(authToken);

@@ -8,6 +8,7 @@ import android.content.Context;
  */
 public abstract class DAOBase {
     protected final static int VERSION = 9;
+    public static int DB_TYPE = 2;
     public static String NAME = "playlist.db";
     protected SQLiteDatabase db = null;
     protected DatabaseHandler dbHandler = null;

@@ -1,27 +1,27 @@
 package com.gbrfix.randomyzik;
 
-import android.os.Bundle;
-import android.support.v4.media.session.MediaControllerCompat;
+import android.content.Context;
+
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
 import javax.net.ssl.HttpsURLConnection;
 
-interface RepositoryCallback {
-    void onProgress(int position, int total);
-    void onComplete();
-}
-
 public class AmpRepository {
-    private Executor executor;
     private AmpXmlParser parser;
+    private MediaProvider provider;
+    private Context context;
 
-    public AmpRepository(AmpXmlParser parser, Executor executor) {
+    public AmpRepository(AmpXmlParser parser, Context context) {
         this.parser = parser;
-        this.executor = executor;
+        this.provider = new MediaProvider(context);
+        this.context = context;
     }
 
     public String handshake() throws IOException, XmlPullParserException {
@@ -72,44 +72,43 @@ public class AmpRepository {
         return res;
     }
 
-    public void localplay_addAndPlay(final int mediaId, final int duration, final RepositoryCallback callback) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String authToken = handshake();
-                    localplay_stop(authToken);
-                    localplay_add(authToken, mediaId);
-                    localplay_play(authToken);
-                    int counter = 0;
-                    while (counter < duration) {
-                        Thread.sleep(1000);
-                        counter += 1000;
-                        callback.onProgress(counter, duration);
-                    }
-                    callback.onComplete();
-                } catch (XmlPullParserException | IOException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
-    public void localplay_stopOrPause(final boolean stop) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String authToken = handshake();
-                    if (stop) {
-                        localplay_stop(authToken);
-                    } else {
-                        localplay_pause(authToken);
-                    }
-                } catch (XmlPullParserException | IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+    public void localplay_addAndPlay() {
+        try {
+            Media media = provider.selectTrack();
+            WorkRequest handshakeWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth=a47b0979a17207e084f8b25f9b0a4440")
+                                    .putString("PARSE_AUTH", "auth")
+                                    .build()
+                    ).build();
+            WorkRequest stopWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=stop")
+                                    .build()
+                    ).build();
+            WorkRequest addWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=add&type=song&oid="+media.getMediaId()+"&clear=1")
+                                    .build()
+                    ).build();
+            WorkRequest playWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=play")
+                                    .putInt("duration", media.getDuration())
+                                    .build()
+                    ).build();
+            WorkManager.getInstance(context)
+                    .beginWith((OneTimeWorkRequest) handshakeWork)
+                    .then((OneTimeWorkRequest) stopWork)
+                    .then((OneTimeWorkRequest) addWork)
+                    .then((OneTimeWorkRequest) playWork)
+                    .enqueue();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
