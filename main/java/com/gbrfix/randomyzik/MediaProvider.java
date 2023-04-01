@@ -144,6 +144,7 @@ public class MediaProvider {
         media.setAlbum(cursor.getString(cursor.getColumnIndex("album")));
         media.setArtist(cursor.getString(cursor.getColumnIndex("artist")));
         media.setMediaId(cursor.getInt(cursor.getColumnIndex("media_id")));
+        media.setDuration(cursor.getInt(cursor.getColumnIndex("duration")));
 
         dao.close();
 

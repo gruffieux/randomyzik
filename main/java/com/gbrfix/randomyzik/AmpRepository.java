@@ -74,7 +74,7 @@ public class AmpRepository {
 
     public void localplay_addAndPlay() {
         try {
-            Media media = provider.selectTrack();
+            final Media media = provider.selectTrack();
             WorkRequest handshakeWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
                     .setInputData(
                             new Data.Builder()

@@ -37,6 +37,7 @@ public class MediaDAO extends DAOBase {
         values.put("title", media.getTitle());
         values.put("album", media.getAlbum());
         values.put("artist", media.getArtist());
+        values.put("duration", media.getDuration());
 
         return this.db.insert("medias", null, values);
     }
@@ -50,6 +51,7 @@ public class MediaDAO extends DAOBase {
         values.put("title", media.getTitle());
         values.put("album", media.getAlbum());
         values.put("artist", media.getArtist());
+        values.put("duration", media.getDuration());
 
         return this.db.update("medias", values, "`id`=?", new String[] {String.valueOf(id)});
     }
