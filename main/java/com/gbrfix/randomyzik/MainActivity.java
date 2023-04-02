@@ -24,6 +24,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -201,17 +202,7 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setProgress(position);
                     break;
                 case "onTrackRead":
-                    MediaDAO dao = new MediaDAO(MainActivity.this);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAllOrdered();
-                    ListView listView = findViewById(R.id.playlist);
-                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    adapter.changeCursor(cursor);
-                    dao.close();
-                    if (extras.getBoolean("last")) {
-                        color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                        infoMsg(getString(R.string.info_play_end), color);
-                    }
+                    onTrackRead(extras.getBoolean("last"));
                     break;
                 case "onError":
                     infoMsg(extras.getString("message"), Color.RED);
@@ -323,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else {
                         if (amp != null) {
-                            amp.localplay_addAndPlay();
+                            amp.localplay_addAndPlay(0);
                         } else {
                             MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                         }
@@ -460,6 +451,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected  void onTrackRead(boolean last) {
+        MediaDAO dao = new MediaDAO(MainActivity.this);
+        dao.open();
+        SQLiteCursor cursor = dao.getAllOrdered();
+        ListView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+        adapter.changeCursor(cursor);
+        dao.close();
+
+        if (last) {
+            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+            infoMsg(getString(R.string.info_play_end), color);
+        }
+    }
+
     protected void init(int perms) {
         // On récup les éléments de l'UI
         final ListView listView = findViewById(R.id.playlist);
@@ -493,7 +499,7 @@ public class MainActivity extends AppCompatActivity {
                 switch (db) {
                     case 2:
                         DAOBase.NAME = "playlist-amp.db";
-                        amp = new AmpRepository(new AmpXmlParser(), this);
+                        amp = new AmpRepository(new AmpXmlParser(), this, MainActivity.this);
                         break;
                     case 1:
                         DAOBase.NAME = "playlist-test.db";

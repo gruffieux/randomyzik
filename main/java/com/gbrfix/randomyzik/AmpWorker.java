@@ -43,7 +43,7 @@ public class AmpWorker extends Worker {
             conn.disconnect();
             if (duration > 0) {
                 int counter = 0;
-                duration = 10; // Testes
+                //duration = 10; // Testes
                 while (counter < duration) {
                     Thread.sleep(1000);
                     counter++;

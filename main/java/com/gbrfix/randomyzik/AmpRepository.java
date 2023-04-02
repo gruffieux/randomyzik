@@ -2,6 +2,9 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.work.Data;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -11,17 +14,20 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+
 import javax.net.ssl.HttpsURLConnection;
 
-public class AmpRepository {
+public class AmpRepository implements LifecycleOwner {
     private AmpXmlParser parser;
     private MediaProvider provider;
     private Context context;
+    private MainActivity activity;
 
-    public AmpRepository(AmpXmlParser parser, Context context) {
+    public AmpRepository(AmpXmlParser parser, Context context, MainActivity activity) {
         this.parser = parser;
         this.provider = new MediaProvider(context);
         this.context = context;
+        this.activity = activity;
     }
 
     public String handshake() throws IOException, XmlPullParserException {
@@ -72,9 +78,12 @@ public class AmpRepository {
         return res;
     }
 
-    public void localplay_addAndPlay() {
+    public void localplay_addAndPlay(int selectId) {
         try {
-            final Media media = provider.selectTrack();
+            if (selectId > 0) {
+                provider.setSelectId(selectId);
+            }
+            Media media = provider.selectTrack();
             WorkRequest handshakeWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
                     .setInputData(
                             new Data.Builder()
@@ -100,15 +109,33 @@ public class AmpRepository {
                                     .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=play")
                                     .putInt("duration", media.getDuration())
                                     .build()
-                    ).build();
+                    )
+                    .build();
             WorkManager.getInstance(context)
                     .beginWith((OneTimeWorkRequest) handshakeWork)
                     .then((OneTimeWorkRequest) stopWork)
                     .then((OneTimeWorkRequest) addWork)
                     .then((OneTimeWorkRequest) playWork)
                     .enqueue();
+            WorkManager.getInstance(context).getWorkInfoByIdLiveData(playWork.getId())
+                .observe(this, info -> {
+                    if (info != null && info.getState().isFinished()) {
+                        provider.updateState("read");
+                        boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+                        activity.onTrackRead(last);
+                        if (!last) {
+                            localplay_addAndPlay(0);
+                        }
+                    }
+                });
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @NonNull
+    @Override
+    public Lifecycle getLifecycle() {
+        return activity.getLifecycle();
     }
 }

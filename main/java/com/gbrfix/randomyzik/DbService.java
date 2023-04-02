@@ -61,7 +61,7 @@ public class DbService extends IntentService {
         ArrayList<Media> list = new ArrayList<Media>();
 
         if (db == 2) {
-            AmpRepository amp = new AmpRepository(new AmpXmlParser(), getApplicationContext());
+            AmpRepository amp = new AmpRepository(new AmpXmlParser(), getApplicationContext(), null);
             try {
                 String authToken = amp.handshake();
                 list = (ArrayList<Media>)amp.advanced_search(authToken);

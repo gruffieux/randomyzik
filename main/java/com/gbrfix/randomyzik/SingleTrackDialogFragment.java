@@ -73,10 +73,14 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
-                    Bundle args = new Bundle();
-                    args.putInt("id", id);
-                    activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
-                    MediaControllerCompat.getMediaController(activity).getTransportControls().play();
+                    if (activity.amp != null) {
+                        activity.amp.localplay_addAndPlay(id);
+                    } else {
+                        Bundle args = new Bundle();
+                        args.putInt("id", id);
+                        activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
+                        MediaControllerCompat.getMediaController(activity).getTransportControls().play();
+                    }
                 }
             })
             .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
