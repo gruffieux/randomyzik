@@ -1,6 +1,8 @@
 package com.gbrfix.randomyzik;
 
 import android.content.Context;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
@@ -17,26 +19,26 @@ import androidx.work.WorkRequest;
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 
-public class AmpRepository implements LifecycleOwner {
+public class AmpRepository implements Observer<WorkInfo> {
     private AmpXmlParser parser;
     private MediaProvider provider;
     private Context context;
     private MainActivity activity;
-
-    public MediaProvider getProvider() {
-        return provider;
-    }
+    private SimpleDateFormat dateFormat;
 
     public AmpRepository(AmpXmlParser parser, Context context, MainActivity activity) {
         this.parser = parser;
         this.provider = new MediaProvider(context);
         this.context = context;
         this.activity = activity;
+        dateFormat = new SimpleDateFormat("mm:ss");
     }
 
     public String handshake() throws IOException, XmlPullParserException {
@@ -88,16 +90,34 @@ public class AmpRepository implements LifecycleOwner {
     }
 
     public void localplay_addAndPlay(int selectId) {
+        TextView positionLabel =  activity.findViewById(R.id.position);
+        TextView durationLabel =  activity.findViewById(R.id.duration);
+        ProgressBar progressBar =  activity.findViewById(R.id.progressBar);
+
         if (selectId > 0) {
             provider.setSelectId(selectId);
         }
+
         try {
             Media media = provider.selectTrack();
+            String label = MediaProvider.getTrackLabel(media.getTitle(), media.getAlbum(), media.getArtist());
+            int color = activity.fetchColor(activity, R.attr.colorPrimaryDark);
+            activity.infoMsg(label, color);
+            positionLabel.setText(dateFormat.format(new Date(0)));
+            durationLabel.setText(dateFormat.format(new Date(media.getDuration()*1000)));
+            progressBar.setProgress(0);
+            progressBar.setMax(media.getDuration());
+            String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
+            String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
+            String subText = provider.getSummary();
             WorkRequest playWork = new OneTimeWorkRequest.Builder(PlayWorker.class)
                     .setInputData(
                             new Data.Builder()
                                     .putInt("mediaId", media.getMediaId())
                                     .putInt("duration", media.getDuration())
+                                    .putString("contentTitle", contentTitle)
+                                    .putString("contentText", contentText)
+                                    .putString("subText", subText)
                                     .build()
                     )
                     .build();
@@ -105,88 +125,34 @@ public class AmpRepository implements LifecycleOwner {
                     "play",
                     ExistingWorkPolicy.KEEP,
                     (OneTimeWorkRequest) playWork);
-            WorkManager.getInstance(context).getWorkInfoByIdLiveData(playWork.getId())
-                    .observeForever(new Observer<WorkInfo>() {
-                        @Override
-                        public void onChanged(WorkInfo workInfo) {
-                            if (workInfo != null) {
-                                Data progress = workInfo.getProgress();
-                                int value = progress.getInt("progress", 0);
-                                // Do something with progress
-                                if (workInfo.getState().isFinished() && workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-                                    provider.updateState("read");
-                                    boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-                                    activity.onTrackRead(last);
-                                    if (!last) {
-                                        localplay_addAndPlay(0);
-                                    }
-                                }
-                            }
-                        }
-                    });
-
+            WorkManager.getInstance(context).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void localplay_addAndPlay_old(int selectId) {
-        try {
-            if (selectId > 0) {
-                provider.setSelectId(selectId);
-            }
-            Media media = provider.selectTrack();
-            WorkRequest handshakeWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
-                    .setInputData(
-                            new Data.Builder()
-                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth=a47b0979a17207e084f8b25f9b0a4440")
-                                    .putString("PARSE_AUTH", "auth")
-                                    .build()
-                    ).build();
-            WorkRequest stopWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
-                    .setInputData(
-                            new Data.Builder()
-                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=stop")
-                                    .build()
-                    ).build();
-            WorkRequest addWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
-                    .setInputData(
-                            new Data.Builder()
-                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=add&type=song&oid="+media.getMediaId()+"&clear=1")
-                                    .build()
-                    ).build();
-            WorkRequest playWork = new OneTimeWorkRequest.Builder(AmpWorker.class)
-                    .setInputData(
-                            new Data.Builder()
-                                    .putString("URL_SPEC", "https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&command=play")
-                                    .putInt("duration", media.getDuration())
-                                    .build()
-                    )
-                    .build();
-            WorkManager.getInstance(context)
-                    .beginWith((OneTimeWorkRequest)handshakeWork)
-                    .then(Arrays.asList((OneTimeWorkRequest)stopWork, (OneTimeWorkRequest)addWork))
-                    .then((OneTimeWorkRequest)playWork)
-                    .enqueue();
-            WorkManager.getInstance(context).getWorkInfoByIdLiveData(playWork.getId())
-                .observe(this, info -> {
-                    if (info != null && info.getState() == WorkInfo.State.SUCCEEDED) {
-                        provider.updateState("read");
-                        boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-                        activity.onTrackRead(last);
-                        if (!last) {
-                            localplay_addAndPlay(0);
-                        }
-                    }
-                });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @NonNull
     @Override
-    public Lifecycle getLifecycle() {
-        return activity.getLifecycle();
+    public void onChanged(WorkInfo workInfo) {
+        TextView positionLabel =  activity.findViewById(R.id.position);
+        TextView durationLabel =  activity.findViewById(R.id.duration);
+        ProgressBar progressBar =  activity.findViewById(R.id.progressBar);
+
+        if (workInfo != null) {
+            Data progress = workInfo.getProgress();
+            int position = progress.getInt("progress", 0);
+            positionLabel.setText(dateFormat.format(new Date(position*1000)));
+            progressBar.setProgress(position);
+            if (workInfo.getState().isFinished()) {
+                WorkManager.getInstance(context).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    provider.updateState("read");
+                    boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+                    activity.onTrackRead(last);
+                    if (!last) {
+                        localplay_addAndPlay(0);
+                    }
+                }
+            }
+        }
     }
 }

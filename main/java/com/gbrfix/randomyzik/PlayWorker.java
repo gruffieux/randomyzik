@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -21,7 +22,6 @@ public class PlayWorker extends Worker {
 
     public PlayWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-        setProgressAsync(new Data.Builder().putInt("progress", 0).build());
     }
 
     @NonNull
@@ -30,35 +30,36 @@ public class PlayWorker extends Worker {
         AmpRepository amp = new AmpRepository(new AmpXmlParser(), getApplicationContext(), null);
         int mediaId = getInputData().getInt("mediaId", 0);
         int duration = getInputData().getInt("duration", 0);
+        String contentTitle = getInputData().getString("contentTitle");
+        String contentText = getInputData().getString("contentText");
+        String subText = getInputData().getString("subText");
         try {
             String auth = amp.handshake();
             amp.localplay_stop(auth);
             amp.localplay_add(auth, mediaId);
             amp.localplay_play(auth);
-            if (duration > 0) {
-                int counter = 0;
-                String progress = "Starting play";
-                setForegroundAsync(createForegroundInfo(progress));
-                while (counter < duration) {
-                    Thread.sleep(1000);
-                    counter++;
-                    setForegroundAsync(createForegroundInfo(String.valueOf(counter)));
-                    setProgressAsync(new Data.Builder().putInt("progress", counter).build());
-                }
-                return Result.success();
+            setProgressAsync(new Data.Builder().putInt("progress", 0).build());
+            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            int counter = 0;
+            while (counter < duration) {
+                Thread.sleep(1000);
+                counter++;
+                setProgressAsync(new Data.Builder().putInt("progress", counter).build());
             }
+            return Result.success();
         } catch (Exception e) {
             Data output = new Data.Builder()
                     .putString("msg", e.getMessage())
                     .build();
             return Result.failure(output);
         }
-        return Result.failure();
     }
 
-    private ForegroundInfo createForegroundInfo(String progress) {
+    private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
         Context context = getApplicationContext();
-        String title = "Teste";
+
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
         PendingIntent stopPendingIntent = WorkManager.getInstance(context)
                 .createCancelPendingIntent(getId());
@@ -73,11 +74,15 @@ public class PlayWorker extends Worker {
         }
 
         Notification notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                .setContentTitle(title)
-                .setContentText(progress)
+                .setContentTitle(contentTitle)
+                .setContentText(contentText)
+                .setSubText(subText)
+                .setContentIntent(pendingIntent)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)
                 .setOngoing(true)
-                .addAction(android.R.drawable.ic_delete, "Stop", stopPendingIntent)
+                .addAction(new NotificationCompat.Action(R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
                 .build();
 
         return new ForegroundInfo(NOTIFICATION_ID, notification);
