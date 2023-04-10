@@ -27,7 +27,7 @@ public class PlayWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        AmpRepository amp = new AmpRepository(new AmpXmlParser(), getApplicationContext(), null);
+        AmpRepository amp = new AmpRepository(getApplicationContext());
         int mediaId = getInputData().getInt("mediaId", 0);
         int duration = getInputData().getInt("duration", 0);
         String contentTitle = getInputData().getString("contentTitle");

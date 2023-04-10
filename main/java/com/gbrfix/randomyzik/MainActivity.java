@@ -162,28 +162,17 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            TextView positionLabel = findViewById(R.id.position);
-            TextView durationLabel = findViewById(R.id.duration);
-            ProgressBar progressBar = findViewById(R.id.progressBar);
             SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
 
             switch (event) {
                 case "onTrackSelect":
                     currentId = extras.getInt("id");
                     int duration = extras.getInt("duration");
+                    String title = extras.getString("title");
+                    String album = extras.getString("album");
+                    String artist = extras.getString("artist");
 
-                    // Libellé de position et durée
-                    positionLabel.setText(dateFormat.format(new Date(0)));
-                    durationLabel.setText(dateFormat.format(new Date(duration)));
-
-                    // Barre de progression
-                    progressBar.setProgress(0);
-                    progressBar.setMax(duration);
-
-                    // Titre en cours
-                    String label = MediaProvider.getTrackLabel(extras.getString("title"), extras.getString("album"), extras.getString("artist"));
-                    int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                    infoMsg(label, color);
+                    onTrackSelect(duration, title, album, artist);
 
                     // Sauvegarde piste en cours
                     editor.putInt("currentId", currentId);
@@ -198,8 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
-                    positionLabel.setText(dateFormat.format(new Date(position)));
-                    progressBar.setProgress(position);
+                    onTrackPorgress(position);
                     break;
                 case "onTrackRead":
                     onTrackRead(extras.getBoolean("last"));
@@ -451,6 +439,33 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    protected void onTrackSelect(int duration, String title, String album, String artist) {
+        TextView positionLabel = findViewById(R.id.position);
+        TextView durationLabel = findViewById(R.id.duration);
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+
+        // Libellé de position et durée
+        positionLabel.setText(dateFormat.format(new Date(0)));
+        durationLabel.setText(dateFormat.format(new Date(duration)));
+
+        // Barre de progression
+        progressBar.setProgress(0);
+        progressBar.setMax(duration);
+
+        // Titre en cours
+        String label = MediaProvider.getTrackLabel(title, album, artist);
+        int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+        infoMsg(label, color);
+    }
+
+    protected void onTrackPorgress(int position) {
+        TextView positionLabel = findViewById(R.id.position);
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+
+        positionLabel.setText(dateFormat.format(new Date(position)));
+        progressBar.setProgress(position);
+    }
+
     protected  void onTrackRead(boolean last) {
         MediaDAO dao = new MediaDAO(MainActivity.this);
         dao.open();
@@ -499,7 +514,26 @@ public class MainActivity extends AppCompatActivity {
                 switch (db) {
                     case 2:
                         DAOBase.NAME = "playlist-amp.db";
-                        amp = new AmpRepository(new AmpXmlParser(), this, MainActivity.this);
+                        amp = new AmpRepository(this);
+                        amp.setAmpSignalListener(new AmpSignal() {
+                            @Override
+                            public void onSelect(int duration, String title, String album, String artist) {
+                                onTrackSelect(duration*1000, title, album, artist);
+                            }
+
+                            @Override
+                            public void onProgress(int position) {
+                                onTrackPorgress(position*1000);
+                            }
+
+                            @Override
+                            public void onComplete(boolean last) {
+                                onTrackRead(last);
+                                if (!last) {
+                                    amp.localplay_addAndPlay(0);
+                                }
+                            }
+                        });
                         break;
                     case 1:
                         DAOBase.NAME = "playlist-test.db";
