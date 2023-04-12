@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
         <service android:name=".DbService" />
+        <service android:name=".AmpService" />
         <service android:name=".MediaPlaybackService"
             android:exported="false">
             <intent-filter>

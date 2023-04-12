@@ -44,10 +44,11 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
+    AmpService ampService = null;
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int currentId = 0;
-    AmpRepository amp = null;
+    AmpRepository amp = null; // Depracated
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override
@@ -118,6 +119,36 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             dbService.setBound(false);
+        }
+    };
+
+    private ServiceConnection ampConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            AmpService.LocalBinder binder = (AmpService.LocalBinder)service;
+            ampService = binder.getService();
+            ampService.setBound(true);
+            ampService.setAmpSignalListener(new AmpSignal() {
+                @Override
+                public void onSelect(int duration, String title, String album, String artist) {
+                    onTrackSelect(duration*1000, title, album, artist);
+                }
+
+                @Override
+                public void onProgress(int position) {
+                    onTrackPorgress(position*1000);
+                }
+
+                @Override
+                public void onComplete(boolean last) {
+                    onTrackRead(last);
+                }
+            });
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            ampService.setBound(false);
         }
     };
 
@@ -301,8 +332,9 @@ public class MainActivity extends AppCompatActivity {
                             MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
                         }
                     } else {
-                        if (amp != null) {
-                            amp.localplay_addAndPlay(0);
+                        if (ampService.isBound()) {
+                            Intent intent = new Intent(MainActivity.this, AmpService.class);
+                            startService(intent);
                         } else {
                             MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                         }
@@ -514,26 +546,8 @@ public class MainActivity extends AppCompatActivity {
                 switch (db) {
                     case 2:
                         DAOBase.NAME = "playlist-amp.db";
-                        amp = new AmpRepository(this);
-                        amp.setAmpSignalListener(new AmpSignal() {
-                            @Override
-                            public void onSelect(int duration, String title, String album, String artist) {
-                                onTrackSelect(duration*1000, title, album, artist);
-                            }
-
-                            @Override
-                            public void onProgress(int position) {
-                                onTrackPorgress(position*1000);
-                            }
-
-                            @Override
-                            public void onComplete(boolean last) {
-                                onTrackRead(last);
-                                if (!last) {
-                                    amp.localplay_addAndPlay(0);
-                                }
-                            }
-                        });
+                        Intent intent2 = new Intent(this, AmpService.class);
+                        bindService(intent2, ampConnection, Context.BIND_AUTO_CREATE);
                         break;
                     case 1:
                         DAOBase.NAME = "playlist-test.db";
@@ -625,6 +639,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (dbService != null && dbService.isBound()) {
             unbindService(connection);
+        }
+
+        if (ampService != null && ampService.isBound()) {
+            unbindService(ampConnection);
         }
     }
 }

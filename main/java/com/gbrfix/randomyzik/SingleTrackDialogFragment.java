@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
@@ -73,8 +74,10 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
-                    if (activity.amp != null) {
-                        activity.amp.localplay_addAndPlay(id);
+                    if (activity.ampService.isBound()) {
+                        activity.ampService.selectId(id);
+                        Intent intent = new Intent(activity, AmpService.class);
+                        activity.startService(intent);
                     } else {
                         Bundle args = new Bundle();
                         args.putInt("id", id);
