@@ -13,12 +13,19 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.lifecycle.Observer;
 import androidx.media.session.MediaButtonReceiver;
+import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class AmpService extends Service {
+public class AmpService extends Service implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 2;
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
@@ -54,6 +61,33 @@ public class AmpService extends Service {
     }
 
     @Override
+    public void onChanged(WorkInfo workInfo) {
+        if (workInfo != null) {
+            Data progress = workInfo.getProgress();
+            int position = progress.getInt("progress", 0);
+            ampSignalListener.onProgress(position);
+            if (workInfo.getState().isFinished()) {
+                WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    provider.updateState("read");
+                    boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+                    ampSignalListener.onComplete(last);
+                    if (!last) {
+                        try {
+                            addAndPlay();
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        stopSelf();
+                        stopForeground(true);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
 
@@ -65,20 +99,11 @@ public class AmpService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        addAndPlay();
-                    } catch (Exception e) {
-                        stopForeground(true);
-                        stopSelf();
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-        });
+        try {
+            addAndPlay();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         return START_NOT_STICKY;
     }
@@ -87,7 +112,35 @@ public class AmpService extends Service {
         provider.setSelectId(id);
     }
 
-    private boolean addAndPlay() throws Exception {
+    private void addAndPlay() throws Exception {
+        Media media = provider.selectTrack();
+        String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
+        String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
+        String subText = provider.getSummary();
+
+        ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
+
+        WorkRequest playWork = new OneTimeWorkRequest.Builder(PlayWorker.class)
+                .setInputData(
+                        new Data.Builder()
+                                .putInt("mediaId", media.getMediaId())
+                                .putInt("duration", media.getDuration())
+                                .putString("contentTitle", contentTitle)
+                                .putString("contentText", contentText)
+                                .putString("subText", subText)
+                                .build()
+                )
+                .build();
+
+        WorkManager.getInstance(this).enqueueUniqueWork(
+                "play",
+                ExistingWorkPolicy.KEEP,
+                (OneTimeWorkRequest) playWork);
+
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
+    }
+
+    private boolean addAndPlay_old() throws Exception {
         Media media = provider.selectTrack();
         ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
         showNotification(media.getTitle(), media.getAlbum(), media.getArtist());
