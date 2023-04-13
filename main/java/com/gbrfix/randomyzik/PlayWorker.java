@@ -27,6 +27,38 @@ public class PlayWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
+        MediaProvider provider = new MediaProvider(getApplicationContext());
+        AmpRepository amp = new AmpRepository(getApplicationContext());
+        try {
+            Media media = provider.selectTrack();
+            String auth = amp.handshake();
+            amp.localplay_stop(auth);
+            amp.localplay_add(auth, media.getMediaId());
+            amp.localplay_play(auth);
+            setProgressAsync(new Data.Builder().putInt("progress", 0).build());
+            String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
+            String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
+            String subText = provider.getSummary();
+            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            int counter = 0;
+            int duration = media.getDuration();
+            //int duration = 10; // Teste
+            while (counter < duration) {
+                Thread.sleep(1000);
+                counter++;
+                setProgressAsync(new Data.Builder().putInt("progress", counter).build());
+            }
+            return Result.success();
+        } catch (Exception e) {
+            Data output = new Data.Builder()
+                    .putString("msg", e.getMessage())
+                    .build();
+            return Result.failure(output);
+        }
+    }
+
+    @NonNull
+    public Result doWork_old() {
         AmpRepository amp = new AmpRepository(getApplicationContext());
         int mediaId = getInputData().getInt("mediaId", 0);
         int duration = getInputData().getInt("duration", 0);

@@ -5,23 +5,33 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
 import androidx.media.session.MediaButtonReceiver;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
+import androidx.work.ForegroundInfo;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkContinuation;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -112,7 +122,24 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         provider.setSelectId(id);
     }
 
-    private void addAndPlay() throws Exception {
+    private void addAndPlay() {
+        MediaDAO dao = new MediaDAO(this);
+        dao.open();
+        SQLiteCursor cursor = dao.getUnread();
+
+        WorkManager.getInstance(this).cancelAllWork();
+        OneTimeWorkRequest first = OneTimeWorkRequest.from(PlayWorker.class);
+        WorkContinuation continuation = WorkManager.getInstance(this).beginWith(first);
+
+        for (int i = 0; i < cursor.getCount(); i++) {
+            OneTimeWorkRequest then = OneTimeWorkRequest.from(PlayWorker.class);
+            continuation = continuation.then(then);
+        }
+
+        continuation.enqueue();
+    }
+
+    private void addAndPlay2() throws Exception {
         Media media = provider.selectTrack();
         String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
         String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
@@ -140,7 +167,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
     }
 
-    private boolean addAndPlay_old() throws Exception {
+    private boolean addAndPlay1() throws Exception {
         Media media = provider.selectTrack();
         ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
         showNotification(media.getTitle(), media.getAlbum(), media.getArtist());
