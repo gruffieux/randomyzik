@@ -1,6 +1,8 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -43,6 +45,7 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
+    final static String NOTIFICATION_CHANNEL = "Randomyzik channel";
     DbService dbService = null;
     AmpService ampService = null;
     MediaBrowserCompat mediaBrowser = null;
@@ -131,17 +134,32 @@ public class MainActivity extends AppCompatActivity {
             ampService.setAmpSignalListener(new AmpSignal() {
                 @Override
                 public void onSelect(int duration, String title, String album, String artist) {
-                    onTrackSelect(duration*1000, title, album, artist);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            onTrackSelect(duration*1000, title, album, artist);
+                        }
+                    });
                 }
 
                 @Override
                 public void onProgress(int position) {
-                    onTrackPorgress(position*1000);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            onTrackPorgress(position*1000);
+                        }
+                    });
                 }
 
                 @Override
                 public void onComplete(boolean last) {
-                    onTrackRead(last);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            onTrackRead(last);
+                        }
+                    });
                 }
             });
         }
@@ -580,6 +598,15 @@ public class MainActivity extends AppCompatActivity {
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Notifications compatibility
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
+            NotificationManager notificationManager = (NotificationManager)this.getSystemService(MainActivity.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
+
         // Dialogue d'édition du flag pour une piste
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -636,6 +663,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
+        }
 
         if (dbService != null && dbService.isBound()) {
             unbindService(connection);

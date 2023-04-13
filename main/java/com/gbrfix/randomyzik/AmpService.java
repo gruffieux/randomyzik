@@ -9,16 +9,17 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class AmpService extends Service {
     public final static int NOTIFICATION_ID = 2;
-    public final static String NOTIFICATION_CHANNEL = "Randomyzik amp channel";
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
     private boolean bound;
@@ -68,7 +69,13 @@ public class AmpService extends Service {
             @Override
             public void run() {
                 while (true) {
-                    addAndPlay();
+                    try {
+                        addAndPlay();
+                    } catch (Exception e) {
+                        stopForeground(true);
+                        stopSelf();
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         });
@@ -80,32 +87,32 @@ public class AmpService extends Service {
         provider.setSelectId(id);
     }
 
-    private boolean addAndPlay() {
-        try {
-            Media media = provider.selectTrack();
-            //ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
-            showNotification(media.getTitle(), media.getAlbum(), media.getArtist());
-            String auth = amp.handshake();
-            amp.localplay_stop(auth);
-            amp.localplay_add(auth, media.getMediaId());
-            amp.localplay_play(auth);
-            int counter = 0;
-            while (counter < media.getDuration()) {
-                Thread.sleep(1000);
-                counter++;
-                //ampSignalListener.onProgress(counter);
-            }
-            provider.updateState("read");
-            boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-            //ampSignalListener.onComplete(last);
-            if (last) {
-                stopForeground(true);
-                stopSelf();
-            }
-            return true;
-        } catch (Exception e) {
-            return false;
+    private boolean addAndPlay() throws Exception {
+        Media media = provider.selectTrack();
+        ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
+        showNotification(media.getTitle(), media.getAlbum(), media.getArtist());
+        String auth = amp.handshake();
+        amp.localplay_stop(auth);
+        amp.localplay_add(auth, media.getMediaId());
+        amp.localplay_play(auth);
+
+        int counter = 0;
+        while (counter < media.getDuration()) {
+            Thread.sleep(1000);
+            counter++;
+            ampSignalListener.onProgress(counter);
         }
+
+        provider.updateState("read");
+        boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+        ampSignalListener.onComplete(last);
+
+        if (last) {
+            stopForeground(true);
+            stopSelf();
+        }
+
+        return true;
     }
 
     private void showNotification(String title, String album, String artist) {
@@ -113,26 +120,34 @@ public class AmpService extends Service {
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
-            channel.setVibrationPattern(null);
-            channel.setShowBadge(false);
-            NotificationManager notificationManager = (NotificationManager)this.getSystemService(MainActivity.NOTIFICATION_SERVICE);
-            notificationManager.createNotificationChannel(channel);
-        }
+        // Create an action intent for stopping the service
+        Intent stopIntent = new Intent(this, AmpService.class);
+        stopIntent.setAction("STOP");
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        // Create an action intent for resume
+        Intent resumeIntent = new Intent(this, AmpService.class);
+        resumeIntent.setAction("RESUME");
+        PendingIntent resumePendingIntent = PendingIntent.getService(this, 0, resumeIntent, 0);
 
         String contentTitle = MediaProvider.getTrackLabel(title, "", "");
         String contentText = MediaProvider.getTrackLabel("", album, artist);
 
-        Notification notification = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
+        Notification notification = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL)
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
                 .setSubText(provider.getSummary())
                 .setContentIntent(pendingIntent)
+                .setDeleteIntent(stopPendingIntent)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)
+                .addAction(new NotificationCompat.Action(
+                        R.drawable.ic_action_pause, "Resume", resumePendingIntent))
+                .addAction(new NotificationCompat.Action(
+                        R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(0, 1))
                 .build();
 
         startForeground(NOTIFICATION_ID, notification);
