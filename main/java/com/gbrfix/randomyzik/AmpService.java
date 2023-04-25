@@ -41,7 +41,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private final IBinder binder = new LocalBinder();
     private boolean bound;
     private AmpSignal ampSignalListener;
-    private AmpRepository amp;
 
     public class LocalBinder extends Binder {
         AmpService getService() {
@@ -89,7 +88,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         super.onCreate();
 
         bound = false;
-        amp = new AmpRepository(this);
     }
 
     @Override
@@ -101,10 +99,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         }
 
         return START_NOT_STICKY;
-    }
-
-    public void selectId(int id) {
-        MediaProvider.getInstance(this).setSelectId(id);
     }
 
     private void addAndPlay() {

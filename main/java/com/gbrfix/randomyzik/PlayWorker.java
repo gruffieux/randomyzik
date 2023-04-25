@@ -39,8 +39,8 @@ public class PlayWorker extends Worker {
                 String subText = provider.getSummary();
                 setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
                 int counter = 0;
-                int duration = media.getDuration();
-                //int duration = 10; // Teste
+                //int duration = media.getDuration();
+                int duration = 10; // Teste
                 while (counter < duration) {
                     Thread.sleep(1000);
                     counter++;

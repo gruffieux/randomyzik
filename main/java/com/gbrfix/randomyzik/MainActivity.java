@@ -391,10 +391,12 @@ public class MainActivity extends AppCompatActivity {
             editor.putInt("mode", mode);
             editor.commit();
 
-            // Send action to browser service
-            Bundle args = new Bundle();
-            args.putInt("mode", mode);
-            mediaBrowser.sendCustomAction("changeMode", args, null);
+            MediaProvider.getInstance(getApplicationContext()).setMode(mode);
+
+            // Send action to browser service (Depracated)
+            //Bundle args = new Bundle();
+            //args.putInt("mode", mode);
+            //mediaBrowser.sendCustomAction("changeMode", args, null);
         }
     };
 
