@@ -17,9 +17,6 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 public class PlayWorker extends Worker {
-    public final static int NOTIFICATION_ID = 2;
-    public final static String NOTIFICATION_CHANNEL = "Randomyzik amp channel";
-
     public PlayWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
@@ -27,63 +24,39 @@ public class PlayWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        MediaProvider provider = new MediaProvider(getApplicationContext());
         AmpRepository amp = new AmpRepository(getApplicationContext());
-        try {
-            Media media = provider.selectTrack();
-            String auth = amp.handshake();
-            amp.localplay_stop(auth);
-            amp.localplay_add(auth, media.getMediaId());
-            amp.localplay_play(auth);
-            setProgressAsync(new Data.Builder().putInt("progress", 0).build());
-            String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
-            String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
-            String subText = provider.getSummary();
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            int counter = 0;
-            int duration = media.getDuration();
-            //int duration = 10; // Teste
-            while (counter < duration) {
-                Thread.sleep(1000);
-                counter++;
-                setProgressAsync(new Data.Builder().putInt("progress", counter).build());
+        MediaProvider provider = MediaProvider.getInstance(getApplicationContext());
+        while (true) {
+            try {
+                Media media = provider.selectTrack();
+                String auth = amp.handshake();
+                amp.localplay_stop(auth);
+                amp.localplay_add(auth, media.getMediaId());
+                amp.localplay_play(auth);
+                setProgressAsync(new Data.Builder().putInt("progress", 0).build());
+                String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
+                String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
+                String subText = provider.getSummary();
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                int counter = 0;
+                int duration = media.getDuration();
+                //int duration = 10; // Teste
+                while (counter < duration) {
+                    Thread.sleep(1000);
+                    counter++;
+                    setProgressAsync(new Data.Builder().putInt("progress", counter).build());
+                }
+                provider.updateState("read");
+                boolean last = provider.getTotalRead() == provider.getTotal() - 1;
+                if (last) {
+                    return Result.success();
+                }
+            } catch (Exception e) {
+                Data output = new Data.Builder()
+                        .putString("msg", e.getMessage())
+                        .build();
+                return Result.failure(output);
             }
-            return Result.success();
-        } catch (Exception e) {
-            Data output = new Data.Builder()
-                    .putString("msg", e.getMessage())
-                    .build();
-            return Result.failure(output);
-        }
-    }
-
-    @NonNull
-    public Result doWork_old() {
-        AmpRepository amp = new AmpRepository(getApplicationContext());
-        int mediaId = getInputData().getInt("mediaId", 0);
-        int duration = getInputData().getInt("duration", 0);
-        String contentTitle = getInputData().getString("contentTitle");
-        String contentText = getInputData().getString("contentText");
-        String subText = getInputData().getString("subText");
-        try {
-            String auth = amp.handshake();
-            amp.localplay_stop(auth);
-            amp.localplay_add(auth, mediaId);
-            amp.localplay_play(auth);
-            setProgressAsync(new Data.Builder().putInt("progress", 0).build());
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            int counter = 0;
-            while (counter < duration) {
-                Thread.sleep(1000);
-                counter++;
-                setProgressAsync(new Data.Builder().putInt("progress", counter).build());
-            }
-            return Result.success();
-        } catch (Exception e) {
-            Data output = new Data.Builder()
-                    .putString("msg", e.getMessage())
-                    .build();
-            return Result.failure(output);
         }
     }
 
@@ -98,14 +71,14 @@ public class PlayWorker extends Worker {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
+            NotificationChannel channel = new NotificationChannel(MainActivity.NOTIFICATION_CHANNEL, "Control notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
             channel.setShowBadge(false);
             NotificationManager notificationManager = (NotificationManager)context.getSystemService(MainActivity.NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(channel);
         }
 
-        Notification notification = new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+        Notification notification = new NotificationCompat.Builder(context, MainActivity.NOTIFICATION_CHANNEL)
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
                 .setSubText(subText)
@@ -117,6 +90,6 @@ public class PlayWorker extends Worker {
                 .addAction(new NotificationCompat.Action(R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
                 .build();
 
-        return new ForegroundInfo(NOTIFICATION_ID, notification);
+        return new ForegroundInfo(AmpService.NOTIFICATION_ID, notification);
     }
 }

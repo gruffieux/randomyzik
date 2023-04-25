@@ -41,9 +41,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private final IBinder binder = new LocalBinder();
     private boolean bound;
     private AmpSignal ampSignalListener;
-    private MediaProvider provider;
     private AmpRepository amp;
-    private Executor executor;
 
     public class LocalBinder extends Binder {
         AmpService getService() {
@@ -73,25 +71,14 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            Data progress = workInfo.getProgress();
-            int position = progress.getInt("progress", 0);
-            ampSignalListener.onProgress(position);
+            //Data progress = workInfo.getProgress();
+            //int position = progress.getInt("progress", 0);
+            //ampSignalListener.onProgress(position);
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
+                stopSelf();
+                stopForeground(true);
                 if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-                    provider.updateState("read");
-                    boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-                    ampSignalListener.onComplete(last);
-                    if (!last) {
-                        try {
-                            addAndPlay();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    } else {
-                        stopSelf();
-                        stopForeground(true);
-                    }
                 }
             }
         }
@@ -102,9 +89,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         super.onCreate();
 
         bound = false;
-        provider = new MediaProvider(this);
         amp = new AmpRepository(this);
-        executor = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -119,117 +104,16 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     }
 
     public void selectId(int id) {
-        provider.setSelectId(id);
+        MediaProvider.getInstance(this).setSelectId(id);
     }
 
     private void addAndPlay() {
-        MediaDAO dao = new MediaDAO(this);
-        dao.open();
-        SQLiteCursor cursor = dao.getUnread();
-
         WorkManager.getInstance(this).cancelAllWork();
-        OneTimeWorkRequest first = OneTimeWorkRequest.from(PlayWorker.class);
-        WorkContinuation continuation = WorkManager.getInstance(this).beginWith(first);
-
-        for (int i = 0; i < cursor.getCount(); i++) {
-            OneTimeWorkRequest then = OneTimeWorkRequest.from(PlayWorker.class);
-            continuation = continuation.then(then);
-        }
-
-        continuation.enqueue();
-    }
-
-    private void addAndPlay2() throws Exception {
-        Media media = provider.selectTrack();
-        String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
-        String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
-        String subText = provider.getSummary();
-
-        ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
-
-        WorkRequest playWork = new OneTimeWorkRequest.Builder(PlayWorker.class)
-                .setInputData(
-                        new Data.Builder()
-                                .putInt("mediaId", media.getMediaId())
-                                .putInt("duration", media.getDuration())
-                                .putString("contentTitle", contentTitle)
-                                .putString("contentText", contentText)
-                                .putString("subText", subText)
-                                .build()
-                )
-                .build();
-
+        OneTimeWorkRequest playWork = OneTimeWorkRequest.from(PlayWorker.class);
         WorkManager.getInstance(this).enqueueUniqueWork(
                 "play",
                 ExistingWorkPolicy.KEEP,
                 (OneTimeWorkRequest) playWork);
-
         WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
-    }
-
-    private boolean addAndPlay1() throws Exception {
-        Media media = provider.selectTrack();
-        ampSignalListener.onSelect(media.getDuration(), media.getTitle(), media.getAlbum(), media.getArtist());
-        showNotification(media.getTitle(), media.getAlbum(), media.getArtist());
-        String auth = amp.handshake();
-        amp.localplay_stop(auth);
-        amp.localplay_add(auth, media.getMediaId());
-        amp.localplay_play(auth);
-
-        int counter = 0;
-        while (counter < media.getDuration()) {
-            Thread.sleep(1000);
-            counter++;
-            ampSignalListener.onProgress(counter);
-        }
-
-        provider.updateState("read");
-        boolean last = provider.getTotalRead() == provider.getTotal() - 1;
-        ampSignalListener.onComplete(last);
-
-        if (last) {
-            stopForeground(true);
-            stopSelf();
-        }
-
-        return true;
-    }
-
-    private void showNotification(String title, String album, String artist) {
-        // If the notification supports a direct reply action, use PendingIntent.FLAG_MUTABLE instead.
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-
-        // Create an action intent for stopping the service
-        Intent stopIntent = new Intent(this, AmpService.class);
-        stopIntent.setAction("STOP");
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
-
-        // Create an action intent for resume
-        Intent resumeIntent = new Intent(this, AmpService.class);
-        resumeIntent.setAction("RESUME");
-        PendingIntent resumePendingIntent = PendingIntent.getService(this, 0, resumeIntent, 0);
-
-        String contentTitle = MediaProvider.getTrackLabel(title, "", "");
-        String contentText = MediaProvider.getTrackLabel("", album, artist);
-
-        Notification notification = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL)
-                .setContentTitle(contentTitle)
-                .setContentText(contentText)
-                .setSubText(provider.getSummary())
-                .setContentIntent(pendingIntent)
-                .setDeleteIntent(stopPendingIntent)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.drawable.ic_stat_audio)
-                .addAction(new NotificationCompat.Action(
-                        R.drawable.ic_action_pause, "Resume", resumePendingIntent))
-                .addAction(new NotificationCompat.Action(
-                        R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1))
-                .build();
-
-        startForeground(NOTIFICATION_ID, notification);
     }
 }

@@ -21,7 +21,9 @@ public class MediaProvider {
     private Context context;
     private boolean test;
 
-    public MediaProvider(Context context) {
+    private static MediaProvider instance = null;
+
+    private MediaProvider(Context context) {
         currentId = selectId = position = 0;
         total = totalRead = 0;
         mode = MODE_TRACK;
@@ -29,6 +31,13 @@ public class MediaProvider {
         dao = new MediaDAO(context);
         this.context = context;
         test = false;
+    }
+
+    public static MediaProvider getInstance(Context context) {
+        if (instance == null) {
+            instance = new MediaProvider(context);
+        }
+        return instance;
     }
 
     public int getPosition() { return position; }

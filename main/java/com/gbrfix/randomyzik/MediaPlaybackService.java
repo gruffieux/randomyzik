@@ -44,7 +44,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
     private ProgressThread progress = null;
-    private MediaProvider provider;
     private AudioFocusRequest focusRequest;
     private  boolean changeFocus = true;
 
@@ -82,8 +81,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
 
-        provider = new MediaProvider(this);
-        //provider.setTest(true);
+        MediaProvider.getInstance(this).setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -112,20 +110,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     @Override
     public void onCustomAction(@NonNull String action, Bundle extras, @NonNull Result<Bundle> result) {
         if (action == "changeMode") {
-            provider.setMode(extras.getInt("mode"));
+            MediaProvider.getInstance(this).setMode(extras.getInt("mode"));
         }
 
         if (action == "selectTrack") {
-            provider.setSelectId(extras.getInt("id"));
+            MediaProvider.getInstance(this).setSelectId(extras.getInt("id"));
         }
 
         if (action == "restoreTrack") {
-            provider.setSelectId(extras.getInt("id"));
-            provider.setPosition(extras.getInt("position"));
+            MediaProvider.getInstance(this).setSelectId(extras.getInt("id"));
+            MediaProvider.getInstance(this).setPosition(extras.getInt("position"));
         }
 
         if (action == "test") {
-            provider.setTest(true);
+            MediaProvider.getInstance(this).setTest(true);
         }
 
         if (action == "stop") {
@@ -211,6 +209,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        MediaProvider provider = MediaProvider.getInstance(this);
         provider.updateState("read");
 
         player.stop();
@@ -230,6 +229,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
+        MediaProvider provider = MediaProvider.getInstance(MediaPlaybackService.this);
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
             KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
@@ -440,7 +440,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add the metadata for the currently playing track
             .setContentTitle(contentTitle)
             .setContentText(contentText)
-            .setSubText(provider.getSummary())
+            .setSubText(MediaProvider.getInstance(this).getSummary())
 
             // Enable launching the app by clicking the notification
             .setContentIntent(pendingIntent)
