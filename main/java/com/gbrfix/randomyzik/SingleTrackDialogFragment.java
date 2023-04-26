@@ -74,15 +74,14 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
-                    MediaProvider.getInstance(getContext()).setSelectId(id);
                     if (activity.ampService.isBound()) {
-                        //activity.ampService.selectId(id);
+                        activity.ampService.selectTrack(id);
                         Intent intent = new Intent(activity, AmpService.class);
                         activity.startService(intent);
                     } else {
-                        //Bundle args = new Bundle();
-                        //args.putInt("id", id);
-                        //activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
+                        Bundle args = new Bundle();
+                        args.putInt("id", id);
+                        activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
                         MediaControllerCompat.getMediaController(activity).getTransportControls().play();
                     }
                 }

@@ -40,6 +40,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
     private boolean bound;
+    private static MediaProvider provider = null;
     private AmpSignal ampSignalListener;
 
     public class LocalBinder extends Binder {
@@ -55,6 +56,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public void setBound(boolean bound) {
         this.bound = bound;
+    }
+
+    public static MediaProvider getProvider() {
+        return provider;
     }
 
     public void setAmpSignalListener(AmpSignal ampSignalListener) {
@@ -77,7 +82,14 @@ public class AmpService extends Service implements Observer<WorkInfo> {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
                 stopSelf();
                 stopForeground(true);
-                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                switch (workInfo.getState()) {
+                    case SUCCEEDED:
+                        ampSignalListener.onComplete(true);
+                        break;
+                    case FAILED:
+                        ampSignalListener.onError(workInfo.getOutputData().getString("msg"));
+                        break;
+                    default:
                 }
             }
         }
@@ -88,6 +100,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         super.onCreate();
 
         bound = false;
+
+        if (provider == null) {
+            provider = new MediaProvider(this);
+        }
     }
 
     @Override
@@ -109,5 +125,13 @@ public class AmpService extends Service implements Observer<WorkInfo> {
                 ExistingWorkPolicy.KEEP,
                 (OneTimeWorkRequest) playWork);
         WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
+    }
+
+    public void changeMode(int mode) {
+        provider.setMode(mode);
+    }
+
+    public void selectTrack(int id) {
+        provider.setSelectId(id);
     }
 }

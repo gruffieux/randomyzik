@@ -161,6 +161,16 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                 }
+
+                @Override
+                public void onError(String msg) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            infoMsg(msg, Color.RED);
+                        }
+                    });
+                }
             });
         }
 
@@ -391,12 +401,14 @@ public class MainActivity extends AppCompatActivity {
             editor.putInt("mode", mode);
             editor.commit();
 
-            MediaProvider.getInstance(getApplicationContext()).setMode(mode);
-
-            // Send action to browser service (Depracated)
-            //Bundle args = new Bundle();
-            //args.putInt("mode", mode);
-            //mediaBrowser.sendCustomAction("changeMode", args, null);
+            if (ampService.isBound()) {
+                ampService.changeMode(mode);
+            } else {
+                // Send action to browser service (Depracated)
+                Bundle args = new Bundle();
+                args.putInt("mode", mode);
+                mediaBrowser.sendCustomAction("changeMode", args, null);
+            }
         }
     };
 
