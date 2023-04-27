@@ -1,9 +1,12 @@
 package com.gbrfix.randomyzik;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -23,10 +26,10 @@ public class PlayWorker extends Worker {
     public Result doWork() {
         AmpRepository amp = new AmpRepository(getApplicationContext());
         MediaProvider provider = AmpService.getProvider();
-        while (true) {
-            try {
+        try {
+            String auth = amp.handshake();
+            while (!isStopped()) {
                 Media media = provider.selectTrack();
-                String auth = amp.handshake();
                 amp.localplay_stop(auth);
                 amp.localplay_add(auth, media.getMediaId());
                 amp.localplay_play(auth);
@@ -42,19 +45,24 @@ public class PlayWorker extends Worker {
                     Thread.sleep(1000);
                     counter++;
                     //setProgressAsync(new Data.Builder().putInt("progress", counter).build());
+                    if (isStopped()) {
+                        amp.localplay_stop(auth);
+                        return Result.failure();
+                    }
                 }
                 provider.updateState("read");
                 boolean last = provider.getTotalRead() == provider.getTotal() - 1;
                 if (last) {
                     return Result.success();
                 }
-            } catch (Exception e) {
-                Data output = new Data.Builder()
-                        .putString("msg", e.getMessage())
-                        .build();
-                return Result.failure(output);
             }
+        } catch (Exception e) {
+            Data output = new Data.Builder()
+                    .putString("msg", e.getMessage())
+                    .build();
+            return Result.failure(output);
         }
+        return Result.failure();
     }
 
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
@@ -66,7 +74,16 @@ public class PlayWorker extends Worker {
         PendingIntent stopPendingIntent = WorkManager.getInstance(context)
                 .createCancelPendingIntent(getId());
 
-        Notification notification = new NotificationCompat.Builder(context, MainActivity.NOTIFICATION_CHANNEL)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Notifications compatibility
+            NotificationChannel channel = new NotificationChannel(AmpService.NOTIFICATION_CHANNEL, "Ampache notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
+            NotificationManager notificationManager = (NotificationManager)context.getSystemService(MainActivity.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Notification notification = new NotificationCompat.Builder(context, AmpService.NOTIFICATION_CHANNEL)
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
                 .setSubText(subText)

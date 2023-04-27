@@ -37,6 +37,7 @@ import java.util.List;
 
 public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
     public final static int NOTIFICATION_ID = 1;
+    final static String NOTIFICATION_CHANNEL = "MediaPlayback channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
     private MediaMetadataCompat.Builder metaDataBuilder;
@@ -139,6 +140,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onDestroy() {
         if (player != null) {
             player.release();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }
 
         super.onDestroy();
@@ -433,8 +439,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         stopIntent.setAction("STOP");
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Notifications compatibility
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
+            NotificationManager notificationManager = (NotificationManager)this.getSystemService(MainActivity.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
+
         // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL);
 
         builder
             // Add the metadata for the currently playing track

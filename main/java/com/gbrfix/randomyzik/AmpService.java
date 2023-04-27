@@ -1,9 +1,12 @@
 package com.gbrfix.randomyzik;
 
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
@@ -16,6 +19,7 @@ import androidx.work.WorkManager;
 
 public class AmpService extends Service implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 2;
+    final static String NOTIFICATION_CHANNEL = "Ampache channel";
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
     private boolean bound;
@@ -86,6 +90,16 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     }
 
     @Override
+    public void onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction() == "STOP") {
             stopSelf();
@@ -94,7 +108,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
         try {
             addAndPlay();
-            //showNotification();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -118,56 +131,5 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public void selectTrack(int id) {
         provider.setSelectId(id);
-    }
-
-    private void showNotification() {
-        String contentTitle = "N/A";
-        String contentText = "N/A";
-
-        // Create an explicit intent for an Activity in your app
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
-
-        // Create an action intent for stopping the service
-        Intent stopIntent = new Intent(this, AmpService.class);
-        stopIntent.setAction("STOP");
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
-
-        // Build notification
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL);
-
-        builder
-                // Add the metadata for the currently playing track
-                .setContentTitle(contentTitle)
-                .setContentText(contentText)
-                .setSubText(provider.getSummary())
-
-                // Enable launching the app by clicking the notification
-                .setContentIntent(pendingIntent)
-
-                // Stop the service when the notification is swiped away
-                //.setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
-                .setDeleteIntent(stopPendingIntent)
-
-                // Make the transport controls visible on the lockscreen
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setOngoing(true)
-
-                // Add an app icon and set its accent color
-                // Be careful about the color
-                .setSmallIcon(R.drawable.ic_stat_audio)
-
-                // Add a pause button
-                .addAction(new NotificationCompat.Action(
-                        R.drawable.ic_action_pause, "Resume",
-                        null))
-
-                // Add a cancel button
-                .addAction(new NotificationCompat.Action(
-                        R.drawable.ic_action_cancel, "Stop", stopPendingIntent));
-
-        // Display the notification and place the service in the foreground
-        startForeground(NOTIFICATION_ID, builder.build());
     }
 }
