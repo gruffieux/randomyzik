@@ -1,39 +1,18 @@
 package com.gbrfix.randomyzik;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
-import android.support.v4.media.session.PlaybackStateCompat;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
-import androidx.media.session.MediaButtonReceiver;
-import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
-import androidx.work.ForegroundInfo;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
-import androidx.work.WorkContinuation;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
-import androidx.work.WorkRequest;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class AmpService extends Service implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 2;
@@ -108,13 +87,19 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction() == "STOP") {
+            stopSelf();
+            stopForeground(true);
+        }
+
         try {
             addAndPlay();
+            //showNotification();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        return START_NOT_STICKY;
+        return super.onStartCommand(intent, flags, startId);
     }
 
     private void addAndPlay() {
@@ -133,5 +118,56 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public void selectTrack(int id) {
         provider.setSelectId(id);
+    }
+
+    private void showNotification() {
+        String contentTitle = "N/A";
+        String contentText = "N/A";
+
+        // Create an explicit intent for an Activity in your app
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+
+        // Create an action intent for stopping the service
+        Intent stopIntent = new Intent(this, AmpService.class);
+        stopIntent.setAction("STOP");
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+
+        // Build notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, MainActivity.NOTIFICATION_CHANNEL);
+
+        builder
+                // Add the metadata for the currently playing track
+                .setContentTitle(contentTitle)
+                .setContentText(contentText)
+                .setSubText(provider.getSummary())
+
+                // Enable launching the app by clicking the notification
+                .setContentIntent(pendingIntent)
+
+                // Stop the service when the notification is swiped away
+                //.setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
+                .setDeleteIntent(stopPendingIntent)
+
+                // Make the transport controls visible on the lockscreen
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOngoing(true)
+
+                // Add an app icon and set its accent color
+                // Be careful about the color
+                .setSmallIcon(R.drawable.ic_stat_audio)
+
+                // Add a pause button
+                .addAction(new NotificationCompat.Action(
+                        R.drawable.ic_action_pause, "Resume",
+                        null))
+
+                // Add a cancel button
+                .addAction(new NotificationCompat.Action(
+                        R.drawable.ic_action_cancel, "Stop", stopPendingIntent));
+
+        // Display the notification and place the service in the foreground
+        startForeground(NOTIFICATION_ID, builder.build());
     }
 }
