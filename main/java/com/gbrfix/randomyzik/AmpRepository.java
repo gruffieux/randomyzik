@@ -26,7 +26,7 @@ public class AmpRepository {
     }
 
     public ArrayList advanced_search(String auth) throws IOException, XmlPullParserException {
-        URL url = new URL("https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=or&type=song&offset=0&limit=1000&random=0&rule_1=Catalog&rule_1_operator=4&rule_1_input=gab");
+        URL url = new URL("https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=or&type=song&offset=0&limit=10&random=1&rule_1=Catalog&rule_1_operator=4&rule_1_input=gab");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         ArrayList list = (ArrayList<Media>)parser.parseSongs(conn.getInputStream());

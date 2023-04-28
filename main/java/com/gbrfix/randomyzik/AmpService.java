@@ -101,11 +101,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction() == "STOP") {
-            stopSelf();
-            stopForeground(true);
-        }
-
         try {
             addAndPlay();
         } catch (Exception e) {
