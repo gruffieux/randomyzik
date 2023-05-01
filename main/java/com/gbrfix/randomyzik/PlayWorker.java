@@ -27,11 +27,13 @@ public class PlayWorker extends Worker {
     private boolean playing;
     private String auth;
     private AmpRepository amp;
+    BroadcastReceiver ampBroadcastReceiver;
 
     public PlayWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         playing = false;
         amp = new AmpRepository(context);
+        ampBroadcastReceiver = null;
     }
 
     @NonNull
@@ -52,14 +54,13 @@ public class PlayWorker extends Worker {
                 int counter = 0;
                 int duration = media.getDuration();
                 //duration = 10; // Teste
-                //setProgressAsync(new Data.Builder().putInt("progress", 0).build());
                 playing = true;
                 while (counter < duration) {
                     Thread.sleep(1000);
                     if (playing) {
                         counter++;
                     }
-                    //setProgressAsync(new Data.Builder().putInt("progress", counter).build());
+                    //setProgressAsync(data);
                     if (isStopped()) {
                         amp.localplay_stop(auth);
                         playing = false;
@@ -85,19 +86,23 @@ public class PlayWorker extends Worker {
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
         Context context = getApplicationContext();
 
+        if (ampBroadcastReceiver != null) {
+            context.unregisterReceiver(ampBroadcastReceiver);
+        }
+
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
         PendingIntent stopPendingIntent = WorkManager.getInstance(context)
                 .createCancelPendingIntent(getId());
 
-        BroadcastReceiver ampBroadcastReceiver = new BroadcastReceiver() {
+        ampBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
                 if (action.equals("resume")) {
-                    Executor executor = Executors.newSingleThreadExecutor();
-                    executor.execute(new Runnable() {
+                    final PendingResult result = goAsync();
+                    Thread thread = new Thread() {
                         @Override
                         public void run() {
                             try {
@@ -107,21 +112,20 @@ public class PlayWorker extends Worker {
                                     amp.localplay_play(auth);
                                 }
                                 playing = !playing;
+                                result.finish();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                         }
-                    });
+                    };
+                    thread.start();
                 }
             }
         };
         Intent resumeIntent = new Intent();
         //resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         resumeIntent.setAction("resume");
-        PendingIntent resumePendingIntent = PendingIntent.getBroadcast(context, 1, resumeIntent, PendingIntent.FLAG_IMMUTABLE);
-        IntentFilter resumeIntentFilter = new IntentFilter();
-        resumeIntentFilter.addAction("resume");
-        context.registerReceiver(ampBroadcastReceiver, resumeIntentFilter);
+        PendingIntent resumePendingIntent = PendingIntent.getBroadcast(context, 1, resumeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Notifications compatibility
@@ -146,6 +150,10 @@ public class PlayWorker extends Worker {
                         R.drawable.ic_action_pause, "Resume",
                         resumePendingIntent))
                 .build();
+
+        IntentFilter resumeIntentFilter = new IntentFilter();
+        resumeIntentFilter.addAction("resume");
+        context.registerReceiver(ampBroadcastReceiver, resumeIntentFilter);
 
         return new ForegroundInfo(AmpService.NOTIFICATION_ID, notification);
     }

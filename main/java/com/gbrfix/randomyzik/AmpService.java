@@ -12,6 +12,7 @@ import android.os.IBinder;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
+import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
@@ -23,6 +24,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
     private boolean bound;
+    private static boolean started = false;
     private static MediaProvider provider = null;
     private AmpSignal ampSignalListener;
 
@@ -35,6 +37,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public boolean isBound() {
         return bound;
+    }
+
+    public boolean isStarted() {
+        return started;
     }
 
     public void setBound(boolean bound) {
@@ -65,6 +71,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
                 stopSelf();
                 stopForeground(true);
+                started = false;
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         ampSignalListener.onComplete(true);
@@ -81,8 +88,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        bound = false;
 
         if (provider == null) {
             provider = new MediaProvider(this);
@@ -103,6 +108,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
             addAndPlay();
+            started = true;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

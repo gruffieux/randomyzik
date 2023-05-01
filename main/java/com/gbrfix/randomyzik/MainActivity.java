@@ -352,20 +352,25 @@ public class MainActivity extends AppCompatActivity {
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
-                    if (state == PlaybackStateCompat.STATE_PLAYING) {
-                        if (amp != null) {
+                    if (ampService.isBound()) {
+                        if (ampService.isStarted()) {
+                            Intent resumeIntent = new Intent();
+                            //resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            resumeIntent.setAction("resume");
+                            sendBroadcast(resumeIntent);
                         } else {
-                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
-                        }
-                    } else {
-                        if (ampService.isBound()) {
                             Intent intent = new Intent(MainActivity.this, AmpService.class);
                             startService(intent);
+                        }
+                    } else {
+                        int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+                        if (state == PlaybackStateCompat.STATE_PLAYING) {
+                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
                         } else {
                             MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                         }
                     }
+
                 }
             });
 
