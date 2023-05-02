@@ -9,19 +9,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-
-import java.io.IOException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class PlayWorker extends Worker {
     private boolean playing;
@@ -44,7 +40,6 @@ public class PlayWorker extends Worker {
             auth = amp.handshake();
             while (!isStopped()) {
                 Media media = provider.selectTrack();
-                //amp.localplay_stop(auth);
                 amp.localplay_add(auth, media.getMediaId());
                 amp.localplay_play(auth);
                 String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
@@ -54,13 +49,26 @@ public class PlayWorker extends Worker {
                 int counter = 0;
                 int duration = media.getDuration();
                 //duration = 10; // Teste
+                Data data = new Data.Builder()
+                        .putInt("state", PlaybackStateCompat.STATE_PLAYING)
+                        .putInt("position", 0)
+                        .putInt("duration", duration)
+                        .putString("title", media.getTitle())
+                        .putString("album", media.getAlbum())
+                        .putString("artist", media.getArtist())
+                        .build();
+                setProgressAsync(data);
                 playing = true;
                 while (counter < duration) {
                     Thread.sleep(1000);
                     if (playing) {
                         counter++;
                     }
-                    //setProgressAsync(data);
+                    data = new Data.Builder()
+                            .putInt("state", playing ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED)
+                            .putInt("position", counter)
+                            .build();
+                    setProgressAsync(data);
                     if (isStopped()) {
                         amp.localplay_stop(auth);
                         playing = false;
@@ -112,10 +120,10 @@ public class PlayWorker extends Worker {
                                     amp.localplay_play(auth);
                                 }
                                 playing = !playing;
-                                result.finish();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
+                            result.finish();
                         }
                     };
                     thread.start();
@@ -123,7 +131,7 @@ public class PlayWorker extends Worker {
             }
         };
         Intent resumeIntent = new Intent();
-        //resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         resumeIntent.setAction("resume");
         PendingIntent resumePendingIntent = PendingIntent.getBroadcast(context, 1, resumeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 

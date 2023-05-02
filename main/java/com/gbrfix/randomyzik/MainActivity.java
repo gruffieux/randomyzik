@@ -142,10 +142,12 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onProgress(int position) {
+                public void onProgress(int state, int position) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            ImageButton playBtn = findViewById(R.id.play);
+                            playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
                             onTrackPorgress(position*1000);
                         }
                     });
@@ -319,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            int state = ampService.isBound() ? ampService.getState() : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -335,7 +337,9 @@ public class MainActivity extends AppCompatActivity {
             changeMode(modeBtn.isChecked());
 
             // Set controls info with current track
-            if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
+            if (ampService.isBound()) {
+
+            } else if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 long duration = metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
@@ -355,6 +359,7 @@ public class MainActivity extends AppCompatActivity {
                     if (ampService.isBound()) {
                         if (ampService.isStarted()) {
                             Intent resumeIntent = new Intent();
+                            resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             //resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             resumeIntent.setAction("resume");
                             sendBroadcast(resumeIntent);

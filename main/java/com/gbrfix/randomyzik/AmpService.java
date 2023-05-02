@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
@@ -23,8 +24,8 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     final static String NOTIFICATION_CHANNEL = "Ampache channel";
     // Binder given to clients.
     private final IBinder binder = new LocalBinder();
-    private boolean bound;
-    private static boolean started = false;
+    private boolean bound, started;
+    private int state;
     private static MediaProvider provider = null;
     private AmpSignal ampSignalListener;
 
@@ -41,6 +42,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public boolean isStarted() {
         return started;
+    }
+
+    public int getState() {
+        return state;
     }
 
     public void setBound(boolean bound) {
@@ -64,14 +69,23 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            //Data progress = workInfo.getProgress();
-            //int position = progress.getInt("progress", 0);
-            //ampSignalListener.onProgress(position);
+            Data progress = workInfo.getProgress();
+            state = progress.getInt("state", 0);
+            if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
+                int position = progress.getInt("position", 0);
+                if (position == 0) {
+                    int duration = progress.getInt("duration", 0);
+                    String title = progress.getString("title");
+                    String album = progress.getString("album");
+                    String artist = progress.getString("artist");
+                    ampSignalListener.onSelect(duration, title, album, artist);
+                } else {
+                    ampSignalListener.onProgress(state, position);
+                }
+            }
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
-                stopSelf();
-                stopForeground(true);
-                started = false;
+                stop();
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         ampSignalListener.onComplete(true);
@@ -124,6 +138,13 @@ public class AmpService extends Service implements Observer<WorkInfo> {
                 ExistingWorkPolicy.KEEP,
                 (OneTimeWorkRequest) playWork);
         WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
+    }
+
+    private void stop() {
+        state = 0;
+        started = false;
+        stopSelf();
+        stopForeground(true);
     }
 
     public void changeMode(int mode) {
