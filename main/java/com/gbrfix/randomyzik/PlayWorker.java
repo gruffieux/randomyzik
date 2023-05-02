@@ -51,6 +51,7 @@ public class PlayWorker extends Worker {
                 //duration = 10; // Teste
                 Data data = new Data.Builder()
                         .putInt("state", PlaybackStateCompat.STATE_PLAYING)
+                        .putInt("id", media.getId())
                         .putInt("position", 0)
                         .putInt("duration", duration)
                         .putString("title", media.getTitle())

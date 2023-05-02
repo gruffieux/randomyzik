@@ -74,11 +74,12 @@ public class AmpService extends Service implements Observer<WorkInfo> {
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int position = progress.getInt("position", 0);
                 if (position == 0) {
+                    int id = progress.getInt("id", 0);
                     int duration = progress.getInt("duration", 0);
                     String title = progress.getString("title");
                     String album = progress.getString("album");
                     String artist = progress.getString("artist");
-                    ampSignalListener.onSelect(duration, title, album, artist);
+                    ampSignalListener.onSelect(id, duration, title, album, artist);
                 } else {
                     ampSignalListener.onProgress(state, position);
                 }

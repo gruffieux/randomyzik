@@ -132,10 +132,11 @@ public class MainActivity extends AppCompatActivity {
             ampService.setBound(true);
             ampService.setAmpSignalListener(new AmpSignal() {
                 @Override
-                public void onSelect(int duration, String title, String album, String artist) {
+                public void onSelect(int id, int duration, String title, String album, String artist) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            currentId = id;
                             onTrackSelect(duration*1000, title, album, artist);
                         }
                     });
@@ -143,12 +144,19 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onProgress(int state, int position) {
+                    ImageButton playBtn = findViewById(R.id.play);
+                    ImageButton rewBtn = findViewById(R.id.rew);
+                    ImageButton fwdBtn = findViewById(R.id.fwd);
+                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            ImageButton playBtn = findViewById(R.id.play);
                             playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
-                            onTrackPorgress(position*1000);
+                            rewBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
+                            rewBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+                            fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
+                            fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+                            onTrackProgress(position*1000);
                         }
                     });
                 }
@@ -247,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
-                    onTrackPorgress(position);
+                    onTrackProgress(position);
                     break;
                 case "onTrackRead":
                     onTrackRead(extras.getBoolean("last"));
@@ -382,14 +390,25 @@ public class MainActivity extends AppCompatActivity {
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
+                    if (ampService.isBound()) {
+                        ampService.selectTrack(currentId);
+                        Intent intent = new Intent(MainActivity.this, AmpService.class);
+                        startService(intent);
+                    } else {
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
+                    }
                 }
             });
 
             // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
+                    if (ampService.isBound()) {
+                        Intent intent = new Intent(MainActivity.this, AmpService.class);
+                        startService(intent);
+                    } else {
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
+                    }
                 }
             });
 
@@ -531,7 +550,7 @@ public class MainActivity extends AppCompatActivity {
         infoMsg(label, color);
     }
 
-    protected void onTrackPorgress(int position) {
+    protected void onTrackProgress(int position) {
         TextView positionLabel = findViewById(R.id.position);
         ProgressBar progressBar = findViewById(R.id.progressBar);
 
