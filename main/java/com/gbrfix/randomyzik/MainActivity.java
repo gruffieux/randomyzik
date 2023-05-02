@@ -26,6 +26,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.Data;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -329,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            int state = ampService.isBound() ? ampService.getState() : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            int state = ampService.isBound() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -346,7 +347,18 @@ public class MainActivity extends AppCompatActivity {
 
             // Set controls info with current track
             if (ampService.isBound()) {
-
+                Data metaData = ampService.getMetadata();
+                if (metaData != null) {
+                    currentId = metaData.getInt("id", 0);
+                    int duration = metaData.getInt("duration", 0) * 1000;
+                    int position = metaData.getInt("position", 0) * 1000;
+                    durationLabel.setText(dateFormat.format(new Date(duration)));
+                    positionLabel.setText(dateFormat.format(new Date(position)));
+                    progressBar.setMax(duration);
+                    progressBar.setProgress(position);
+                    color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                    infoMsg(MediaProvider.getTrackLabel(metaData.getString("title"), metaData.getString("album"), metaData.getString("artist")), color);
+                }
             } else if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));

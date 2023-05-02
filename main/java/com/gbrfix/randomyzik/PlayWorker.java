@@ -65,11 +65,12 @@ public class PlayWorker extends Worker {
                     if (playing) {
                         counter++;
                     }
-                    data = new Data.Builder()
+                    Data data2 = new Data.Builder()
+                            .putAll(data)
                             .putInt("state", playing ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED)
                             .putInt("position", counter)
                             .build();
-                    setProgressAsync(data);
+                    setProgressAsync(data2);
                     if (isStopped()) {
                         amp.localplay_stop(auth);
                         playing = false;
