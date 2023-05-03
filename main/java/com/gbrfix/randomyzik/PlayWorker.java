@@ -23,13 +23,26 @@ public class PlayWorker extends Worker {
     private boolean playing;
     private String auth;
     private AmpRepository amp;
-    BroadcastReceiver ampBroadcastReceiver;
+    private BroadcastReceiver ampBroadcastReceiver;
+    private Context context;
 
     public PlayWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         playing = false;
         amp = new AmpRepository(context);
         ampBroadcastReceiver = null;
+        this.context = context;
+    }
+
+    @Override
+    public void onStopped() {
+        super.onStopped();
+
+        playing = false;
+
+        if (ampBroadcastReceiver != null) {
+            context.unregisterReceiver(ampBroadcastReceiver);
+        }
     }
 
     @NonNull
@@ -94,8 +107,6 @@ public class PlayWorker extends Worker {
     }
 
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
-        Context context = getApplicationContext();
-
         if (ampBroadcastReceiver != null) {
             context.unregisterReceiver(ampBroadcastReceiver);
         }
@@ -107,25 +118,28 @@ public class PlayWorker extends Worker {
                 .createCancelPendingIntent(getId());
 
         ampBroadcastReceiver = new BroadcastReceiver() {
+            private boolean locked = false;
             @Override
             public void onReceive(Context context, Intent intent) {
                 String action = intent.getAction();
-                if (action.equals("resume")) {
+                if (!locked && action.equals("resume")) {
                     final PendingResult result = goAsync();
                     Thread thread = new Thread() {
                         @Override
                         public void run() {
                             try {
+                                locked = true;
                                 if (playing) {
                                     amp.localplay_pause(auth);
                                 } else {
                                     amp.localplay_play(auth);
                                 }
                                 playing = !playing;
+                                locked = false;
+                                result.finish();
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
-                            result.finish();
                         }
                     };
                     thread.start();

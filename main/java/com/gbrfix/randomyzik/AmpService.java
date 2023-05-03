@@ -1,7 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +10,6 @@ import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.Observer;
 import androidx.work.Data;
 import androidx.work.ExistingWorkPolicy;
@@ -117,6 +115,8 @@ public class AmpService extends Service implements Observer<WorkInfo> {
                     case FAILED:
                         ampSignalListener.onError(workInfo.getOutputData().getString("msg"));
                         break;
+                    case CANCELLED:
+                        ampSignalListener.onStop();
                     default:
                 }
             }

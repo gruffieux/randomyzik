@@ -1,8 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -178,6 +176,34 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             infoMsg(msg, Color.RED);
+                        }
+                    });
+                }
+
+                @Override
+                public void onStop() {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ImageButton playBtn = findViewById(R.id.play);
+                            ImageButton rewBtn = findViewById(R.id.rew);
+                            ImageButton fwdBtn = findViewById(R.id.fwd);
+                            TextView infoMsg = findViewById(R.id.infoMsg);
+                            TextView positionLabel = findViewById(R.id.position);
+                            TextView durationLabel = findViewById(R.id.duration);
+                            ProgressBar progressBar = findViewById(R.id.progressBar);
+                            playBtn.setEnabled(true);
+                            playBtn.setColorFilter(fetchColor(MainActivity.this, R.attr.colorAccent));
+                            playBtn.setImageResource(R.drawable.ic_action_play);
+                            rewBtn.setEnabled(false);
+                            rewBtn.setColorFilter(Color.GRAY);
+                            fwdBtn.setEnabled(false);
+                            fwdBtn.setColorFilter(Color.GRAY);
+                            infoMsg.setText("");
+                            positionLabel.setText("");
+                            durationLabel.setText("");
+                            progressBar.setProgress(0);
+                            progressBar.setMax(0);
                         }
                     });
                 }
@@ -375,8 +401,7 @@ public class MainActivity extends AppCompatActivity {
                     if (ampService.isBound()) {
                         if (ampService.isStarted()) {
                             Intent resumeIntent = new Intent();
-                            resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            //resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             resumeIntent.setAction("resume");
                             sendBroadcast(resumeIntent);
                         } else {

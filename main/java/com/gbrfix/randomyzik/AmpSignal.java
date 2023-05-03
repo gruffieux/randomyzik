@@ -5,4 +5,5 @@ public interface AmpSignal {
     void onProgress(int state, int position);
     void onComplete(boolean last);
     void onError(String msg);
+    void onStop();
 }
