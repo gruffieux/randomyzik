@@ -29,6 +29,22 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private static MediaProvider provider = null;
     private AmpSignal ampSignalListener;
 
+    private void addAndPlay() {
+        WorkManager.getInstance(this).cancelAllWork();
+        OneTimeWorkRequest playWork = OneTimeWorkRequest.from(PlayWorker.class);
+        WorkManager.getInstance(this).enqueueUniqueWork(
+                "play",
+                ExistingWorkPolicy.KEEP,
+                (OneTimeWorkRequest) playWork);
+        WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
+    }
+
+    private void stop() {
+        started = false;
+        stopSelf();
+        stopForeground(true);
+    }
+
     public class LocalBinder extends Binder {
         AmpService getService() {
             // Return this instance of AmpService so clients can call public methods.
@@ -58,6 +74,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public void setAmpSignalListener(AmpSignal ampSignalListener) {
         this.ampSignalListener = ampSignalListener;
+    }
+
+    public void changeMode(int mode) {
+        provider.setMode(mode);
     }
 
     @Nullable
@@ -135,27 +155,18 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    private void addAndPlay() {
-        WorkManager.getInstance(this).cancelAllWork();
-        OneTimeWorkRequest playWork = OneTimeWorkRequest.from(PlayWorker.class);
-        WorkManager.getInstance(this).enqueueUniqueWork(
-                "play",
-                ExistingWorkPolicy.KEEP,
-                (OneTimeWorkRequest) playWork);
-        WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
+    public void rewind() {
+        provider.setSelectId(provider.getCurrentId());
+        addAndPlay();
     }
 
-    private void stop() {
-        started = false;
-        stopSelf();
-        stopForeground(true);
-    }
-
-    public void changeMode(int mode) {
-        provider.setMode(mode);
-    }
-
-    public void selectTrack(int id) {
+    public void selectAndPlay(int id) {
         provider.setSelectId(id);
+        addAndPlay();
+    }
+
+    public void skipToNext() {
+        provider.updateState("skip");
+        addAndPlay();
     }
 }

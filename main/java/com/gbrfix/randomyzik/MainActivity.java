@@ -403,9 +403,7 @@ public class MainActivity extends AppCompatActivity {
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if (ampService.isBound()) {
-                        ampService.selectTrack(currentId);
-                        Intent intent = new Intent(MainActivity.this, AmpService.class);
-                        startService(intent);
+                        ampService.rewind();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
                     }
@@ -416,8 +414,7 @@ public class MainActivity extends AppCompatActivity {
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     if (ampService.isBound()) {
-                        Intent intent = new Intent(MainActivity.this, AmpService.class);
-                        startService(intent);
+                        ampService.skipToNext();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
                     }

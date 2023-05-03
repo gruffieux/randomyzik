@@ -75,9 +75,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
                     if (activity.ampService.isBound()) {
-                        activity.ampService.selectTrack(id);
-                        Intent intent = new Intent(activity, AmpService.class);
-                        activity.startService(intent);
+                        activity.ampService.selectAndPlay(id);
                     } else {
                         Bundle args = new Bundle();
                         args.putInt("id", id);
