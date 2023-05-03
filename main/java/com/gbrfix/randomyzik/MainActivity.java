@@ -346,30 +346,26 @@ public class MainActivity extends AppCompatActivity {
             changeMode(modeBtn.isChecked());
 
             // Set controls info with current track
-            if (ampService.isBound()) {
-                Data metaData = ampService.getMetadata();
-                if (metaData != null) {
+            if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
+                int duration, position;
+                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                if (ampService.isBound()) {
+                    Data metaData = ampService.getMetadata();
                     currentId = metaData.getInt("id", 0);
-                    int duration = metaData.getInt("duration", 0) * 1000;
-                    int position = metaData.getInt("position", 0) * 1000;
-                    durationLabel.setText(dateFormat.format(new Date(duration)));
-                    positionLabel.setText(dateFormat.format(new Date(position)));
-                    progressBar.setMax(duration);
-                    progressBar.setProgress(position);
-                    color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                    duration = metaData.getInt("duration", 0) * 1000;
+                    position = metaData.getInt("position", 0) * 1000;
                     infoMsg(MediaProvider.getTrackLabel(metaData.getString("title"), metaData.getString("album"), metaData.getString("artist")), color);
+                } else {
+                    MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
+                    currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+                    duration = (int)metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
+                    position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
+                    infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
                 }
-            } else if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
-                MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
-                currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
-                long duration = metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
-                long position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
+                progressBar.setMax(duration);
+                progressBar.setProgress(position);
                 durationLabel.setText(dateFormat.format(new Date(duration)));
                 positionLabel.setText(dateFormat.format(new Date(position)));
-                progressBar.setMax((int)duration);
-                progressBar.setProgress((int)position);
-                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
             }
 
             // Handle play button

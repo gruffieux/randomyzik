@@ -89,17 +89,16 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            Data progress = workInfo.getProgress();
-            metaData = progress;
-            int state = progress.getInt("state", 0);
+            metaData = workInfo.getProgress();
+            int state = metaData.getInt("state", 0);
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
-                int position = progress.getInt("position", 0);
-                int duration = progress.getInt("duration", 0);
+                int position = metaData.getInt("position", 0);
+                int duration = metaData.getInt("duration", 0);
                 if (position == 0) {
-                    int id = progress.getInt("id", 0);
-                    String title = progress.getString("title");
-                    String album = progress.getString("album");
-                    String artist = progress.getString("artist");
+                    int id = metaData.getInt("id", 0);
+                    String title = metaData.getString("title");
+                    String album = metaData.getString("album");
+                    String artist = metaData.getString("artist");
                     ampSignalListener.onSelect(id, duration, title, album, artist);
                 } else if (position >= duration) {
                     boolean last = provider.getTotalRead() == provider.getTotal() - 1;
