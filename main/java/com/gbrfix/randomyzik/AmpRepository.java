@@ -2,14 +2,38 @@ package com.gbrfix.randomyzik;
 
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 
 abstract class AmpRepository {
     public static String handshake() throws IOException, XmlPullParserException {
         URL url = new URL("https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth=a47b0979a17207e084f8b25f9b0a4440");
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        AmpXmlParser parser = new AmpXmlParser();
+        String authToken = parser.parseText(conn.getInputStream(), "auth");
+        conn.disconnect();
+        return authToken;
+    }
+
+    // TODO: Faire fonctionner le login par mot de passe
+    public static String handshake(String user, String pwd) throws IOException, XmlPullParserException, NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(pwd.getBytes());
+        byte[] md1 = md.digest();
+        String key = String.format("%0" + (md1.length*2) + "X", new BigInteger(1, md1));
+        Date now = new Date();
+        String time = String.valueOf(now.getTime());
+        String str = time + key;
+        md.update(str.getBytes());
+        byte[] md2 = md.digest();
+        String pass = String.format("%0" + (md2.length*2) + "X", new BigInteger(1, md2));
+        URL url = new URL("https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth="+pass+"&timestamp="+time+"&user="+user);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         String authToken = parser.parseText(conn.getInputStream(), "auth");
