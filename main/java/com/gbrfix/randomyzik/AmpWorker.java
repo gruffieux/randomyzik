@@ -19,17 +19,15 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-public class PlayWorker extends Worker {
+public class AmpWorker extends Worker {
     private boolean playing;
     private String auth;
-    private AmpRepository amp;
     private BroadcastReceiver ampBroadcastReceiver;
     private Context context;
 
-    public PlayWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public AmpWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         playing = false;
-        amp = new AmpRepository(context);
         ampBroadcastReceiver = null;
         this.context = context;
     }
@@ -50,11 +48,11 @@ public class PlayWorker extends Worker {
     public Result doWork() {
         MediaProvider provider = AmpService.getProvider();
         try {
-            auth = amp.handshake();
+            auth = AmpRepository.handshake();
             while (!isStopped()) {
                 Media media = provider.selectTrack();
-                amp.localplay_add(auth, media.getMediaId());
-                amp.localplay_play(auth);
+                AmpRepository.localplay_add(auth, media.getMediaId());
+                AmpRepository.localplay_play(auth);
                 String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
                 String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
                 String subText = provider.getSummary();
@@ -85,7 +83,7 @@ public class PlayWorker extends Worker {
                             .build();
                     setProgressAsync(data2);
                     if (isStopped()) {
-                        amp.localplay_stop(auth);
+                        AmpRepository.localplay_stop(auth);
                         playing = false;
                         return Result.failure();
                     }
@@ -130,9 +128,9 @@ public class PlayWorker extends Worker {
                             try {
                                 locked = true;
                                 if (playing) {
-                                    amp.localplay_pause(auth);
+                                    AmpRepository.localplay_pause(auth);
                                 } else {
-                                    amp.localplay_play(auth);
+                                    AmpRepository.localplay_play(auth);
                                 }
                                 playing = !playing;
                                 locked = false;

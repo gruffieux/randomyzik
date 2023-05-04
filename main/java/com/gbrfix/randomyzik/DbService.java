@@ -61,10 +61,9 @@ public class DbService extends IntentService {
         ArrayList<Media> list = new ArrayList<Media>();
 
         if (db == 2) {
-            AmpRepository amp = new AmpRepository(getApplicationContext());
             try {
-                String authToken = amp.handshake();
-                list = (ArrayList<Media>)amp.advanced_search(authToken);
+                String authToken = AmpRepository.handshake();
+                list = (ArrayList<Media>)AmpRepository.advanced_search(authToken);
             } catch (IOException | XmlPullParserException e) {
                 dbSignalListener.onError(e.getMessage());
                 return;

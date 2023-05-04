@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int currentId = 0;
-    AmpRepository amp = null; // Depracated
 
     private ServiceConnection connection = new ServiceConnection() {
         @Override

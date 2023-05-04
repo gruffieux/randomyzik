@@ -29,7 +29,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     private void addAndPlay() {
         WorkManager.getInstance(this).cancelAllWork();
-        OneTimeWorkRequest playWork = OneTimeWorkRequest.from(PlayWorker.class);
+        OneTimeWorkRequest playWork = OneTimeWorkRequest.from(AmpWorker.class);
         WorkManager.getInstance(this).enqueueUniqueWork(
                 "play",
                 ExistingWorkPolicy.KEEP,
