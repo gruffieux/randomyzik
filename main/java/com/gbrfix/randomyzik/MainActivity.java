@@ -16,6 +16,9 @@ import android.media.MediaMetadata;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
@@ -28,6 +31,9 @@ import androidx.work.Data;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
@@ -496,6 +502,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
         switch (requestCode) {
             case MY_PERSMISSIONS_REQUEST_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -505,8 +513,7 @@ public class MainActivity extends AppCompatActivity {
                     if (mediaBrowser != null && !mediaBrowser.isConnected()) {
                         mediaBrowser.connect();
                     }
-                }
-                else {
+                } else {
                     // Permission denied, display info
                     setContentView(R.layout.playlist);
                     init(0);
@@ -525,6 +532,30 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.playlist);
         init(1);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
+                return true;
+            case R.id.action_rescan:
+                if (dbService.isBound()) {
+                    dbService.rescan();
+                }
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

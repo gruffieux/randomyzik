@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 27.08.2017.
@@ -57,8 +58,8 @@ public class DbService extends IntentService {
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
-        SQLiteCursor cursor = dao.getAll();
         ArrayList<Media> list = new ArrayList<Media>();
+        SQLiteCursor cursor = dao.getAll();
 
         if (db == 2) {
             try {
@@ -152,7 +153,17 @@ public class DbService extends IntentService {
             }
         };
 
-        scan();
+        //can();
         contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
+    }
+
+    public void rescan() {
+        Executors.newSingleThreadExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                scan();
+            }
+        });
+
     }
 }
