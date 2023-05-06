@@ -27,6 +27,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 
 import android.os.Bundle;
@@ -262,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
 
             switch (event) {
                 case "onTrackSelect":
@@ -324,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Récup piste en cours
             if (currentId == 0) {
-                SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
                 int id = prefs.getInt("currentId", 0);
                 int position = prefs.getInt("position", 0);
                 if (id > 0) {
@@ -361,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            int state = ampService.isBound() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            int state = ampService != null && ampService.isBound() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -380,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                if (ampService.isBound()) {
+                if (ampService != null && ampService.isBound()) {
                     Data metaData = ampService.getMetadata();
                     currentId = metaData.getInt("id", 0);
                     duration = metaData.getInt("duration", 0) * 1000;
@@ -403,7 +404,7 @@ public class MainActivity extends AppCompatActivity {
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (ampService.isBound()) {
+                    if (ampService != null && ampService.isBound()) {
                         if (ampService.isStarted()) {
                             Intent resumeIntent = new Intent();
                             resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -428,7 +429,7 @@ public class MainActivity extends AppCompatActivity {
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampService.isBound()) {
+                    if (ampService != null && ampService.isBound()) {
                         ampService.rewind();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
@@ -439,7 +440,7 @@ public class MainActivity extends AppCompatActivity {
             // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampService.isBound()) {
+                    if (ampService != null && ampService.isBound()) {
                         ampService.skipToNext();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
@@ -460,11 +461,11 @@ public class MainActivity extends AppCompatActivity {
             int mode =  b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
             // Save mode as preferences
-            SharedPreferences.Editor editor = getPreferences(Context.MODE_PRIVATE).edit();
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
             editor.putInt("mode", mode);
             editor.commit();
 
-            if (ampService.isBound()) {
+            if (ampService != null && ampService.isBound()) {
                 ampService.changeMode(mode);
             } else {
                 // Send action to browser service (Depracated)
@@ -651,10 +652,11 @@ public class MainActivity extends AppCompatActivity {
 
         // Read preferences
         Switch modeBtn = findViewById(R.id.mode);
-        SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
-        int db = prefs.getInt("db", DAOBase.DB_TYPE);
+        boolean amp = prefs.getBoolean("amp", false);
+        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
 
         try {
             if (perms == 1) {
@@ -663,18 +665,12 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
-                switch (db) {
-                    case 2:
-                        DAOBase.NAME = "playlist-amp.db";
-                        Intent intent2 = new Intent(this, AmpService.class);
-                        bindService(intent2, ampConnection, Context.BIND_AUTO_CREATE);
-                        break;
-                    case 1:
-                        DAOBase.NAME = "playlist-test.db";
-                        break;
-                    default:
-                        DAOBase.NAME = "playlist.db";
+                if (amp) {
+                    DAOBase.NAME = "playlist-amp.db";
+                    Intent intentAmp = new Intent(this, AmpService.class);
+                    bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
                 }
+
                 MediaDAO dao = new MediaDAO(this);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();

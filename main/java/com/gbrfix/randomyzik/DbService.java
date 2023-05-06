@@ -54,14 +54,14 @@ public class DbService extends IntentService {
         dbSignalListener.onScanStart();
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        int db = prefs.getInt("db", DAOBase.DB_TYPE);
+        boolean amp = prefs.getBoolean("amp", false);
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
         ArrayList<Media> list = new ArrayList<Media>();
         SQLiteCursor cursor = dao.getAll();
 
-        if (db == 2) {
+        if (amp) {
             try {
                 String authToken = AmpRepository.handshake();
                 list = (ArrayList<Media>)AmpRepository.advanced_search(authToken);
@@ -153,7 +153,6 @@ public class DbService extends IntentService {
             }
         };
 
-        //can();
         contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
     }
 
