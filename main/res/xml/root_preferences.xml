@@ -11,14 +11,14 @@
         <EditTextPreference
             app:defaultValue="https://your.ampache-server.com"
             app:dependency="amp"
-            app:key="url"
+            app:key="amp_url"
             app:title="@string/amp_url"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:defaultValue=""
             app:dependency="amp"
-            app:key="auth_token"
+            app:key="amp_auth_token"
             app:title="@string/amp_auth_key"
             app:useSimpleSummaryProvider="true" />
 

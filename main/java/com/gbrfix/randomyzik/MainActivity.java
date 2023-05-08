@@ -49,7 +49,7 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
     AmpService ampService = null;
@@ -533,6 +533,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.playlist);
         init(1);
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -563,6 +564,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean amp = prefs.getBoolean("amp", false);
+        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
+
         if (dbService != null && dbService.isBound()) {
             MediaDAO dao = new MediaDAO(this);
             dao.open();
@@ -571,6 +576,11 @@ public class MainActivity extends AppCompatActivity {
             TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
             adapter.changeCursor(cursor);
             dao.close();
+        }
+
+        if (amp) {
+            Intent intentAmp = new Intent(this, AmpService.class);
+            bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
         }
 
         if (mediaBrowser != null) {
@@ -586,6 +596,11 @@ public class MainActivity extends AppCompatActivity {
         /*if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
         }*/
+
+        if (ampService != null && ampService.isBound()) {
+            unbindService(ampConnection);
+            ampService = null;
+        }
 
         if (mediaBrowser != null) {
             mediaBrowser.disconnect();
@@ -664,12 +679,6 @@ public class MainActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
-
-                if (amp) {
-                    DAOBase.NAME = "playlist-amp.db";
-                    Intent intentAmp = new Intent(this, AmpService.class);
-                    bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
-                }
 
                 MediaDAO dao = new MediaDAO(this);
                 dao.open();
@@ -757,8 +766,20 @@ public class MainActivity extends AppCompatActivity {
             unbindService(connection);
         }
 
-        if (ampService != null && ampService.isBound()) {
-            unbindService(ampConnection);
+        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.startsWith("amp")) {
+            Intent intentAmp = new Intent(this, AmpService.class);
+            stopService(intentAmp);
+            Intent intent = new Intent(this, MediaPlaybackService.class);
+            intent.setAction("STOP");
+            startService(intent);
+            if (dbService.isBound()) {
+                dbService.rescan();
+            }
         }
     }
 }

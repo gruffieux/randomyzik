@@ -134,6 +134,8 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     @Override
     public void onDestroy() {
+        WorkManager.getInstance(this).cancelAllWork();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
             manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);

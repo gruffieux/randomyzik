@@ -55,6 +55,7 @@ public class DbService extends IntentService {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
+        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
         boolean updated = false;
         MediaDAO dao = new MediaDAO(this);
         dao.open();
