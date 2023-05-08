@@ -11,15 +11,22 @@
         <EditTextPreference
             app:defaultValue="https://your.ampache-server.com"
             app:dependency="amp"
-            app:key="amp_url"
-            app:title="@string/amp_url"
+            app:key="amp_server"
+            app:title="@string/amp_server"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
             app:defaultValue=""
             app:dependency="amp"
-            app:key="amp_auth_token"
-            app:title="@string/amp_auth_key"
+            app:key="amp_api_key"
+            app:title="@string/amp_api_key"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue=""
+            app:dependency="amp"
+            app:key="amp_catalog"
+            app:title="@string/amp_catalog"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>

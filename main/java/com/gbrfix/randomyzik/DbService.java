@@ -63,9 +63,14 @@ public class DbService extends IntentService {
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
+            String server = prefs.getString("amp_server", "");
+            String apiKey = prefs.getString("amp_api_key", "");
+            String catalog = prefs.getString("amp_catalog", "");
+            AmpRepository repository = AmpRepository.getInstance();
+            repository.init(server, apiKey);
             try {
-                String authToken = AmpRepository.handshake();
-                list = (ArrayList<Media>)AmpRepository.advanced_search(authToken);
+                String authToken = repository.handshake();
+                list = (ArrayList<Media>)repository.advanced_search(authToken, catalog);
             } catch (IOException | XmlPullParserException e) {
                 dbSignalListener.onError(e.getMessage());
                 return;

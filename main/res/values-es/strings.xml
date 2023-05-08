@@ -30,6 +30,7 @@
     <string name="amp_summary_on">Playlist read from Ampache server
     </string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
-    <string name="amp_url">Url</string>
-    <string name="amp_auth_key">Api key</string>
+    <string name="amp_server">Server</string>
+    <string name="amp_api_key">API key</string>
+    <string name="amp_catalog">Catalog</string>
 </resources>

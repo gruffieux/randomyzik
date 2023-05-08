@@ -8,7 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
@@ -47,12 +49,17 @@ public class AmpWorker extends Worker {
     @Override
     public Result doWork() {
         MediaProvider provider = AmpService.getProvider();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String server = prefs.getString("amp_server", "");
+        String apiKey = prefs.getString("amp_api_key", "");
+        AmpRepository repository = AmpRepository.getInstance();
+        repository.init(server, apiKey);
         try {
-            auth = AmpRepository.handshake();
+            auth = repository.handshake();
             while (!isStopped()) {
                 Media media = provider.selectTrack();
-                AmpRepository.localplay_add(auth, media.getMediaId());
-                AmpRepository.localplay_play(auth);
+                repository.localplay_add(auth, media.getMediaId());
+                repository.localplay_play(auth);
                 String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
                 String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
                 String subText = provider.getSummary();
@@ -83,7 +90,7 @@ public class AmpWorker extends Worker {
                             .build();
                     setProgressAsync(data2);
                     if (isStopped()) {
-                        AmpRepository.localplay_stop(auth);
+                        repository.localplay_stop(auth);
                         playing = false;
                         return Result.failure();
                     }
@@ -128,9 +135,9 @@ public class AmpWorker extends Worker {
                             try {
                                 locked = true;
                                 if (playing) {
-                                    AmpRepository.localplay_pause(auth);
+                                    AmpRepository.getInstance().localplay_pause(auth);
                                 } else {
-                                    AmpRepository.localplay_play(auth);
+                                    AmpRepository.getInstance().localplay_play(auth);
                                 }
                                 playing = !playing;
                                 locked = false;

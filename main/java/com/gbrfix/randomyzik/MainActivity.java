@@ -111,10 +111,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                 @Override
                 public void onError(String msg) {
-                    infoMsg(msg, Color.RED);
-                    playBtn.setEnabled(false);
-                    rewBtn.setEnabled(false);
-                    fwdBtn.setEnabled(false);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            infoMsg(msg, Color.RED);
+                            playBtn.setEnabled(false);
+                            rewBtn.setEnabled(false);
+                            fwdBtn.setEnabled(false);
+                        }
+                    });
                 }
             });
 
