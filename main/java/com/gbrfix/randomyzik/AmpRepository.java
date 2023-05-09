@@ -8,10 +8,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
 public class AmpRepository {
+    public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
     private String server;
     private String apiKey;
     private static AmpRepository instance = null;
@@ -57,13 +60,31 @@ public class AmpRepository {
         return authToken;
     }
 
-    public ArrayList advanced_search(String auth, String catalog) throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset=0&limit=100&rule_1=Catalog&rule_1_operator=4&rule_1_input="+catalog);
+    public List advanced_search(String auth, int offset, int catalogId) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        ArrayList list = (ArrayList<Media>)parser.parseSongs(conn.getInputStream());
+        List list = parser.parseSongs(conn.getInputStream());
         conn.disconnect();
         return list;
+    }
+
+    public List songs(String auth, int offset) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=songs&auth="+auth+"&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST);
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        AmpXmlParser parser = new AmpXmlParser();
+        List list = parser.parseSongs(conn.getInputStream());
+        conn.disconnect();
+        return list;
+    }
+
+    public Map catalogs(String auth) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=catalogs&auth="+auth);
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        AmpXmlParser parser = new AmpXmlParser();
+        Map<String, Integer> map = parser.parseCatalogs(conn.getInputStream());
+        conn.disconnect();
+        return map;
     }
 
     public String localplay_add(String auth, int oid) throws IOException {

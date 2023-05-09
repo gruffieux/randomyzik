@@ -18,6 +18,7 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 /**
@@ -70,7 +71,21 @@ public class DbService extends IntentService {
             repository.init(server, apiKey);
             try {
                 String authToken = repository.handshake();
-                list = (ArrayList<Media>)repository.advanced_search(authToken, catalog);
+                Map<String, Integer> catalogs;
+                catalogs = repository.catalogs(authToken);
+                int catalogId = catalogs.containsKey(catalog) ? catalogs.get(catalog) : 0;
+                int offset = 0;
+                ArrayList<Media> elements = new ArrayList<Media>();
+                do {
+                    elements.clear();
+                    if (catalogId == 0) {
+                        elements = (ArrayList<Media>) repository.songs(authToken, offset);
+                    } else {
+                        elements = (ArrayList<Media>) repository.advanced_search(authToken, offset, catalogId);
+                    }
+                    list.addAll(elements);
+                    offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
+                } while (elements.size() >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
             } catch (IOException | XmlPullParserException e) {
                 dbSignalListener.onError(e.getMessage());
                 return;

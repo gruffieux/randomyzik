@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.util.Pair;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -9,17 +10,21 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /*
 URL examples
 Authentication:
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth=7e5b37f14c08b28bdff73abe8f990c0b
+Catalogs:
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=catalogs&auth=a967f8fadc3053112edf87eac271ed76
 Advanced search:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth=fafd9745e9278962c6b826e680d8b37e&operator=or&type=song&offset=0&limit=10&random=0&rule_1=Catalog&rule_1_operator=4&rule_1_input=gab
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth=a967f8fadc3053112edf87eac271ed76&operator=or&type=song&offset=0&limit=10&random=0&rule_1=Catalog&rule_1_operator=4&rule_1_input=gab
 Local play:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=fafd9745e9278962c6b826e680d8b37e&command=add&oid=12697&type=song&clear=1
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=4bd1ef8c62171242b33d84aad0a79c69&command=status
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=add&oid=12697&type=song&clear=1
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=status
 */
 
 public class AmpXmlParser {
@@ -104,6 +109,43 @@ public class AmpXmlParser {
         return media;
     }
 
+    private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "catalog");
+        int value = Integer.valueOf(parser.getAttributeValue(0));
+        String key = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("name")) {
+                key = readTag(parser, "name");
+            } else {
+                skip(parser);
+            }
+        }
+        return new Pair(key, value);
+    }
+
+    private Map readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
+        Map catalogs = new HashMap<String, Integer>();
+        parser.require(XmlPullParser.START_TAG, ns, "root");
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            // Starts by looking for the entry tag
+            if (name.equals("catalog")) {
+                Pair pair = readCatalog(parser);
+                catalogs.put(pair.first, pair.second);
+            } else {
+                skip(parser);
+            }
+        }
+        return catalogs;
+    }
+
     // Processes title tags in the feed.
     private String readTag(XmlPullParser parser, String name) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, name);
@@ -163,4 +205,15 @@ public class AmpXmlParser {
         }
     }
 
+    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readCatalogs(parser);
+        } finally {
+            in.close();
+        }
+    }
 }
