@@ -348,13 +348,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
             // Mode streaming
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            boolean streaming = prefs.getBoolean("amp_streaming", false);
-            if (streaming) {
-                Bundle args = new Bundle();
-                args.putString("server", prefs.getString("amp_server", ""));
-                args.putString("apiKey", prefs.getString("amp_apiKey", ""));
-                mediaBrowser.sendCustomAction("streaming", args, null);
-            }
+            Bundle args = new Bundle();
+            args.putBoolean("streaming", prefs.getBoolean("amp", false));
+            args.putString("server", prefs.getString("amp_server", ""));
+            args.putString("apiKey", prefs.getString("amp_apiKey", ""));
+            mediaBrowser.sendCustomAction("streaming", args, null);
         }
 
         @Override
@@ -376,7 +374,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            int state = ampService != null && ampService.isBound() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            boolean streaming = prefs.getBoolean("amp_streaming", false);
+            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
+            int state = ampRemote && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -390,10 +391,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
             // Set mode switcher state
             changeMode(modeBtn.isChecked());
-
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            boolean streaming = prefs.getBoolean("amp_streaming", false);
-            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
 
             // Set controls info with current track
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {

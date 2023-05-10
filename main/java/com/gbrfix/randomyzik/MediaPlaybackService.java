@@ -140,21 +140,25 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         if (action.equals("streaming")) {
-            String server = extras.getString("server", "");
-            String apiKey = extras.getString("apiKey", "");
+            boolean streaming = extras.getBoolean("streaming");
+            String server = extras.getString("server");
+            String apiKey = extras.getString("apiKey");
             AmpRepository.getInstance().init(server, apiKey);
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        streamAuth = AmpRepository.getInstance().handshake();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (XmlPullParserException e) {
-                        throw new RuntimeException(e);
+            streamAuth = "";
+            if (streaming) {
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            streamAuth = AmpRepository.getInstance().handshake();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        } catch (XmlPullParserException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         super.onCustomAction(action, extras, result);
@@ -351,23 +355,23 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     progress = new ProgressThread();
                     media = provider.selectTrack();
-                    int position = provider.getPosition();
 
                     if (!streamAuth.isEmpty()) {
                         player = new MediaPlayer();
-                        String url = AmpRepository.getInstance().streaming_url(streamAuth, media.getMediaId(), position);
+                        String url = AmpRepository.getInstance().streaming_url(streamAuth, media.getMediaId(), 0);
                         player.setDataSource(url);
                         player.prepare();
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                         player = MediaPlayer.create(getApplicationContext(), uri);
-                        if (provider.isTest()) {
-                            player.seekTo(player.getDuration() - 10);
-                        } else if (position > 0) {
-                            player.seekTo(position);
-                        }
                     }
 
+                    int position = provider.getPosition();
+                    if (provider.isTest()) {
+                        player.seekTo(player.getDuration() - 10);
+                    } else if (position > 0) {
+                        player.seekTo(position);
+                    }
                     provider.setPosition(0);
 
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
