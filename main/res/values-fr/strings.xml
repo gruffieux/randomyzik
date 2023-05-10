@@ -31,6 +31,8 @@
     </string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
     <string name="amp_server">Serveur</string>
-    <string name="amp_api_key">Clé API</string>
+    <string name="amp_apiKey">Clé API</string>
     <string name="amp_catalog">Catalogue</string>
+    <string name="amp_streaming_on">Joue en streaming</string>
+    <string name="amp_streaming_off">Joue à distance</string>
 </resources>

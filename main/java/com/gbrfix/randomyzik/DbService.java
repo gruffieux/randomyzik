@@ -65,7 +65,7 @@ public class DbService extends IntentService {
 
         if (amp) {
             String server = prefs.getString("amp_server", "");
-            String apiKey = prefs.getString("amp_api_key", "");
+            String apiKey = prefs.getString("amp_apiKey", "");
             String catalog = prefs.getString("amp_catalog", "");
             AmpRepository repository = AmpRepository.getInstance();
             repository.init(server, apiKey);

@@ -18,7 +18,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.support.v4.media.MediaBrowserCompat;
@@ -346,6 +345,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     dao.close();
                 }
             }
+
+            // Mode streaming
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            boolean streaming = prefs.getBoolean("amp_streaming", false);
+            if (streaming) {
+                Bundle args = new Bundle();
+                args.putString("server", prefs.getString("amp_server", ""));
+                args.putString("apiKey", prefs.getString("amp_apiKey", ""));
+                mediaBrowser.sendCustomAction("streaming", args, null);
+            }
         }
 
         @Override
@@ -382,11 +391,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Set mode switcher state
             changeMode(modeBtn.isChecked());
 
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            boolean streaming = prefs.getBoolean("amp_streaming", false);
+            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
+
             // Set controls info with current track
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                if (ampService != null && ampService.isBound()) {
+                if (ampRemote) {
                     Data metaData = ampService.getMetadata();
                     currentId = metaData.getInt("id", 0);
                     duration = metaData.getInt("duration", 0) * 1000;
@@ -409,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (ampService != null && ampService.isBound()) {
+                    if (ampRemote) {
                         if (ampService.isStarted()) {
                             Intent resumeIntent = new Intent();
                             resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -434,7 +447,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampService != null && ampService.isBound()) {
+                    if (ampRemote) {
                         ampService.rewind();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
@@ -445,7 +458,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampService != null && ampService.isBound()) {
+                    if (ampRemote) {
                         ampService.skipToNext();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
@@ -466,11 +479,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             int mode =  b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
             // Save mode as preferences
-            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            SharedPreferences.Editor editor = prefs.edit();
             editor.putInt("mode", mode);
             editor.commit();
 
-            if (ampService != null && ampService.isBound()) {
+            boolean streaming = prefs.getBoolean("amp_streaming", false);
+            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
+
+            if (ampRemote) {
                 ampService.changeMode(mode);
             } else {
                 // Send action to browser service (Depracated)
@@ -782,7 +799,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
-            if (dbService.isBound()) {
+            if (dbService.isBound() && !key.equals("amp_streaming")) {
                 dbService.rescan();
             }
         }

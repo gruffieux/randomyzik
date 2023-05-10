@@ -51,7 +51,7 @@ public class AmpWorker extends Worker {
         MediaProvider provider = AmpService.getProvider();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
-        String apiKey = prefs.getString("amp_api_key", "");
+        String apiKey = prefs.getString("amp_apiKey", "");
         AmpRepository repository = AmpRepository.getInstance();
         repository.init(server, apiKey);
         try {

@@ -24,12 +24,17 @@ import android.support.v4.media.MediaBrowserCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import androidx.media.session.MediaButtonReceiver;
+
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.KeyEvent;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 14.01.2018.
@@ -48,6 +53,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private ProgressThread progress = null;
     private AudioFocusRequest focusRequest;
     private  boolean changeFocus = true;
+    private String streamAuth = "";
 
     @Nullable
     @Override
@@ -112,25 +118,43 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public void onCustomAction(@NonNull String action, Bundle extras, @NonNull Result<Bundle> result) {
-        if (action == "changeMode") {
+        if (action.equals("changeMode")) {
             provider.setMode(extras.getInt("mode"));
         }
 
-        if (action == "selectTrack") {
+        if (action.equals("selectTrack")) {
             provider.setSelectId(extras.getInt("id"));
         }
 
-        if (action == "restoreTrack") {
+        if (action.equals("restoreTrack")) {
             provider.setSelectId(extras.getInt("id"));
             provider.setPosition(extras.getInt("position"));
         }
 
-        if (action == "test") {
+        if (action.equals("test")) {
             provider.setTest(true);
         }
 
-        if (action == "stop") {
+        if (action.equals("stop")) {
             session.getController().getTransportControls().stop();
+        }
+
+        if (action.equals("streaming")) {
+            String server = extras.getString("server", "");
+            String apiKey = extras.getString("apiKey", "");
+            AmpRepository.getInstance().init(server, apiKey);
+            Executors.newSingleThreadExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        streamAuth = AmpRepository.getInstance().handshake();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (XmlPullParserException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
         }
 
         super.onCustomAction(action, extras, result);
@@ -327,16 +351,24 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     progress = new ProgressThread();
                     media = provider.selectTrack();
-                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                    player = MediaPlayer.create(getApplicationContext(), uri);
                     int position = provider.getPosition();
 
-                    if (provider.isTest()) {
-                        player.seekTo(player.getDuration() - 10);
-                    } else if (position > 0) {
-                        player.seekTo(position);
-                        provider.setPosition(0);
+                    if (!streamAuth.isEmpty()) {
+                        player = new MediaPlayer();
+                        String url = AmpRepository.getInstance().streaming_url(streamAuth, media.getMediaId(), position);
+                        player.setDataSource(url);
+                        player.prepare();
+                    } else {
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                        player = MediaPlayer.create(getApplicationContext(), uri);
+                        if (provider.isTest()) {
+                            player.seekTo(player.getDuration() - 10);
+                        } else if (position > 0) {
+                            player.seekTo(position);
+                        }
                     }
+
+                    provider.setPosition(0);
 
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())

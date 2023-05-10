@@ -18,8 +18,8 @@
         <EditTextPreference
             app:defaultValue=""
             app:dependency="amp"
-            app:key="amp_api_key"
-            app:title="@string/amp_api_key"
+            app:key="amp_apiKey"
+            app:title="@string/amp_apiKey"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
@@ -28,6 +28,12 @@
             app:key="amp_catalog"
             app:title="@string/amp_catalog"
             app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreferenceCompat
+            app:key="amp_streaming"
+            app:title="Mode"
+            app:summaryOff="@string/amp_streaming_off"
+            app:summaryOn="@string/amp_streaming_on" />
 
     </PreferenceCategory>
 
