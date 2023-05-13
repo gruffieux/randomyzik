@@ -1,6 +1,5 @@
 package com.gbrfix.randomyzik;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -78,10 +77,18 @@ public class AmpWorker extends Worker {
                         .build();
                 setProgressAsync(data);
                 playing = true;
+                boolean lastState = false;
                 while (counter < duration) {
                     Thread.sleep(1000);
                     if (playing) {
+                        if (!lastState) {
+                            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                            lastState = true;
+                        }
                         counter++;
+                    } else if (lastState) {
+                        setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                        lastState = false;
                     }
                     Data data2 = new Data.Builder()
                             .putAll(data)
@@ -165,25 +172,28 @@ public class AmpWorker extends Worker {
             notificationManager.createNotificationChannel(channel);
         }
 
-        Notification notification = new NotificationCompat.Builder(context, AmpService.NOTIFICATION_CHANNEL)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, AmpService.NOTIFICATION_CHANNEL);
+
+        builder
                 .setContentTitle(contentTitle)
                 .setContentText(contentText)
                 .setSubText(subText)
                 .setContentIntent(pendingIntent)
-                //.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                //.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setDeleteIntent(stopPendingIntent)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)
-                .setOngoing(true)
-                .addAction(new NotificationCompat.Action(R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
                 .addAction(new NotificationCompat.Action(
-                        R.drawable.ic_action_pause, "Resume",
-                        resumePendingIntent))
-                .build();
+                        playing ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume", resumePendingIntent))
+                .addAction(new NotificationCompat.Action(
+                        R.drawable.ic_action_cancel, "Stop", stopPendingIntent))
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(0, 1));
 
         IntentFilter resumeIntentFilter = new IntentFilter();
         resumeIntentFilter.addAction("resume");
         context.registerReceiver(ampBroadcastReceiver, resumeIntentFilter);
 
-        return new ForegroundInfo(AmpService.NOTIFICATION_ID, notification);
+        return new ForegroundInfo(AmpService.NOTIFICATION_ID, builder.build());
     }
 }

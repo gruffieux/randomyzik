@@ -37,12 +37,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         WorkManager.getInstance(this).getWorkInfoByIdLiveData(playWork.getId()).observeForever(this);
     }
 
-    private void stop() {
-        started = false;
-        stopSelf();
-        stopForeground(true);
-    }
-
     public class LocalBinder extends Binder {
         AmpService getService() {
             // Return this instance of AmpService so clients can call public methods.
@@ -107,7 +101,9 @@ public class AmpService extends Service implements Observer<WorkInfo> {
             }
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
-                stop();
+                started = false;
+                stopSelf();
+                stopForeground(true);
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         ampSignalListener.onComplete(true);
