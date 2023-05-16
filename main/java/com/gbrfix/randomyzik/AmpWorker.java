@@ -20,6 +20,8 @@ import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import java.io.IOException;
+
 public class AmpWorker extends Worker {
     private boolean playing;
     private String auth;
@@ -37,6 +39,13 @@ public class AmpWorker extends Worker {
     public void onStopped() {
         super.onStopped();
 
+        AmpRepository repository = AmpRepository.getInstance();
+        try {
+            repository.localplay_stop(auth);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         playing = false;
 
         if (ampBroadcastReceiver != null) {
@@ -50,11 +59,12 @@ public class AmpWorker extends Worker {
         MediaProvider provider = AmpService.getProvider();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
-        String apiKey = prefs.getString("amp_apiKey", "");
+        String user = prefs.getString("amp_user", "");
+        String pwd = prefs.getString("amp_pwd", "");
         AmpRepository repository = AmpRepository.getInstance();
-        repository.init(server, apiKey);
+        repository.init(server, "");
         try {
-            auth = repository.handshake();
+            auth = repository.handshake(user, pwd);
             while (!isStopped()) {
                 Media media = provider.selectTrack();
                 repository.localplay_add(auth, media.getMediaId());
@@ -96,11 +106,6 @@ public class AmpWorker extends Worker {
                             .putInt("position", counter)
                             .build();
                     setProgressAsync(data2);
-                    if (isStopped()) {
-                        repository.localplay_stop(auth);
-                        playing = false;
-                        return Result.failure();
-                    }
                 }
                 playing = false;
                 provider.updateState("read");
@@ -179,7 +184,6 @@ public class AmpWorker extends Worker {
                 .setContentText(contentText)
                 .setSubText(subText)
                 .setContentIntent(pendingIntent)
-                .setDeleteIntent(stopPendingIntent)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)

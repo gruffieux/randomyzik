@@ -14,9 +14,6 @@ import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
 
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -65,12 +62,13 @@ public class DbService extends IntentService {
 
         if (amp) {
             String server = prefs.getString("amp_server", "");
-            String apiKey = prefs.getString("amp_apiKey", "");
+            String user = prefs.getString("amp_user", "");
+            String pwd = prefs.getString("amp_pwd", "");
             String catalog = prefs.getString("amp_catalog", "");
             AmpRepository repository = AmpRepository.getInstance();
-            repository.init(server, apiKey);
+            repository.init(server, "");
             try {
-                String authToken = repository.handshake();
+                String authToken = repository.handshake(user, pwd);
                 Map<String, Integer> catalogs;
                 catalogs = repository.catalogs(authToken);
                 int catalogId = catalogs.containsKey(catalog) ? catalogs.get(catalog) : 0;
@@ -86,7 +84,7 @@ public class DbService extends IntentService {
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                 } while (elements.size() >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
-            } catch (IOException | XmlPullParserException e) {
+            } catch (Exception e) {
                 dbSignalListener.onError(e.getMessage());
                 return;
             }

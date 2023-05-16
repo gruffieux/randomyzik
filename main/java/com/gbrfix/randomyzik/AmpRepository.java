@@ -2,11 +2,10 @@ package com.gbrfix.randomyzik;
 
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +14,16 @@ import javax.net.ssl.HttpsURLConnection;
 public class AmpRepository {
     public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
     private String server;
-    private String apiKey;
+    private String auth;
     private static AmpRepository instance = null;
+
+    private static String byteToHex(byte byteData[]) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < byteData.length; i++) {
+            sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+        }
+        return sb.toString();
+    }
 
     public static AmpRepository getInstance() {
         if (instance == null) {
@@ -27,11 +34,11 @@ public class AmpRepository {
 
     public void init(String server, String apiKey) {
         this.server = server;
-        this.apiKey = apiKey;
+        this.auth = apiKey;
     }
 
     public String handshake() throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+apiKey);
+        URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+auth);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         String authToken = parser.parseText(conn.getInputStream(), "auth");
@@ -39,18 +46,16 @@ public class AmpRepository {
         return authToken;
     }
 
-    // TODO: Faire fonctionner le login par mot de passe
     public String handshake(String user, String pwd) throws IOException, XmlPullParserException, NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(pwd.getBytes());
         byte[] md1 = md.digest();
-        String key = String.format("%0" + (md1.length*2) + "X", new BigInteger(1, md1));
-        Date now = new Date();
-        String time = String.valueOf(now.getTime());
+        String key = byteToHex(md1);
+        long time = Calendar.getInstance().getTimeInMillis() / 1000; // Convert in second to be PHP compatible
         String str = time + key;
         md.update(str.getBytes());
         byte[] md2 = md.digest();
-        String pass = String.format("%0" + (md2.length*2) + "X", new BigInteger(1, md2));
+        String pass = byteToHex(md2);
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+pass+"&timestamp="+time+"&user="+user);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();

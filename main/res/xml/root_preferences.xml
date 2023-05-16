@@ -18,8 +18,16 @@
         <EditTextPreference
             app:defaultValue=""
             app:dependency="amp"
-            app:key="amp_apiKey"
-            app:title="@string/amp_apiKey"
+            app:key="amp_user"
+            app:title="@string/amp_user"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue=""
+            app:dependency="amp"
+            app:key="amp_pwd"
+            app:title="@string/amp_pwd"
+            app:shouldDisableView="true"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference

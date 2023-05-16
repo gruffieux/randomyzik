@@ -31,7 +31,8 @@
     </string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
     <string name="amp_server">Server</string>
-    <string name="amp_apiKey">API key</string>
+    <string name="amp_user">Username</string>
+    <string name="amp_pwd">Password</string>
     <string name="amp_streaming_on">Play streaming</string>
     <string name="amp_streaming_off">Play remotely</string>
 </resources>
