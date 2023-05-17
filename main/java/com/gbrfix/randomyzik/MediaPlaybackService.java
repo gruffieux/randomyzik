@@ -30,10 +30,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.KeyEvent;
 
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -143,22 +139,22 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         if (action.equals("streaming")) {
             boolean streaming = extras.getBoolean("streaming");
             String server = extras.getString("server");
+            String apiKey = extras.getString("apiKey");
             String user = extras.getString("user");
             String pwd = extras.getString("pwd");
-            AmpRepository.getInstance().init(server, "");
+            AmpRepository repository = AmpRepository.getInstance();
+            repository.setServer(server);
             streamAuth = "";
             if (streaming) {
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            streamAuth = AmpRepository.getInstance().handshake(user, pwd);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } catch (XmlPullParserException e) {
-                            throw new RuntimeException(e);
-                        } catch (NoSuchAlgorithmException e) {
-                            throw new RuntimeException(e);
+                            streamAuth = repository.handshake(apiKey, user, pwd);
+                        } catch (Exception e) {
+                            Bundle args = new Bundle();
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
                         }
                     }
                 });

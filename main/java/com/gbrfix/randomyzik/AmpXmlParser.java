@@ -66,7 +66,7 @@ public class AmpXmlParser {
         return songs;
     }
 
-    // Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them off
+    // Parses the contents of an entry. If it encounters a song, hands them off
     // to their respective "read" methods for processing. Otherwise, skips the tag.
     private Media readSong(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "song");
@@ -146,7 +146,7 @@ public class AmpXmlParser {
         return catalogs;
     }
 
-    // Processes title tags in the feed.
+    // Processes tags in the feed.
     private String readTag(XmlPullParser parser, String name) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, name);
         String tag = readText(parser);
@@ -154,7 +154,7 @@ public class AmpXmlParser {
         return tag;
     }
 
-    // For the tags title and summary, extracts their text values.
+    // For the tags, extracts their text values.
     private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = "";
         if (parser.next() == XmlPullParser.TEXT) {

@@ -9,29 +9,35 @@
             app:summaryOn="@string/amp_summary_on" />
 
         <EditTextPreference
-            app:defaultValue="https://your.ampache-server.com"
+            app:defaultValue="https://demo.ampache.dev"
             app:dependency="amp"
             app:key="amp_server"
             app:title="@string/amp_server"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:defaultValue=""
+            app:defaultValue="demodemo"
+            app:dependency="amp"
+            app:key="amp_apiKey"
+            app:title="@string/amp_apiKey"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:defaultValue="demo"
             app:dependency="amp"
             app:key="amp_user"
             app:title="@string/amp_user"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:defaultValue=""
+            app:defaultValue="demodemo"
             app:dependency="amp"
             app:key="amp_pwd"
             app:title="@string/amp_pwd"
-            app:shouldDisableView="true"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference
-            app:defaultValue=""
+            app:defaultValue="music"
             app:dependency="amp"
             app:key="amp_catalog"
             app:title="@string/amp_catalog"

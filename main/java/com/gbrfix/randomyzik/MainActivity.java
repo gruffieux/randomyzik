@@ -72,11 +72,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            TextView infoMsg = findViewById(R.id.infoMsg);
-                            if (infoMsg.getText().equals("")) {
-                                int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                                infoMsg(getString(R.string.info_scanning), color);
-                            }
+                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                            infoMsg(getString(R.string.info_scanning), color);
                         }
                     });
                 }
@@ -88,9 +85,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         public void run() {
                             playBtn.setEnabled(true);
                             TextView infoMsg = findViewById(R.id.infoMsg);
-                            if (infoMsg.getText().equals(getText(R.string.info_scanning))) {
-                                infoMsg.setText("");
-                            }
+                            infoMsg.setText("");
                             if (update) {
                                 try {
                                     MediaDAO dao = new MediaDAO(MainActivity.this);
@@ -351,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Bundle args = new Bundle();
             args.putBoolean("streaming", prefs.getBoolean("amp", false));
             args.putString("server", prefs.getString("amp_server", ""));
+            args.putString("apiKey", prefs.getString("amp_apiKey", ""));
             args.putString("user", prefs.getString("amp_user", ""));
             args.putString("pwd", prefs.getString("amp_pwd", ""));
             mediaBrowser.sendCustomAction("streaming", args, null);

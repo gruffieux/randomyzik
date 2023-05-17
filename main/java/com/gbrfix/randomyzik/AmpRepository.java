@@ -14,7 +14,6 @@ import javax.net.ssl.HttpsURLConnection;
 public class AmpRepository {
     public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
     private String server;
-    private String auth;
     private static AmpRepository instance = null;
 
     private static String byteToHex(byte byteData[]) {
@@ -32,13 +31,20 @@ public class AmpRepository {
         return instance;
     }
 
-    public void init(String server, String apiKey) {
+    public void setServer(String server) {
         this.server = server;
-        this.auth = apiKey;
     }
 
-    public String handshake() throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+auth);
+    public String handshake(String apiKey, String user, String pwd) throws Exception {
+        String authToken = apiKey.isEmpty() ? handshake(user, pwd) : handshake(apiKey);
+        if (authToken.isEmpty()) {
+            throw new Exception("Invalid authentication");
+        }
+        return authToken;
+    }
+
+    public String handshake(String apiKey) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+apiKey);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         String authToken = parser.parseText(conn.getInputStream(), "auth");
@@ -46,7 +52,7 @@ public class AmpRepository {
         return authToken;
     }
 
-    public String handshake(String user, String pwd) throws IOException, XmlPullParserException, NoSuchAlgorithmException {
+    public String handshake(String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(pwd.getBytes());
         byte[] md1 = md.digest();

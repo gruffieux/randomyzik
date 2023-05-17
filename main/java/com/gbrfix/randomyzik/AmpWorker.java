@@ -59,12 +59,13 @@ public class AmpWorker extends Worker {
         MediaProvider provider = AmpService.getProvider();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
+        String apiKey = prefs.getString("amp_apiKey", "");
         String user = prefs.getString("amp_user", "");
         String pwd = prefs.getString("amp_pwd", "");
         AmpRepository repository = AmpRepository.getInstance();
-        repository.init(server, "");
+        repository.setServer(server);
         try {
-            auth = repository.handshake(user, pwd);
+            auth = repository.handshake(apiKey, user, pwd);
             while (!isStopped()) {
                 Media media = provider.selectTrack();
                 repository.localplay_add(auth, media.getMediaId());

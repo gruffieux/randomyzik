@@ -62,13 +62,14 @@ public class DbService extends IntentService {
 
         if (amp) {
             String server = prefs.getString("amp_server", "");
+            String apiKey = prefs.getString("amp_apiKey", "");
             String user = prefs.getString("amp_user", "");
             String pwd = prefs.getString("amp_pwd", "");
             String catalog = prefs.getString("amp_catalog", "");
             AmpRepository repository = AmpRepository.getInstance();
-            repository.init(server, "");
+            repository.setServer(server);
             try {
-                String authToken = repository.handshake(user, pwd);
+                String authToken = repository.handshake(apiKey, user, pwd);
                 Map<String, Integer> catalogs;
                 catalogs = repository.catalogs(authToken);
                 int catalogId = catalogs.containsKey(catalog) ? catalogs.get(catalog) : 0;
