@@ -31,7 +31,10 @@
     </string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
     <string name="amp_server">Serveur</string>
-    <string name="amp_apiKey">API key</string>
+    <string name="amp_api">Use API key</string>
+    <string name="amp_api_on">Authenticate with API key</string>
+    <string name="amp_api_off">Authenticate with user / password</string>
+    <string name="amp_api_key">API key</string>
     <string name="amp_user">Nom d\'utilisateur</string>
     <string name="amp_pwd">Mot de passe</string>
     <string name="amp_catalog">Catalogue</string>

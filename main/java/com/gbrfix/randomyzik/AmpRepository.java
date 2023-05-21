@@ -11,10 +11,8 @@ import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
-public class AmpRepository {
+abstract class AmpRepository {
     public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
-    private String server;
-    private static AmpRepository instance = null;
 
     private static String byteToHex(byte byteData[]) {
         StringBuffer sb = new StringBuffer();
@@ -24,26 +22,7 @@ public class AmpRepository {
         return sb.toString();
     }
 
-    public static AmpRepository getInstance() {
-        if (instance == null) {
-            instance = new AmpRepository();
-        }
-        return instance;
-    }
-
-    public void setServer(String server) {
-        this.server = server;
-    }
-
-    public String handshake(String apiKey, String user, String pwd) throws Exception {
-        String authToken = apiKey.isEmpty() ? handshake(user, pwd) : handshake(apiKey);
-        if (authToken.isEmpty()) {
-            throw new Exception("Invalid authentication");
-        }
-        return authToken;
-    }
-
-    public String handshake(String apiKey) throws IOException, XmlPullParserException {
+    public static String handshake(String server, String apiKey) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+apiKey);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
@@ -52,7 +31,7 @@ public class AmpRepository {
         return authToken;
     }
 
-    public String handshake(String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
+    public static String handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(pwd.getBytes());
         byte[] md1 = md.digest();
@@ -70,7 +49,7 @@ public class AmpRepository {
         return authToken;
     }
 
-    public List advanced_search(String auth, int offset, int catalogId) throws IOException, XmlPullParserException {
+    public static List advanced_search(String server, String auth, int offset, int catalogId) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
@@ -79,7 +58,7 @@ public class AmpRepository {
         return list;
     }
 
-    public List songs(String auth, int offset) throws IOException, XmlPullParserException {
+    public static List songs(String server, String auth, int offset) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=songs&auth="+auth+"&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
@@ -88,7 +67,7 @@ public class AmpRepository {
         return list;
     }
 
-    public Map catalogs(String auth) throws IOException, XmlPullParserException {
+    public static Map catalogs(String server, String auth) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=catalogs&auth="+auth);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
@@ -97,7 +76,7 @@ public class AmpRepository {
         return map;
     }
 
-    public String localplay_add(String auth, int oid) throws IOException {
+    public static String localplay_add(String server, String auth, int oid) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=add&type=song&oid="+oid+"&clear=1");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         String res = conn.getResponseMessage();
@@ -105,7 +84,7 @@ public class AmpRepository {
         return res;
     }
 
-    public String localplay_pause(String auth) throws IOException {
+    public static String localplay_pause(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=pause");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         String res = conn.getResponseMessage();
@@ -113,7 +92,7 @@ public class AmpRepository {
         return res;
     }
 
-    public String localplay_play(String auth) throws IOException {
+    public static String localplay_play(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=play");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         String res = conn.getResponseMessage();
@@ -121,7 +100,7 @@ public class AmpRepository {
         return res;
     }
 
-    public String localplay_stop(String auth) throws IOException {
+    public static String localplay_stop(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=stop");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         String res = conn.getResponseMessage();
@@ -129,7 +108,7 @@ public class AmpRepository {
         return res;
     }
 
-    public String streaming_url(String auth, int oid, int offset) {
+    public static String streaming_url(String server, String auth, int oid, int offset) {
         return server+"/server/xml.server.php?action=stream&auth="+auth+"&id="+oid+"&type=song&offset="+offset;
     }
 }

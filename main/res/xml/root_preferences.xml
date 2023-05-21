@@ -15,11 +15,18 @@
             app:title="@string/amp_server"
             app:useSimpleSummaryProvider="true" />
 
+        <SwitchPreferenceCompat
+            app:dependency="amp"
+            app:key="amp_api"
+            app:title="@string/amp_api"
+            app:summaryOff="@string/amp_api_off"
+            app:summaryOn="@string/amp_api_on" />
+
         <EditTextPreference
             app:defaultValue="demodemo"
-            app:dependency="amp"
-            app:key="amp_apiKey"
-            app:title="@string/amp_apiKey"
+            app:dependency="amp_api"
+            app:key="amp_api_key"
+            app:title="@string/amp_api_key"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference

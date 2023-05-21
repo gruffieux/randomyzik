@@ -61,26 +61,21 @@ public class DbService extends IntentService {
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
-            String server = prefs.getString("amp_server", "");
-            String apiKey = prefs.getString("amp_apiKey", "");
-            String user = prefs.getString("amp_user", "");
-            String pwd = prefs.getString("amp_pwd", "");
             String catalog = prefs.getString("amp_catalog", "");
-            AmpRepository repository = AmpRepository.getInstance();
-            repository.setServer(server);
+            AmpSession ampSession = AmpSession.getInstance();
             try {
-                String authToken = repository.handshake(apiKey, user, pwd);
+                ampSession.connect(prefs);
                 Map<String, Integer> catalogs;
-                catalogs = repository.catalogs(authToken);
+                catalogs = ampSession.catalogs();
                 int catalogId = catalogs.containsKey(catalog) ? catalogs.get(catalog) : 0;
                 int offset = 0;
                 ArrayList<Media> elements = new ArrayList<Media>();
                 do {
                     elements.clear();
                     if (catalogId == 0) {
-                        elements = (ArrayList<Media>) repository.songs(authToken, offset);
+                        elements = (ArrayList<Media>) ampSession.songs(offset);
                     } else {
-                        elements = (ArrayList<Media>) repository.advanced_search(authToken, offset, catalogId);
+                        elements = (ArrayList<Media>) ampSession.advanced_search(offset, catalogId);
                     }
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;

@@ -8,6 +8,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -24,6 +25,7 @@ import android.support.v4.media.MediaBrowserCompat;
 import androidx.media.MediaBrowserServiceCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import androidx.media.session.MediaButtonReceiver;
+import androidx.preference.PreferenceManager;
 
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -50,7 +52,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private ProgressThread progress = null;
     private AudioFocusRequest focusRequest;
     private  boolean changeFocus = true;
-    private String streamAuth = "";
+    private boolean streaming = false;
 
     @Nullable
     @Override
@@ -137,20 +139,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         if (action.equals("streaming")) {
-            boolean streaming = extras.getBoolean("streaming");
-            String server = extras.getString("server");
-            String apiKey = extras.getString("apiKey");
-            String user = extras.getString("user");
-            String pwd = extras.getString("pwd");
-            AmpRepository repository = AmpRepository.getInstance();
-            repository.setServer(server);
-            streamAuth = "";
-            if (streaming) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean amp = prefs.getBoolean("amp", false);
+            AmpSession ampSession = AmpSession.getInstance();
+            streaming = prefs.getBoolean("amp_streaming", false);
+            if (amp) {
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            streamAuth = repository.handshake(apiKey, user, pwd);
+                            ampSession.connect(prefs);
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
@@ -356,9 +354,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     progress = new ProgressThread();
                     media = provider.selectTrack();
 
-                    if (!streamAuth.isEmpty()) {
+                    if (streaming) {
                         player = new MediaPlayer();
-                        String url = AmpRepository.getInstance().streaming_url(streamAuth, media.getMediaId(), 0);
+                        String url = AmpSession.getInstance().streaming_url(media.getMediaId(), 0);
                         player.setDataSource(url);
                         player.prepare();
                     } else {

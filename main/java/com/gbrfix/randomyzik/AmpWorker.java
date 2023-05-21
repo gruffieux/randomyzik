@@ -9,11 +9,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.preference.PreferenceManager;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.WorkManager;
@@ -24,7 +24,6 @@ import java.io.IOException;
 
 public class AmpWorker extends Worker {
     private boolean playing;
-    private String auth;
     private BroadcastReceiver ampBroadcastReceiver;
     private Context context;
 
@@ -39,9 +38,8 @@ public class AmpWorker extends Worker {
     public void onStopped() {
         super.onStopped();
 
-        AmpRepository repository = AmpRepository.getInstance();
         try {
-            repository.localplay_stop(auth);
+            AmpSession.getInstance().localplay_stop();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -56,20 +54,15 @@ public class AmpWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        MediaProvider provider = AmpService.getProvider();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String server = prefs.getString("amp_server", "");
-        String apiKey = prefs.getString("amp_apiKey", "");
-        String user = prefs.getString("amp_user", "");
-        String pwd = prefs.getString("amp_pwd", "");
-        AmpRepository repository = AmpRepository.getInstance();
-        repository.setServer(server);
+        MediaProvider provider = AmpService.getProvider();
+        AmpSession session = AmpSession.getInstance();
         try {
-            auth = repository.handshake(apiKey, user, pwd);
+            session.connect(prefs);
             while (!isStopped()) {
                 Media media = provider.selectTrack();
-                repository.localplay_add(auth, media.getMediaId());
-                repository.localplay_play(auth);
+                session.localplay_add(media.getMediaId());
+                session.localplay_play();
                 String contentTitle = MediaProvider.getTrackLabel(media.getTitle(), "", "");
                 String contentText = MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist());
                 String subText = provider.getSummary();
@@ -148,9 +141,9 @@ public class AmpWorker extends Worker {
                             try {
                                 locked = true;
                                 if (playing) {
-                                    AmpRepository.getInstance().localplay_pause(auth);
+                                    AmpSession.getInstance().localplay_pause();
                                 } else {
-                                    AmpRepository.getInstance().localplay_play(auth);
+                                    AmpSession.getInstance().localplay_play();
                                 }
                                 playing = !playing;
                                 locked = false;

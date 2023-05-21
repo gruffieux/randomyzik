@@ -342,14 +342,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
 
             // Mode streaming
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            Bundle args = new Bundle();
-            args.putBoolean("streaming", prefs.getBoolean("amp", false));
-            args.putString("server", prefs.getString("amp_server", ""));
-            args.putString("apiKey", prefs.getString("amp_apiKey", ""));
-            args.putString("user", prefs.getString("amp_user", ""));
-            args.putString("pwd", prefs.getString("amp_pwd", ""));
-            mediaBrowser.sendCustomAction("streaming", args, null);
+            mediaBrowser.sendCustomAction("streaming", null, null);
         }
 
         @Override
