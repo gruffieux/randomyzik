@@ -111,7 +111,7 @@ public class AmpXmlParser {
 
     private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "catalog");
-        int value = Integer.valueOf(parser.getAttributeValue(0));
+        String value = parser.getAttributeValue(0);
         String key = null;
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -128,7 +128,7 @@ public class AmpXmlParser {
     }
 
     private Map readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Map catalogs = new HashMap<String, Integer>();
+        Map catalogs = new HashMap<String, String>();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {

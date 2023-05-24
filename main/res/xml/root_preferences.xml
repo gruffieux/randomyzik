@@ -43,8 +43,8 @@
             app:title="@string/amp_pwd"
             app:useSimpleSummaryProvider="true" />
 
-        <EditTextPreference
-            app:defaultValue="music"
+        <ListPreference
+            app:defaultValue="0"
             app:dependency="amp"
             app:key="amp_catalog"
             app:title="@string/amp_catalog"

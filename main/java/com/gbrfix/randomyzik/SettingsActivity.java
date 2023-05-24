@@ -9,10 +9,18 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
+
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.Executors;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -71,6 +79,29 @@ public class SettingsActivity extends AppCompatActivity {
                     editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
                 }
             });
+
+            ListPreference catalogsPref = findPreference("amp_catalog");
+            AmpSession ampSession = AmpSession.getInstance();
+            Executors.newSingleThreadExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    ampSession.connect(getPreferenceManager().getSharedPreferences());
+                    Map<String, Integer> catalogs;
+                    try {
+                        catalogs = ampSession.catalogs();
+                        CharSequence[] entries = catalogs.keySet().toArray(new String[0]);
+                        CharSequence[] values = catalogs.values().toArray(new String[0]);
+                        catalogsPref.setEntries(entries);
+                        catalogsPref.setDefaultValue(values[0]);
+                        catalogsPref.setEntryValues(values);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (XmlPullParserException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+
         }
     }
 }
