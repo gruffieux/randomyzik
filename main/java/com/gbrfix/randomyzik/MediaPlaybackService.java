@@ -478,7 +478,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
             channel.setShowBadge(false);
-            NotificationManager notificationManager = (NotificationManager)this.getSystemService(MainActivity.NOTIFICATION_SERVICE);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
 

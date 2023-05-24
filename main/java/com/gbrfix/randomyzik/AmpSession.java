@@ -41,6 +41,10 @@ public class AmpSession extends AmpRepository {
         }
     }
 
+    public String getServer() {
+        return server;
+    }
+
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
         return advanced_search(server, auth, offset, catalogId);
     }

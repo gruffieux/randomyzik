@@ -5,16 +5,19 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkContinuation;
+import androidx.work.WorkManager;
+import androidx.work.WorkRequest;
 
-import java.util.ArrayList;
+import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -23,6 +26,8 @@ import java.util.concurrent.Executors;
  */
 
 public class DbService extends IntentService {
+    public final static int NOTIFICATION_ID = 3;
+    final static String NOTIFICATION_CHANNEL = "Database channel";
     private final IBinder binder = new DbBinder();
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
@@ -53,96 +58,50 @@ public class DbService extends IntentService {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
-        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
-        boolean updated = false;
-        MediaDAO dao = new MediaDAO(this);
-        dao.open();
-        ArrayList<Media> list = new ArrayList<Media>();
-        SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
-            String catalog = prefs.getString("amp_catalog", "");
             AmpSession ampSession = AmpSession.getInstance();
             try {
                 ampSession.connect(prefs);
                 Map<String, Integer> catalogs;
                 catalogs = ampSession.catalogs();
-                int catalogId = catalogs.containsKey(catalog) ? catalogs.get(catalog) : 0;
-                int offset = 0;
-                ArrayList<Media> elements = new ArrayList<Media>();
-                do {
-                    elements.clear();
-                    if (catalogId == 0) {
-                        elements = (ArrayList<Media>) ampSession.songs(offset);
+                WorkContinuation workContinuation = null;
+                for (Map.Entry<String, Integer> entry : catalogs.entrySet()) {
+                    String key = entry.getKey();
+                    Integer value = entry.getValue();
+                    URL url = new URL(ampSession.getServer());
+                    String dbName = "amp-" + url.hashCode() + "-" + value.toString() + ".db";
+                    OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                            .setInputData(
+                                    new Data.Builder()
+                                            .putString("dbName", dbName)
+                                            .putInt("catalogId", value)
+                                            .putString("catalogName", key)
+                                            .build()
+                            ).build();
+                    if (workContinuation == null) {
+                        workContinuation = WorkManager.getInstance(this).beginWith(workRequest);
                     } else {
-                        elements = (ArrayList<Media>) ampSession.advanced_search(offset, catalogId);
+                        workContinuation = workContinuation.then(workRequest);
                     }
-                    list.addAll(elements);
-                    offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
-                } while (elements.size() >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
+                }
+                workContinuation.enqueue();
             } catch (Exception e) {
                 dbSignalListener.onError(e.getMessage());
                 return;
             }
         } else {
-            Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
-                    MediaStore.Audio.Media.IS_MUSIC,
-                    MediaStore.Audio.Media._ID,
-                    MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Media.TITLE,
-                    MediaStore.Audio.Media.ALBUM,
-                    MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.ALBUM_KEY
-            }, null, null, null);
-            while (c.moveToNext()) {
-                if (c.getInt(0) != 0) {
-                    Media media = new Media();
-                    media.setMediaId(c.getInt(1));
-                    media.setFlag("unread");
-                    media.setTrackNb(c.getString(2));
-                    media.setTitle(c.getString(3));
-                    media.setAlbum(c.getString(4));
-                    media.setArtist(c.getString(5));
-                    media.setAlbumKey(c.getString(6));
-                    list.add(media);
-                }
-            }
+            WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                    .setInputData(
+                            new Data.Builder()
+                                    .putBoolean("amp", false)
+                                    .putString("dbname", "playlist.db")
+                                    .build()
+                    ).build();
+            WorkManager.getInstance(this).enqueue(workRequest);
         }
 
-        if (cursor.getCount() == 0) {
-            for (int i = 0; i < list.size(); i++) {
-                dao.insert(list.get(i));
-                updated = true;
-            }
-        } else {
-            while (cursor.moveToNext()) {
-                int id = cursor.getInt(cursor.getColumnIndex("id"));
-                int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
-                int i;
-                for (i = 0; i < list.size(); i++) {
-                    if (list.get(i).getMediaId() == media_id) {
-                        dao.update(list.get(i), id);
-                        updated = true;
-                        break;
-                    }
-                }
-                if (i >= list.size()) {
-                    dao.remove(id);
-                    updated = true;
-                }
-                else {
-                    list.remove(i);
-                }
-            }
-            for (int i = 0; i < list.size(); i++) {
-                dao.insert(list.get(i));
-                updated = true;
-            }
-        }
-
-        dao.close();
-
-        dbSignalListener.onScanCompleted(updated);
+        //dbSignalListener.onScanCompleted(updated);
     }
 
     public class DbBinder extends Binder {

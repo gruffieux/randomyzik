@@ -1,11 +1,8 @@
 package com.gbrfix.randomyzik;
 
-import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 
@@ -126,18 +123,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         if (provider == null) {
             provider = new MediaProvider(this);
         }
-    }
-
-    @Override
-    public void onDestroy() {
-        WorkManager.getInstance(this).cancelAllWork();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
-        }
-
-        super.onDestroy();
     }
 
     @Override
