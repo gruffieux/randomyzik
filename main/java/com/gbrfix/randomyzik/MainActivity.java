@@ -680,7 +680,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
         boolean amp = prefs.getBoolean("amp", false);
-        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
+        String server = prefs.getString("amp_server", "");
+        String catalog = prefs.getString("amp_catalog", "");
 
         try {
             if (perms == 1) {
@@ -689,6 +690,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 Intent intent = new Intent(this, DbService.class);
                 bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
+                DAOBase.NAME = amp ? AmpRepository.dbName(server, catalog) : "playlist.db";
                 MediaDAO dao = new MediaDAO(this);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();
@@ -786,7 +788,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
-            if (dbService.isBound() && !key.equals("amp_streaming")) {
+            if (dbService.isBound() && !key.equals("amp_streaming") && !key.equals(("amp_catalog"))) {
                 dbService.rescan();
             }
         }

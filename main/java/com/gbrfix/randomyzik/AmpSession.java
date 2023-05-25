@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -39,10 +41,6 @@ public class AmpSession extends AmpRepository {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public String getServer() {
-        return server;
     }
 
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {

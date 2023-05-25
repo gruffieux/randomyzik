@@ -58,24 +58,28 @@ public class DbService extends IntentService {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
+        String server = prefs.getString("amp_server", "");
 
         if (amp) {
+            WorkManager.getInstance(this).cancelAllWork();
             AmpSession ampSession = AmpSession.getInstance();
             try {
                 ampSession.connect(prefs);
-                Map<String, Integer> catalogs;
+                Map<String, String> catalogs;
                 catalogs = ampSession.catalogs();
                 WorkContinuation workContinuation = null;
-                for (Map.Entry<String, Integer> entry : catalogs.entrySet()) {
+                for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                     String key = entry.getKey();
-                    Integer value = entry.getValue();
-                    URL url = new URL(ampSession.getServer());
-                    String dbName = "amp-" + url.hashCode() + "-" + value.toString() + ".db";
+                    String value = entry.getValue();
+                    String dbName = AmpRepository.dbName(server, value);
+                    if (key.equals("gab")) {
+                        continue;
+                    }
                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                             .setInputData(
                                     new Data.Builder()
                                             .putString("dbName", dbName)
-                                            .putInt("catalogId", value)
+                                            .putInt("catalogId", Integer.valueOf(value))
                                             .putString("catalogName", key)
                                             .build()
                             ).build();

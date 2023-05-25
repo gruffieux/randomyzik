@@ -37,15 +37,14 @@ public class DbWorker extends Worker {
         boolean updated = false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
-        String dbName = getInputData().getString("dbName");
+        DAOBase.NAME = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         MediaDAO dao = new MediaDAO(context);
-        DAOBase.NAME = dbName;
         dao.open();
         ArrayList<Media> list = new ArrayList<Media>();
         SQLiteCursor cursor = dao.getAll();
 
-        setForegroundAsync(createForegroundInfo(dbName, catalogName, "Scanning files..."));
+        setForegroundAsync(createForegroundInfo(DAOBase.NAME, catalogName, "Scanning files..."));
 
         if (amp) {
             AmpSession ampSession = AmpSession.getInstance();
@@ -96,7 +95,7 @@ public class DbWorker extends Worker {
         }
 
         if (cursor.getCount() == 0) {
-            setForegroundAsync(createForegroundInfo(dbName, catalogName, "Inserting files..."));
+            setForegroundAsync(createForegroundInfo(DAOBase.NAME, catalogName, "Inserting files..."));
             for (int i = 0; i < list.size(); i++) {
                 dao.insert(list.get(i));
                 updated = true;
@@ -107,7 +106,7 @@ public class DbWorker extends Worker {
                 int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
                 int i;
                 for (i = 0; i < list.size(); i++) {
-                    setForegroundAsync(createForegroundInfo(dbName, catalogName, "Updating files..."));
+                    setForegroundAsync(createForegroundInfo(DAOBase.NAME, catalogName, "Updating files..."));
                     if (list.get(i).getMediaId() == media_id) {
                         dao.update(list.get(i), id);
                         updated = true;
@@ -115,7 +114,7 @@ public class DbWorker extends Worker {
                     }
                 }
                 if (i >= list.size()) {
-                    setForegroundAsync(createForegroundInfo(dbName, catalogName, "Removing files..."));
+                    setForegroundAsync(createForegroundInfo(DAOBase.NAME, catalogName, "Removing files..."));
                     dao.remove(id);
                     updated = true;
                 }
@@ -123,7 +122,7 @@ public class DbWorker extends Worker {
                     list.remove(i);
                 }
             }
-            setForegroundAsync(createForegroundInfo(dbName, catalogName, "Inserting new files..."));
+            setForegroundAsync(createForegroundInfo(DAOBase.NAME, catalogName, "Inserting new files..."));
             for (int i = 0; i < list.size(); i++) {
                 dao.insert(list.get(i));
                 updated = true;

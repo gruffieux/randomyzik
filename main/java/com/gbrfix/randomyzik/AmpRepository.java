@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -110,5 +111,10 @@ abstract class AmpRepository {
 
     public static String streaming_url(String server, String auth, int oid, int offset) {
         return server+"/server/xml.server.php?action=stream&auth="+auth+"&id="+oid+"&type=song&offset="+offset;
+    }
+
+    public static String dbName(String server, String catalog) throws MalformedURLException {
+        URL url = new URL(server);
+        return "amp-" + url.hashCode() + "-" + catalog + ".db";
     }
 }

@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
 import android.widget.EditText;
@@ -18,6 +20,7 @@ import androidx.preference.SwitchPreferenceCompat;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -44,6 +47,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
             final SwitchPreferenceCompat apiKeySwicher = findPreference("amp_api");
             final EditTextPreference apiKeyPref = findPreference("amp_api_key");
             final EditTextPreference userPref = findPreference("amp_user");
@@ -51,6 +55,9 @@ public class SettingsActivity extends AppCompatActivity {
             apiKeyPref.setVisible(apiKeySwicher.isChecked());
             userPref.setVisible(!apiKeySwicher.isChecked());
             pwdPref.setVisible(!apiKeySwicher.isChecked());
+
+            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+
             apiKeySwicher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
@@ -61,11 +68,12 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
+
             pwdPref.setSummaryProvider(new Preference.SummaryProvider() {
                 @Nullable
                 @Override
                 public CharSequence provideSummary(@NonNull Preference preference) {
-                    String pwd = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("amp_pwd", "");
+                    String pwd = prefs.getString("amp_pwd", "");
                     StringBuilder sb = new StringBuilder();
                     for (int s = 0; s < pwd.length(); s++) {
                         sb.append("*");
@@ -73,6 +81,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return sb.toString();
                 }
             });
+
             pwdPref.setOnBindEditTextListener(new EditTextPreference.OnBindEditTextListener() {
                 @Override
                 public void onBindEditText(@NonNull EditText editText) {
@@ -81,27 +90,21 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             ListPreference catalogsPref = findPreference("amp_catalog");
-            AmpSession ampSession = AmpSession.getInstance();
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
+            String value = prefs.getString("amp_catalog", "");
+            CharSequence[] entries = {"classic", "divers", "enfants", "gab", "gasy - bouge", "gasy - calme", "gasy -rock"};
+            CharSequence[] values = {"13", "14", "15", "6", "10", "11", "12"};
+            catalogsPref.setEntries(entries);
+            catalogsPref.setDefaultValue(values[0]);
+            catalogsPref.setValue(value);
+            catalogsPref.setEntryValues(values);
+
+            catalogsPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
-                public void run() {
-                    ampSession.connect(getPreferenceManager().getSharedPreferences());
-                    Map<String, Integer> catalogs;
-                    try {
-                        catalogs = ampSession.catalogs();
-                        CharSequence[] entries = catalogs.keySet().toArray(new String[0]);
-                        CharSequence[] values = catalogs.values().toArray(new String[0]);
-                        catalogsPref.setEntries(entries);
-                        catalogsPref.setDefaultValue(values[0]);
-                        catalogsPref.setEntryValues(values);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (XmlPullParserException e) {
-                        throw new RuntimeException(e);
-                    }
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+
+                    return true;
                 }
             });
-
         }
     }
 }
