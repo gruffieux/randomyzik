@@ -45,6 +45,7 @@ import android.widget.TextView;
 import android.widget.CompoundButton;
 import android.util.Log;
 
+import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -575,7 +576,20 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
-        DAOBase.NAME = amp ? "playlist-amp.db" : "playlist.db";
+
+        if (amp) {
+            Intent intentAmp = new Intent(this, AmpService.class);
+            bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
+            String server = prefs.getString("amp_server", "");
+            String catalog = prefs.getString("amp_catalog", "");
+            try {
+                DAOBase.NAME = AmpRepository.dbName(server, catalog);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            DAOBase.NAME = "playlist.db";
+        }
 
         if (dbService != null && dbService.isBound()) {
             MediaDAO dao = new MediaDAO(this);
@@ -585,11 +599,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
             adapter.changeCursor(cursor);
             dao.close();
-        }
-
-        if (amp) {
-            Intent intentAmp = new Intent(this, AmpService.class);
-            bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
         }
 
         if (mediaBrowser != null) {

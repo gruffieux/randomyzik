@@ -73,7 +73,7 @@ public class DbService extends IntentService {
                     String value = entry.getValue();
                     String dbName = AmpRepository.dbName(server, value);
                     if (key.equals("gab")) {
-                        continue;
+                        //continue;
                     }
                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                             .setInputData(

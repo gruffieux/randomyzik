@@ -153,7 +153,7 @@ public class DbWorker extends Worker {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(DbService.NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel channel = new NotificationChannel(DbService.NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
             channel.setShowBadge(false);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
