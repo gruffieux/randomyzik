@@ -99,7 +99,7 @@ public class DbService extends IntentService {
                     .setInputData(
                             new Data.Builder()
                                     .putBoolean("amp", false)
-                                    .putString("dbname", "playlist.db")
+                                    .putString("dbName", "playlist.db")
                                     .build()
                     ).build();
             WorkManager.getInstance(this).enqueue(workRequest);
