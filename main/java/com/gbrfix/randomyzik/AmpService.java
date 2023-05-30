@@ -21,7 +21,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private final IBinder binder = new LocalBinder();
     private boolean bound, started;
     private Data metaData;
-    private MediaProvider provider;
+    private static MediaProvider provider = null;
     private AmpSignal ampSignalListener;
 
     private void addAndPlay() {
@@ -51,6 +51,10 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public Data getMetadata() {
         return metaData;
+    }
+
+    public static MediaProvider getProvider() {
+        return provider;
     }
 
     public void setBound(boolean bound) {
@@ -116,7 +120,9 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     public void onCreate() {
         super.onCreate();
 
-        provider = new MediaProvider(this);
+        if (provider == null) {
+            provider = new MediaProvider(this);
+        }
     }
 
     @Override
