@@ -24,12 +24,14 @@ import java.io.IOException;
 
 public class AmpWorker extends Worker {
     private boolean playing;
+    private MediaProvider provider;
     private BroadcastReceiver ampBroadcastReceiver;
     private Context context;
 
     public AmpWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         playing = false;
+        provider = new MediaProvider(context);
         ampBroadcastReceiver = null;
         this.context = context;
     }
@@ -60,7 +62,6 @@ public class AmpWorker extends Worker {
     @Override
     public Result doWork() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        MediaProvider provider = AmpService.getProvider();
         AmpSession session = AmpSession.getInstance();
         try {
             session.connect(prefs);

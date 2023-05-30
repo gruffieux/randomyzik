@@ -418,6 +418,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             sendBroadcast(resumeIntent);
                         } else {
                             Intent intent = new Intent(MainActivity.this, AmpService.class);
+                            intent.setAction("start");
                             startService(intent);
                         }
                     } else {
@@ -615,7 +616,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
         }*/
 
-        if (ampService != null && ampService.isBound()) {
+        if (ampService != null) {
             unbindService(ampConnection);
             ampService = null;
         }
@@ -793,12 +794,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("amp")) {
             Intent intentAmp = new Intent(this, AmpService.class);
-            stopService(intentAmp);
+            intentAmp.setAction("stop");
+            startService(intentAmp);
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
-            if (dbService.isBound() && !key.equals("amp_streaming") && !key.equals(("amp_catalog"))) {
-                dbService.rescan();
+            if (dbService.isBound() && key.matches("^amp_(server|api|user|pwd)$")) {
+                //dbService.rescan();
             }
         }
     }

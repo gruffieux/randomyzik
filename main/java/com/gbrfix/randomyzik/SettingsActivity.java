@@ -1,8 +1,9 @@
 package com.gbrfix.randomyzik;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.widget.EditText;
 
@@ -14,15 +15,10 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
-import org.xmlpull.v1.XmlPullParserException;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -44,24 +40,53 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
+        private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref) {
+            catalogsPref.setValue(prefs.getString("amp_catalog", ""));
+            catalogsPref.setEnabled(false);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+            executor.execute(() -> {
+                Map<String, String> cats;
+                try {
+                    AmpSession ampSession = AmpSession.getInstance();
+                    ampSession.connect(prefs);
+                    cats = ampSession.catalogs();
+                } catch (Exception e) {
+                    cats = null;
+                }
+                final Map<String, String> catalogs = cats;
+                if (catalogs != null) {
+                    handler.post(() -> {
+                        CharSequence[] entries = catalogs.keySet().toArray(new String[0]);
+                        CharSequence[] values = catalogs.values().toArray(new String[0]);
+                        catalogsPref.setEntries(entries);
+                        catalogsPref.setEntryValues(values);
+                        catalogsPref.setDefaultValue(values[0]);
+                        catalogsPref.setEnabled(true);
+                    });
+                }
+            });
+        }
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
 
+            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
+            final SwitchPreferenceCompat ampSwitcher = findPreference("amp");
             final SwitchPreferenceCompat apiKeySwicher = findPreference("amp_api");
             final EditTextPreference apiKeyPref = findPreference("amp_api_key");
             final EditTextPreference userPref = findPreference("amp_user");
             final EditTextPreference pwdPref = findPreference("amp_pwd");
+            final ListPreference catalogsPref = findPreference("amp_catalog");
             apiKeyPref.setVisible(apiKeySwicher.isChecked());
             userPref.setVisible(!apiKeySwicher.isChecked());
             pwdPref.setVisible(!apiKeySwicher.isChecked());
 
-            SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
-
             apiKeySwicher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    boolean value = (boolean)newValue;
+                    boolean value = (boolean) newValue;
                     apiKeyPref.setVisible(value);
                     userPref.setVisible(!value);
                     pwdPref.setVisible(!value);
@@ -89,22 +114,20 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            ListPreference catalogsPref = findPreference("amp_catalog");
-            String value = prefs.getString("amp_catalog", "");
-            CharSequence[] entries = {"classic", "divers", "enfants", "gab", "gasy - bouge", "gasy - calme", "gasy -rock"};
-            CharSequence[] values = {"13", "14", "15", "6", "10", "11", "12"};
-            catalogsPref.setEntries(entries);
-            catalogsPref.setDefaultValue(values[0]);
-            catalogsPref.setValue(value);
-            catalogsPref.setEntryValues(values);
-
-            catalogsPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            ampSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-
+                    if ((boolean)newValue) {
+                        loadCatalogs(prefs, catalogsPref);
+                    }
                     return true;
                 }
             });
+
+            // Chargement de la liste des catalogues par le serveur
+            if (prefs.getBoolean("amp", false)) {
+                loadCatalogs(prefs, catalogsPref);
+            }
         }
     }
 }

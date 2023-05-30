@@ -21,7 +21,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private final IBinder binder = new LocalBinder();
     private boolean bound, started;
     private Data metaData;
-    private static MediaProvider provider = null;
+    private MediaProvider provider;
     private AmpSignal ampSignalListener;
 
     private void addAndPlay() {
@@ -55,10 +55,6 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
     public void setBound(boolean bound) {
         this.bound = bound;
-    }
-
-    public static MediaProvider getProvider() {
-        return provider;
     }
 
     public void setAmpSignalListener(AmpSignal ampSignalListener) {
@@ -120,18 +116,22 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     public void onCreate() {
         super.onCreate();
 
-        if (provider == null) {
-            provider = new MediaProvider(this);
-        }
+        provider = new MediaProvider(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        try {
-            addAndPlay();
-            started = true;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (intent.getAction().equals("stop")) {
+            WorkManager.getInstance(this).cancelAllWork();
+        }
+
+        if (intent.getAction().equals("start")) {
+            try {
+                addAndPlay();
+                started = true;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         return super.onStartCommand(intent, flags, startId);

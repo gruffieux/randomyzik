@@ -141,9 +141,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         if (action.equals("streaming")) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
-            AmpSession ampSession = AmpSession.getInstance();
-            streaming = prefs.getBoolean("amp_streaming", false);
             if (amp) {
+                AmpSession ampSession = AmpSession.getInstance();
+                streaming = prefs.getBoolean("amp_streaming", false);
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -156,6 +156,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                     }
                 });
+            } else {
+                streaming = false;
             }
         }
 

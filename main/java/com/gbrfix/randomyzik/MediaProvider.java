@@ -17,7 +17,6 @@ public class MediaProvider {
     private int total, totalRead;
     private int mode;
     private boolean lastOfAlbum;
-    private MediaDAO dao;
     private Context context;
     private boolean test;
 
@@ -26,7 +25,6 @@ public class MediaProvider {
         total = totalRead = 0;
         mode = MODE_TRACK;
         lastOfAlbum = false;
-        dao = new MediaDAO(context);
         this.context = context;
         test = false;
     }
@@ -68,6 +66,7 @@ public class MediaProvider {
     }
 
     public Media selectTrack() throws Exception {
+        MediaDAO dao = new MediaDAO(context);
         dao.open();
 
         SQLiteCursor cursor = dao.getAll();
@@ -182,6 +181,7 @@ public class MediaProvider {
     }
 
     public void updateState(String flag) {
+        MediaDAO dao = new MediaDAO(context);
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {
