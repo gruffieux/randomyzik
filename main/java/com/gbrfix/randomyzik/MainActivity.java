@@ -365,10 +365,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            boolean streaming = prefs.getBoolean("amp_streaming", false);
-            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
-            int state = ampRemote && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            int state = ampRemote() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -387,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                if (ampRemote) {
+                if (ampRemote()) {
                     Data metaData = ampService.getMetadata();
                     currentId = metaData.getInt("id", 0);
                     duration = metaData.getInt("duration", 0) * 1000;
@@ -410,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (ampRemote) {
+                    if (ampRemote()) {
                         if (ampService.isStarted()) {
                             Intent resumeIntent = new Intent();
                             resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -436,7 +433,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampRemote) {
+                    if (ampRemote()) {
                         ampService.rewind();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
@@ -447,7 +444,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampRemote) {
+                    if (ampRemote()) {
                         ampService.skipToNext();
                     } else {
                         MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
@@ -473,10 +470,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             editor.putInt("mode", mode);
             editor.commit();
 
-            boolean streaming = prefs.getBoolean("amp_streaming", false);
-            boolean ampRemote = ampService != null && ampService.isBound() && !streaming;
-
-            if (ampRemote) {
+            if (ampRemote()) {
                 ampService.changeMode(mode);
             } else {
                 // Send action to browser service (Depracated)
@@ -486,6 +480,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
         }
     };
+
+    public boolean ampRemote() {
+        boolean streaming = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("amp_streaming", false);
+        return ampService != null && ampService.isBound() && !streaming;
+    }
 
     public int fetchColor( Context c, int id ) {
         int[] attrs = { id };
