@@ -157,24 +157,31 @@ public class DbService extends Service implements Observer<WorkInfo> {
     public void onCreate() {
         super.onCreate();
 
-        contentResolver = getContentResolver();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean amp = prefs.getBoolean("amp", false);
 
-        mediaObserver = new ContentObserver(new Handler()) {
-            @Override
-            public void onChange(boolean selfChange) {
-                super.onChange(selfChange);
-                scan();
-            }
-        };
-
-        contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
+        if (!amp) {
+            contentResolver = getContentResolver();
+            mediaObserver = new ContentObserver(new Handler()) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    super.onChange(selfChange);
+                    scan();
+                }
+            };
+            contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
+        } else {
+            contentResolver = null;
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        contentResolver.unregisterContentObserver(mediaObserver);
+        if (contentResolver != null) {
+            contentResolver.unregisterContentObserver(mediaObserver);
+        }
     }
 
     @Override
