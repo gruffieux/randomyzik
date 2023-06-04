@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Service de scanning
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
+            dbService.setBound(true);
             dbService.setDbSignalListener(new DbSignal() {
                 @Override
                 public void onScanStart() {
@@ -118,8 +119,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             });
 
-            dbService.setBound(true);
-            Intent intent = new Intent(dbService, DbService.class);
+            Intent intent = new Intent(MainActivity.this, DbService.class);
             startService(intent);
         }
 
@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 return true;
             case R.id.action_rescan:
                 if (dbService.isBound()) {
-                    dbService.rescan();
+                    dbService.scan();
                 }
                 return true;
             default:
@@ -577,6 +577,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
 
+
         if (amp) {
             Intent intentAmp = new Intent(this, AmpService.class);
             bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
@@ -590,6 +591,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         } else {
             DAOBase.NAME = "playlist.db";
         }
+
+        Intent intent = new Intent(this, DbService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
         if (dbService != null && dbService.isBound()) {
             MediaDAO dao = new MediaDAO(this);
@@ -614,6 +618,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         /*if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
         }*/
+
+        if (dbService != null) {
+            unbindService(connection);
+        }
 
         if (ampService != null) {
             unbindService(ampConnection);
@@ -695,9 +703,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         try {
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
-
-                Intent intent = new Intent(this, DbService.class);
-                bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
                 DAOBase.NAME = amp ? AmpRepository.dbName(server, catalog) : "playlist.db";
                 MediaDAO dao = new MediaDAO(this);
@@ -781,10 +786,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        if (dbService != null && dbService.isBound()) {
-            unbindService(connection);
-        }
 
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
     }
