@@ -6,7 +6,6 @@
     <string name="err_all_read">Nada más para leer</string>
     <string name="info_play_end">Playlist finalizada</string>
     <string name="info_track_summary">Pista: %1$d/%2$d Playlist lectura: %3$.1f%%</string>
-    <string name="info_scanning">Escaneando archivos de audio, espere...</string>
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">¿Indica esta pista como no leída?</string>
     <string name="edit_all_tracks_title">%1$d pistas</string>
@@ -21,6 +20,13 @@
     <string name="action_settings">Settings</string>
     <string name="action_rescan">Rescan</string>
     <string name="title_activity_settings">Settings</string>
+
+    <!-- Scanning -->
+    <string name="info_scanning">Escaneando archivos de audio, espere...</string>
+    <string name="info_searching">Searching in local directory: %1$s</string>
+    <string name="info_cat_searching">Searching in catalog: %1$s</string>
+    <string name="info_inserting">Inserting tracks...</string>
+    <string name="info_updating">Updating tracks...</string>
 
     <!-- Preference Titles -->
     <string name="amp_header">Ampache server</string>

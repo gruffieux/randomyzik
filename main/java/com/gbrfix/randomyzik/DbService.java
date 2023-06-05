@@ -80,9 +80,6 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                     String key = entry.getKey();
                                     String value = entry.getValue();
                                     String dbName = AmpRepository.dbName(server, value);
-                                    if (key.equals("gab")) {
-                                        //continue;
-                                    }
                                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                             .setInputData(
                                                     new Data.Builder()

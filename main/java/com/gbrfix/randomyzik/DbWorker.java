@@ -42,16 +42,17 @@ public class DbWorker extends Worker {
         DAOBase.NAME = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);
-        String contentTitle = "Scanning medias...";
+        String contentTitle = context.getString(R.string.info_scanning);
         String contentText = "";
-        String subText = "Get playlist";
+        String subText = "Playlist scan";
         MediaDAO dao = new MediaDAO(context);
         dao.open();
         ArrayList<Media> list = new ArrayList<Media>();
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
-            contentText = "Searching in Ampache catalog: " + catalogName;
+            contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
+            subText = "Ampache playlist";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             AmpSession ampSession = AmpSession.getInstance();
             try {
@@ -74,7 +75,8 @@ public class DbWorker extends Worker {
                 return Result.failure(output);
             }
         } else {
-            contentText = "Searching in local directory: " + MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.getPath();
+            contentText = String.format(context.getString(R.string.info_searching), MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.getPath());
+            subText = "Playlist";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             ContentResolver contentResolver = context.getContentResolver();
             Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
@@ -102,7 +104,7 @@ public class DbWorker extends Worker {
         }
 
         if (cursor.getCount() == 0) {
-            contentTitle = "Inserting medias...";
+            contentTitle = context.getString(R.string.info_inserting);
             contentText = list.size() + " elements";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             for (int i = 0; i < list.size(); i++) {
@@ -110,7 +112,7 @@ public class DbWorker extends Worker {
                 updated = true;
             }
         } else {
-            contentTitle = "Updating medias...";
+            contentTitle = context.getString(R.string.info_updating);
             contentText = list.size() + " elements";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             while (cursor.moveToNext()) {
@@ -134,7 +136,7 @@ public class DbWorker extends Worker {
                 }
             }
             if (list.size() > 0) {
-                contentTitle = "Inserting new medias";
+                contentTitle = context.getString(R.string.info_inserting);
                 contentText = list.size() + " elements";
                 setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
                 for (int i = 0; i < list.size(); i++) {
