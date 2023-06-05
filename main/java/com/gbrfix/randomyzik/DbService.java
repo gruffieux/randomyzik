@@ -81,7 +81,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                     String value = entry.getValue();
                                     String dbName = AmpRepository.dbName(server, value);
                                     if (key.equals("gab")) {
-                                        continue;
+                                        //continue;
                                     }
                                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                             .setInputData(
@@ -159,29 +159,26 @@ public class DbService extends Service implements Observer<WorkInfo> {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
+        contentResolver = getContentResolver();
 
-        if (!amp) {
-            contentResolver = getContentResolver();
-            mediaObserver = new ContentObserver(new Handler()) {
-                @Override
-                public void onChange(boolean selfChange) {
-                    super.onChange(selfChange);
+        mediaObserver = new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                if (!amp) {
                     scan();
                 }
-            };
-            contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
-        } else {
-            contentResolver = null;
-        }
+            }
+        };
+
+        contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
 
-        if (contentResolver != null) {
-            contentResolver.unregisterContentObserver(mediaObserver);
-        }
+        contentResolver.unregisterContentObserver(mediaObserver);
     }
 
     @Override

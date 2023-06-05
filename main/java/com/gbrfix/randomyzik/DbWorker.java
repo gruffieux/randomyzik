@@ -37,8 +37,10 @@ public class DbWorker extends Worker {
         boolean updated = false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
+        String catalog = prefs.getString("amp_catalog", "");
         DAOBase.NAME = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
+        int catalogId = getInputData().getInt("catalogId", 0);
         String contentTitle = "Scanning medias...";
         String contentText = "";
         String subText = "Get playlist";
@@ -48,12 +50,11 @@ public class DbWorker extends Worker {
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
-            contentText = "Ampache catalog: " + catalogName;
+            contentText = "Searching in Ampache catalog: " + catalogName;
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             AmpSession ampSession = AmpSession.getInstance();
             try {
                 ampSession.connect(prefs);
-                int catalogId = getInputData().getInt("catalogId", 0);
                 if (catalogId == 0) {
                     throw new Exception("No catalog found");
                 }
@@ -72,7 +73,7 @@ public class DbWorker extends Worker {
                 return Result.failure(output);
             }
         } else {
-            contentText = "Music directory: " + MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.getPath();
+            contentText = "Searching in local directory: " + MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.getPath();
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             ContentResolver contentResolver = context.getContentResolver();
             Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
@@ -100,14 +101,16 @@ public class DbWorker extends Worker {
         }
 
         if (cursor.getCount() == 0) {
-            contentTitle = "Inserting " + list.size() + " medias...";
+            contentTitle = "Inserting medias...";
+            contentText = list.size() + " elements";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             for (int i = 0; i < list.size(); i++) {
                 dao.insert(list.get(i));
                 updated = true;
             }
         } else {
-            contentTitle = "Updating " + list.size() + " medias...";
+            contentTitle = "Updating medias...";
+            contentText = list.size() + " elements";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("id"));
@@ -130,19 +133,21 @@ public class DbWorker extends Worker {
                 }
             }
             if (list.size() > 0) {
-                contentTitle = "Inserting " + list.size() + " new medias";
+                contentTitle = "Inserting new medias";
+                contentText = list.size() + " elements";
                 setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            }
-            for (int i = 0; i < list.size(); i++) {
-                dao.insert(list.get(i));
-                updated = true;
+                for (int i = 0; i < list.size(); i++) {
+                    dao.insert(list.get(i));
+                    updated = true;
+                }
             }
         }
 
         dao.close();
 
+        boolean catUpdate = !amp ^ Integer.valueOf(catalog) == catalogId;
         Data output = new Data.Builder()
-                .putBoolean("updated", updated)
+                .putBoolean("updated", updated && catUpdate)
                 .build();
         return Result.success(output);
     }
