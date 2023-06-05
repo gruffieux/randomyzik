@@ -25,7 +25,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     private AmpSignal ampSignalListener;
 
     private void addAndPlay() {
-        WorkManager.getInstance(this).cancelAllWork();
+        WorkManager.getInstance(this).cancelUniqueWork("play");
         OneTimeWorkRequest playWork = OneTimeWorkRequest.from(AmpWorker.class);
         WorkManager.getInstance(this).enqueueUniqueWork(
                 "play",

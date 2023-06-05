@@ -562,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 return true;
             case R.id.action_rescan:
                 if (dbService.isBound()) {
-                    dbService.scan();
+                    dbService.scan(false);
                 }
                 return true;
             default:

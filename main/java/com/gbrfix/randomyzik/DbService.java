@@ -53,13 +53,13 @@ public class DbService extends Service implements Observer<WorkInfo> {
     // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
     // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
     // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-    public void scan() {
+    public void scan(boolean onChange) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
 
-        if (amp) {
-            WorkManager.getInstance(this).cancelAllWork();
+        if (amp && !onChange) {
+            WorkManager.getInstance(this).cancelAllWorkByTag("db");
             AmpSession ampSession = AmpSession.getInstance();
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
@@ -90,7 +90,9 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                                             .putInt("catalogId", Integer.valueOf(value))
                                                             .putString("catalogName", key)
                                                             .build()
-                                            ).build();
+                                            )
+                                            .addTag("db")
+                                            .build();
                                     if (workContinuation == null) {
                                         workContinuation = WorkManager.getInstance(this).beginWith(workRequest);
                                     } else {
@@ -114,7 +116,9 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                     .putBoolean("amp", false)
                                     .putString("dbName", "playlist.db")
                                     .build()
-                    ).build();
+                    )
+                    .addTag("db")
+                    .build();
             WorkManager.getInstance(this).enqueue(workRequest);
             WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
         }
@@ -157,17 +161,13 @@ public class DbService extends Service implements Observer<WorkInfo> {
     public void onCreate() {
         super.onCreate();
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean amp = prefs.getBoolean("amp", false);
         contentResolver = getContentResolver();
 
         mediaObserver = new ContentObserver(new Handler()) {
             @Override
             public void onChange(boolean selfChange) {
                 super.onChange(selfChange);
-                if (!amp) {
-                    scan();
-                }
+                scan(true);
             }
         };
 

@@ -17,6 +17,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
+import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
@@ -166,6 +167,9 @@ public class DbWorker extends Worker {
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
 
+        PendingIntent stopPendingIntent = WorkManager.getInstance(context)
+                .createCancelPendingIntent(getId());
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Notifications compatibility
             NotificationChannel channel = new NotificationChannel(DbService.NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
@@ -184,7 +188,8 @@ public class DbWorker extends Worker {
                 .setContentIntent(pendingIntent)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.drawable.ic_stat_audio);
+                .setSmallIcon(R.drawable.ic_stat_audio)
+                .addAction(android.R.drawable.ic_delete, "Stop", stopPendingIntent);
 
         return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build());
     }
