@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.v4.media.session.MediaControllerCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
-import androidx.preference.PreferenceManager;
 
 import android.util.Log;
 import android.widget.ListView;

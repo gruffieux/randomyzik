@@ -32,7 +32,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.KeyEvent;
 
-import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.Executors;
 
