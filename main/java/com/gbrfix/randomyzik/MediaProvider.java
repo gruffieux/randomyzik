@@ -18,14 +18,16 @@ public class MediaProvider {
     private int mode;
     private boolean lastOfAlbum;
     private Context context;
+    private String dbName;
     private boolean test;
 
-    public MediaProvider(Context context) {
+    public MediaProvider(Context context, String dbName) {
         currentId = selectId = position = 0;
         total = totalRead = 0;
         mode = MODE_TRACK;
         lastOfAlbum = false;
         this.context = context;
+        this.dbName = dbName;
         test = false;
     }
 
@@ -57,6 +59,10 @@ public class MediaProvider {
         this.mode = mode;
     }
 
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
     public boolean isTest() {
         return test;
     }
@@ -66,7 +72,7 @@ public class MediaProvider {
     }
 
     public Media selectTrack() throws Exception {
-        MediaDAO dao = new MediaDAO(context);
+        MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
 
         SQLiteCursor cursor = dao.getAll();
@@ -181,7 +187,7 @@ public class MediaProvider {
     }
 
     public void updateState(String flag) {
-        MediaDAO dao = new MediaDAO(context);
+        MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
 
         if (!dao.getDb().isReadOnly()) {

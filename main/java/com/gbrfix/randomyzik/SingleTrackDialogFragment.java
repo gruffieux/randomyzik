@@ -55,7 +55,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        dao = new MediaDAO(getContext());
+        dao = new MediaDAO(getContext(), activity.dbName);
 
         dao.open();
         SQLiteCursor cursor = dao.getFromId(id);

@@ -56,8 +56,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int currentId = 0;
+    String dbName = DAOBase.DEFAULT_NAME;
 
-    private ServiceConnection connection = new ServiceConnection() {
+    private ServiceConnection dbConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             final ImageButton playBtn = findViewById(R.id.play);
@@ -86,11 +87,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         @Override
                         public void run() {
                             playBtn.setEnabled(true);
-                            TextView infoMsg = findViewById(R.id.infoMsg);
-                            infoMsg.setText("");
                             if (update) {
                                 try {
-                                    MediaDAO dao = new MediaDAO(MainActivity.this);
+                                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
                                     dao.open();
                                     SQLiteCursor cursor = dao.getAllOrdered();
                                     ListView listView = findViewById(R.id.playlist);
@@ -135,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             AmpService.LocalBinder binder = (AmpService.LocalBinder)service;
             ampService = binder.getService();
             ampService.setBound(true);
+            AmpService.getProvider().setDbName(dbName);
             ampService.setAmpSignalListener(new AmpSignal() {
                 @Override
                 public void onSelect(int id, int duration, String title, String album, String artist) {
@@ -329,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 int id = prefs.getInt("currentId", 0);
                 int position = prefs.getInt("position", 0);
                 if (id > 0) {
-                    MediaDAO dao = new MediaDAO(MainActivity.this);
+                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
                     dao.open();
                     SQLiteCursor cursor = dao.getFromId(id);
                     if (cursor.moveToFirst()) {
@@ -584,19 +584,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             String server = prefs.getString("amp_server", "");
             String catalog = prefs.getString("amp_catalog", "");
             try {
-                DAOBase.NAME = AmpRepository.dbName(server, catalog);
+                dbName = AmpRepository.dbName(server, catalog);
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            DAOBase.NAME = "playlist.db";
+            dbName = DAOBase.DEFAULT_NAME;
         }
 
         Intent intent = new Intent(this, DbService.class);
-        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        bindService(intent, dbConnection, Context.BIND_AUTO_CREATE);
 
         if (dbService != null && dbService.isBound()) {
-            MediaDAO dao = new MediaDAO(this);
+            MediaDAO dao = new MediaDAO(this, dbName);
             dao.open();
             SQLiteCursor cursor = dao.getAllOrdered();
             ListView listView = findViewById(R.id.playlist);
@@ -620,7 +620,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }*/
 
         if (dbService != null) {
-            unbindService(connection);
+            unbindService(dbConnection);
         }
 
         if (ampService != null) {
@@ -661,7 +661,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     protected  void onTrackRead(boolean last) {
-        MediaDAO dao = new MediaDAO(MainActivity.this);
+        MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getAllOrdered();
         ListView listView = findViewById(R.id.playlist);
@@ -704,8 +704,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
 
-                DAOBase.NAME = amp ? AmpRepository.dbName(server, catalog) : "playlist.db";
-                MediaDAO dao = new MediaDAO(this);
+                dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                MediaDAO dao = new MediaDAO(this, dbName);
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();
 
@@ -799,9 +799,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
-            if (dbService.isBound() && key.matches("^amp_(server|api|user|pwd)$")) {
-                //dbService.rescan();
-            }
         }
     }
 }

@@ -31,17 +31,13 @@ public class PlaylistTest {
         activity.getSupportFragmentManager().beginTransaction();
     }
 
-    public PlaylistTest() {
-        DAOBase.NAME = "playlist-test.db";
-    }
-
     @Test
     public void playAllTracks() throws Exception {
         activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_TRACKS;
 
         Context c = InstrumentationRegistry.getTargetContext();
 
-        MediaDAO dao = new MediaDAO(c);
+        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.updateFlagAll("unread");
         SQLiteCursor cursor = dao.getUnread();
@@ -62,7 +58,7 @@ public class PlaylistTest {
 
         Context c = InstrumentationRegistry.getTargetContext();
 
-        MediaDAO dao = new MediaDAO(c);
+        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.updateFlagAll("unread");
         SQLiteCursor cursor = dao.getUnread();
@@ -83,7 +79,7 @@ public class PlaylistTest {
 
         Context c = InstrumentationRegistry.getTargetContext();
 
-        MediaDAO dao = new MediaDAO(c);
+        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.updateFlagAll("read");
         SQLiteCursor cursor = dao.getAll();
@@ -119,7 +115,7 @@ public class PlaylistTest {
 
         Context c = InstrumentationRegistry.getTargetContext();
 
-        MediaDAO dao = new MediaDAO(c);
+        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.updateFlagAll("read");
         activity.trackTotal = 0;

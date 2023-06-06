@@ -10,8 +10,8 @@ import java.util.ArrayList;
  * Created by gab on 16.07.2017.
  */
 public class MediaDAO extends DAOBase {
-    public MediaDAO(Context context) {
-        super(context);
+    public MediaDAO(Context context, String name) {
+        super(context, name);
     }
 
     public SQLiteCursor getAll() {

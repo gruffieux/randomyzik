@@ -20,14 +20,14 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaDAOTest {
+    public static String TEST_DBNAME = "playlist-test.db";
     private int mediaTotalExcepted;
     private  MediaDAO dao;
 
     public MediaDAOTest() {
         Context c = InstrumentationRegistry.getTargetContext();
         mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
-        DAOBase.NAME = "playlist-test.db";
-        dao = new MediaDAO(c);
+        dao = new MediaDAO(c, TEST_DBNAME);
     }
 
     @Before

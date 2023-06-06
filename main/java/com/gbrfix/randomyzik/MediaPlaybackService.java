@@ -32,6 +32,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.view.KeyEvent;
 
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.Executors;
 
@@ -88,7 +89,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
 
-        provider = new MediaProvider(this);
+        provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
         //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -144,10 +145,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (amp) {
                 AmpSession ampSession = AmpSession.getInstance();
                 streaming = prefs.getBoolean("amp_streaming", false);
+                String server = prefs.getString("amp_server", "");
+                String catalog = prefs.getString("amp_catalog", "");
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
+                            provider.setDbName(AmpRepository.dbName(server, catalog));
                             ampSession.connect(prefs);
                         } catch (Exception e) {
                             Bundle args = new Bundle();

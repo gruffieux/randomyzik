@@ -39,13 +39,13 @@ public class DbWorker extends Worker {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String catalog = prefs.getString("amp_catalog", "");
-        DAOBase.NAME = getInputData().getString("dbName");
+        String dbName = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);
         String contentTitle = context.getString(R.string.info_scanning);
         String contentText = "";
         String subText = "Playlist scan";
-        MediaDAO dao = new MediaDAO(context);
+        MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
         ArrayList<Media> list = new ArrayList<Media>();
         SQLiteCursor cursor = dao.getAll();

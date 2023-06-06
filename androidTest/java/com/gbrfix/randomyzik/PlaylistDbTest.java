@@ -35,7 +35,7 @@ public class PlaylistDbTest {
             DbService.DbBinder binder = (DbService.DbBinder)iBinder;
             dbService = binder.getService();
             final Context context = InstrumentationRegistry.getTargetContext();
-            final MediaDAO dao = new MediaDAO(context);
+            final MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME);
             dbService.setDbSignalListener(new DbSignal() {
                 @Override
                 public void onScanStart() {
@@ -80,7 +80,6 @@ public class PlaylistDbTest {
         Context c = InstrumentationRegistry.getTargetContext();
         mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
         currentTest = 0;
-        DAOBase.NAME = "playlist-test.db";
     }
 
     @Test
@@ -89,7 +88,7 @@ public class PlaylistDbTest {
 
         Context c = InstrumentationRegistry.getTargetContext();
 
-        MediaDAO dao = new MediaDAO(c);
+        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
 
         dao.open();
         dao.getDb().delete("medias", null, null);

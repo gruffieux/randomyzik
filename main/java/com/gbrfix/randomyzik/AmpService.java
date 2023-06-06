@@ -17,7 +17,6 @@ import androidx.work.WorkManager;
 public class AmpService extends Service implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 2;
     final static String NOTIFICATION_CHANNEL = "Ampache channel";
-    // Binder given to clients.
     private final IBinder binder = new LocalBinder();
     private boolean bound, started;
     private Data metaData;
@@ -121,7 +120,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
         super.onCreate();
 
         if (provider == null) {
-            provider = new MediaProvider(this);
+            provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
         }
     }
 

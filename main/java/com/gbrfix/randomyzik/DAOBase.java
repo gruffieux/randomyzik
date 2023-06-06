@@ -7,13 +7,13 @@ import android.content.Context;
  * Created by gab on 16.07.2017.
  */
 public abstract class DAOBase {
+    final static String DEFAULT_NAME = "playlist.db";
     protected final static int VERSION = 9;
-    public static String NAME = "playlist.db";
     protected SQLiteDatabase db = null;
     protected DatabaseHandler dbHandler = null;
 
-    public DAOBase(Context context) {
-        dbHandler = new DatabaseHandler(context, NAME, null, VERSION);
+    public DAOBase(Context context, String name) {
+        dbHandler = new DatabaseHandler(context, name, null, VERSION);
     }
 
     public SQLiteDatabase open() {

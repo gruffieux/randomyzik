@@ -37,6 +37,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
     private boolean bound;
+    public static String dbName = DAOBase.DEFAULT_NAME;
 
     public boolean isBound() {
         return bound;
@@ -79,7 +80,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                 for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                                     String key = entry.getKey();
                                     String value = entry.getValue();
-                                    String dbName = AmpRepository.dbName(server, value);
+                                    dbName = AmpRepository.dbName(server, value);
                                     OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                             .setInputData(
                                                     new Data.Builder()
@@ -107,11 +108,12 @@ public class DbService extends Service implements Observer<WorkInfo> {
                 });
 
         } else {
+            dbName = DAOBase.DEFAULT_NAME;
             WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                     .setInputData(
                             new Data.Builder()
                                     .putBoolean("amp", false)
-                                    .putString("dbName", "playlist.db")
+                                    .putString("dbName", dbName)
                                     .build()
                     )
                     .addTag("db")
