@@ -88,6 +88,11 @@ public class AmpWorker extends Worker {
                 playing = true;
                 boolean lastState = false;
                 while (counter < duration) {
+                    if (!playing) {
+                        synchronized (ampBroadcastReceiver) {
+                            ampBroadcastReceiver.wait();
+                        }
+                    }
                     Thread.sleep(1000);
                     if (playing) {
                         if (!lastState) {
@@ -149,6 +154,9 @@ public class AmpWorker extends Worker {
                                     AmpSession.getInstance().localplay_pause();
                                 } else {
                                     AmpSession.getInstance().localplay_play();
+                                    synchronized (ampBroadcastReceiver) {
+                                        ampBroadcastReceiver.notify();
+                                    }
                                 }
                                 playing = !playing;
                                 locked = false;
