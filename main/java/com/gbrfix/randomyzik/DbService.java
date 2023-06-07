@@ -5,6 +5,7 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
+import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -36,8 +37,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
-    private boolean bound;
-    public static String dbName = DAOBase.DEFAULT_NAME;
+    private boolean bound, started;
 
     public boolean isBound() {
         return bound;
@@ -47,6 +47,10 @@ public class DbService extends Service implements Observer<WorkInfo> {
         this.bound = bound;
     }
 
+    public boolean isStarted() {
+        return started;
+    }
+
     public void setDbSignalListener(DbSignal listener) {
         dbSignalListener = listener;
     }
@@ -54,7 +58,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
     // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
     // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
     // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-    public void scan(boolean onChange) {
+    public void scan(boolean onChange, String catalog) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
@@ -62,53 +66,55 @@ public class DbService extends Service implements Observer<WorkInfo> {
         if (amp && !onChange) {
             WorkManager.getInstance(this).cancelAllWorkByTag("db");
             AmpSession ampSession = AmpSession.getInstance();
-                ExecutorService executor = Executors.newSingleThreadExecutor();
-                Handler handler = new Handler(Looper.getMainLooper());
-                executor.execute(() -> {
-                    Map<String, String> cats;
-                    try {
-                        ampSession.connect(prefs);
-                        cats = ampSession.catalogs();
-                    } catch (Exception e) {
-                        cats = null;
-                    }
-                    final Map<String, String> catalogs = cats;
-                    if (catalogs != null) {
-                        handler.post(() -> {
-                            try {
-                                WorkContinuation workContinuation = null;
-                                for (Map.Entry<String, String> entry : catalogs.entrySet()) {
-                                    String key = entry.getKey();
-                                    String value = entry.getValue();
-                                    dbName = AmpRepository.dbName(server, value);
-                                    OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
-                                            .setInputData(
-                                                    new Data.Builder()
-                                                            .putString("dbName", dbName)
-                                                            .putInt("catalogId", Integer.valueOf(value))
-                                                            .putString("catalogName", key)
-                                                            .build()
-                                            )
-                                            .addTag("db")
-                                            .build();
-                                    if (workContinuation == null) {
-                                        workContinuation = WorkManager.getInstance(this).beginWith(workRequest);
-                                    } else {
-                                        workContinuation = workContinuation.then(workRequest);
-                                    }
-                                    WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+            executor.execute(() -> {
+                Map<String, String> cats;
+                try {
+                    ampSession.connect(prefs);
+                    cats = ampSession.catalogs();
+                } catch (Exception e) {
+                    cats = null;
+                }
+                final Map<String, String> catalogs = cats;
+                if (catalogs != null) {
+                    handler.post(() -> {
+                        try {
+                            WorkContinuation workContinuation = null;
+                            for (Map.Entry<String, String> entry : catalogs.entrySet()) {
+                                String key = entry.getKey();
+                                String value = entry.getValue();
+                                if (!catalog.isEmpty() && !catalog.equals(value)) {
+                                    continue;
                                 }
-                                workContinuation.enqueue();
-                            } catch (Exception e) {
-                                dbSignalListener.onError(e.getMessage());
-                                return;
+                                String dbName = AmpRepository.dbName(server, value);
+                                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                                        .setInputData(
+                                                new Data.Builder()
+                                                        .putString("dbName", dbName)
+                                                        .putInt("catalogId", Integer.valueOf(value))
+                                                        .putString("catalogName", key)
+                                                        .build()
+                                        )
+                                        .addTag("db")
+                                        .build();
+                                if (workContinuation == null) {
+                                    workContinuation = WorkManager.getInstance(this).beginWith(workRequest);
+                                } else {
+                                    workContinuation = workContinuation.then(workRequest);
+                                }
+                                WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
                             }
-                        });
-                    }
-                });
-
+                            workContinuation.enqueue();
+                        } catch (Exception e) {
+                            dbSignalListener.onError(e.getMessage());
+                            return;
+                        }
+                    });
+                }
+            });
         } else {
-            dbName = DAOBase.DEFAULT_NAME;
+            String dbName = DAOBase.DEFAULT_NAME;
             WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                     .setInputData(
                             new Data.Builder()
@@ -128,6 +134,9 @@ public class DbService extends Service implements Observer<WorkInfo> {
         if (workInfo != null) {
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
+                started = false;
+                stopSelf();
+                stopForeground(true);
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is succeeded");
@@ -166,7 +175,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
             @Override
             public void onChange(boolean selfChange) {
                 super.onChange(selfChange);
-                scan(true);
+                scan(true, "");
             }
         };
 
@@ -182,6 +191,31 @@ public class DbService extends Service implements Observer<WorkInfo> {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction().equals("stop")) {
+            WorkManager.getInstance(this).cancelAllWorkByTag("db");
+        }
+
+        if (intent.getAction().equals("start")) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean amp = prefs.getBoolean("amp", false);
+            String server = prefs.getString("amp_server", "");
+            String catalog = prefs.getString("amp_catalog", "");
+            try {
+                String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                MediaDAO dao = new MediaDAO(this, dbName);
+                dao.open();
+                SQLiteCursor cursor = dao.getAll();
+                int total = cursor.getCount();
+                dao.close();
+                if (total == 0) {
+                    scan(false, catalog);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            started = true;
+        }
+
         return super.onStartCommand(intent, flags, startId);
     }
 }

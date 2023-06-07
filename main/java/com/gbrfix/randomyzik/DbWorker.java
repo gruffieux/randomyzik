@@ -148,9 +148,12 @@ public class DbWorker extends Worker {
 
         dao.close();
 
-        boolean catUpdate = !amp ^ Integer.valueOf(catalog) == catalogId;
+        if (updated && amp) {
+            updated = !catalog.isEmpty() && catalogId != 0 && Integer.valueOf(catalog) == catalogId;
+        }
+
         Data output = new Data.Builder()
-                .putBoolean("updated", updated && catUpdate)
+                .putBoolean("updated", updated)
                 .build();
         return Result.success(output);
     }

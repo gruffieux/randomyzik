@@ -118,8 +118,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             });
 
-            Intent intent = new Intent(MainActivity.this, DbService.class);
-            startService(intent);
+            if (!dbService.isStarted()) {
+                Intent intent = new Intent(MainActivity.this, DbService.class);
+                intent.setAction("start");
+                startService(intent);
+            }
         }
 
         @Override
@@ -562,7 +565,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 return true;
             case R.id.action_rescan:
                 if (dbService.isBound()) {
-                    dbService.scan(false);
+                    dbService.scan(false, "");
                 }
                 return true;
             default:
@@ -574,9 +577,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     protected void onStart() {
         super.onStart();
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
-
 
         if (amp) {
             Intent intentAmp = new Intent(this, AmpService.class);
@@ -592,18 +598,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             dbName = DAOBase.DEFAULT_NAME;
         }
 
+        // Refresh playlist
+        MediaDAO dao = new MediaDAO(this, dbName);
+        dao.open();
+        SQLiteCursor cursor = dao.getAllOrdered();
+        ListView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+        adapter.changeCursor(cursor);
+        dao.close();
+
+        // Bind to DbService
         Intent intent = new Intent(this, DbService.class);
         bindService(intent, dbConnection, Context.BIND_AUTO_CREATE);
-
-        if (dbService != null && dbService.isBound()) {
-            MediaDAO dao = new MediaDAO(this, dbName);
-            dao.open();
-            SQLiteCursor cursor = dao.getAllOrdered();
-            ListView listView = findViewById(R.id.playlist);
-            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-            adapter.changeCursor(cursor);
-            dao.close();
-        }
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -621,6 +627,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         if (dbService != null) {
             unbindService(dbConnection);
+            dbService = null;
         }
 
         if (ampService != null) {
@@ -703,6 +710,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         try {
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
+
+                Intent intent = new Intent(this, DbService.class);
+                bindService(intent, dbConnection, Context.BIND_AUTO_CREATE);
 
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
                 MediaDAO dao = new MediaDAO(this, dbName);
@@ -793,9 +803,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("amp")) {
-            Intent intentAmp = new Intent(this, AmpService.class);
-            intentAmp.setAction("stop");
-            startService(intentAmp);
+            Intent dbIntent = new Intent(this, DbService.class);
+            dbIntent.setAction("stop");
+            startService(dbIntent);
+            Intent ampIntent = new Intent(this, AmpService.class);
+            ampIntent.setAction("stop");
+            startService(ampIntent);
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
