@@ -565,7 +565,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 return true;
             case R.id.action_rescan:
                 if (dbService.isBound()) {
-                    dbService.scan(false, "");
+                    dbService.rescan();
                 }
                 return true;
             default:
@@ -588,7 +588,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intentAmp = new Intent(this, AmpService.class);
             bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
             String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "");
+            String catalog = prefs.getString("amp_catalog", "0");
             try {
                 dbName = AmpRepository.dbName(server, catalog);
             } catch (MalformedURLException e) {
@@ -705,7 +705,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
-        String catalog = prefs.getString("amp_catalog", "");
+        String catalog = prefs.getString("amp_catalog", "0");
 
         try {
             if (perms == 1) {
@@ -812,6 +812,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
+            if (key.equals("amp_server")) {
+                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+                editor.putString("amp_catalog", "0");
+                editor.commit();
+            }
         }
     }
 }

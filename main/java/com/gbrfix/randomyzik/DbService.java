@@ -58,7 +58,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
     // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
     // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
     // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-    public void scan(boolean onChange, String catalog) {
+    private void scan(boolean onChange, String catalog) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
@@ -79,12 +79,19 @@ public class DbService extends Service implements Observer<WorkInfo> {
                 final Map<String, String> catalogs = cats;
                 if (catalogs != null) {
                     handler.post(() -> {
+                        int catalogId = Integer.valueOf(catalog);
                         try {
                             WorkContinuation workContinuation = null;
                             for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                                 String key = entry.getKey();
                                 String value = entry.getValue();
-                                if (!catalog.isEmpty() && !catalog.equals(value)) {
+                                if (catalogId == 0) {
+                                    catalogId = Integer.valueOf(value);
+                                    SharedPreferences.Editor editor = prefs.edit();
+                                    editor.putString("amp_catalog", value);
+                                    editor.commit();
+                                }
+                                if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;
                                 }
                                 String dbName = AmpRepository.dbName(server, value);
@@ -193,29 +200,38 @@ public class DbService extends Service implements Observer<WorkInfo> {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals("stop")) {
             WorkManager.getInstance(this).cancelAllWorkByTag("db");
+            started = false;
         }
 
         if (intent.getAction().equals("start")) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "");
-            try {
-                String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-                MediaDAO dao = new MediaDAO(this, dbName);
-                dao.open();
-                SQLiteCursor cursor = dao.getAll();
-                int total = cursor.getCount();
-                dao.close();
-                if (total == 0) {
-                    scan(false, catalog);
+            String catalog = prefs.getString("amp_catalog", "0");
+            if (catalog.equals("0")) {
+                scan(false, catalog);
+            } else {
+                try {
+                    String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                    MediaDAO dao = new MediaDAO(this, dbName);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAll();
+                    int total = cursor.getCount();
+                    dao.close();
+                    if (total == 0) {
+                        scan(false, catalog);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
             }
             started = true;
         }
 
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    public void rescan() {
+        scan(false, "");
     }
 }

@@ -145,7 +145,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 AmpSession ampSession = AmpSession.getInstance();
                 streaming = prefs.getBoolean("amp_streaming", false);
                 String server = prefs.getString("amp_server", "");
-                String catalog = prefs.getString("amp_catalog", "");
+                String catalog = prefs.getString("amp_catalog", "0");
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {

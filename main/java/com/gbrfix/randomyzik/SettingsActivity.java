@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
         private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref) {
-            catalogsPref.setValue(prefs.getString("amp_catalog", ""));
+            catalogsPref.setValue(prefs.getString("amp_catalog", "0"));
             catalogsPref.setEnabled(false);
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());

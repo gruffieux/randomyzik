@@ -38,7 +38,6 @@ public class DbWorker extends Worker {
         boolean updated = false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
-        String catalog = prefs.getString("amp_catalog", "");
         String dbName = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);
@@ -149,7 +148,8 @@ public class DbWorker extends Worker {
         dao.close();
 
         if (updated && amp) {
-            updated = !catalog.isEmpty() && catalogId != 0 && Integer.valueOf(catalog) == catalogId;
+            String catalog = prefs.getString("amp_catalog", "0");
+            updated = catalogId != 0 && Integer.valueOf(catalog) == catalogId;
         }
 
         Data output = new Data.Builder()

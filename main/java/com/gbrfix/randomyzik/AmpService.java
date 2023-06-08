@@ -128,6 +128,7 @@ public class AmpService extends Service implements Observer<WorkInfo> {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals("stop")) {
             WorkManager.getInstance(this).cancelUniqueWork("play");
+            started = false;
         }
 
         if (intent.getAction().equals("start")) {
