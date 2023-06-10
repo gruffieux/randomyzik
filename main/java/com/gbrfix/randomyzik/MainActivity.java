@@ -118,11 +118,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             });
 
-            if (!dbService.isStarted()) {
-                Intent intent = new Intent(MainActivity.this, DbService.class);
-                intent.setAction("start");
-                startService(intent);
-            }
+            Intent intent = new Intent(MainActivity.this, DbService.class);
+            intent.setAction("start");
+            startService(intent);
         }
 
         @Override
@@ -803,20 +801,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("amp")) {
-            Intent dbIntent = new Intent(this, DbService.class);
-            dbIntent.setAction("stop");
-            startService(dbIntent);
+            //Intent dbIntent = new Intent(this, DbService.class);
+            //dbIntent.setAction("stop");
+            //startService(dbIntent);
             Intent ampIntent = new Intent(this, AmpService.class);
             ampIntent.setAction("stop");
             startService(ampIntent);
             Intent intent = new Intent(this, MediaPlaybackService.class);
             intent.setAction("STOP");
             startService(intent);
-            if (key.equals("amp_server")) {
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
-                editor.putString("amp_catalog", "0");
-                editor.commit();
-            }
         }
     }
 }

@@ -37,7 +37,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
-    private boolean bound, started;
+    private boolean bound;
 
     public boolean isBound() {
         return bound;
@@ -45,10 +45,6 @@ public class DbService extends Service implements Observer<WorkInfo> {
 
     public void setBound(boolean bound) {
         this.bound = bound;
-    }
-
-    public boolean isStarted() {
-        return started;
     }
 
     public void setDbSignalListener(DbSignal listener) {
@@ -141,7 +137,6 @@ public class DbService extends Service implements Observer<WorkInfo> {
         if (workInfo != null) {
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
-                started = false;
                 stopSelf();
                 stopForeground(true);
                 switch (workInfo.getState()) {
@@ -200,7 +195,6 @@ public class DbService extends Service implements Observer<WorkInfo> {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals("stop")) {
             WorkManager.getInstance(this).cancelAllWorkByTag("db");
-            started = false;
         }
 
         if (intent.getAction().equals("start")) {
@@ -225,13 +219,12 @@ public class DbService extends Service implements Observer<WorkInfo> {
                     throw new RuntimeException(e);
                 }
             }
-            started = true;
         }
 
         return super.onStartCommand(intent, flags, startId);
     }
 
     public void rescan() {
-        scan(false, "");
+        scan(false, "0");
     }
 }

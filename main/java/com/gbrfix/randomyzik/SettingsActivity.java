@@ -74,6 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             SharedPreferences prefs = getPreferenceManager().getSharedPreferences();
             final SwitchPreferenceCompat ampSwitcher = findPreference("amp");
+            final EditTextPreference serverPref = findPreference("amp_server");
             final SwitchPreferenceCompat apiKeySwicher = findPreference("amp_api");
             final EditTextPreference apiKeyPref = findPreference("amp_api_key");
             final EditTextPreference userPref = findPreference("amp_user");
@@ -90,6 +91,14 @@ public class SettingsActivity extends AppCompatActivity {
                     apiKeyPref.setVisible(value);
                     userPref.setVisible(!value);
                     pwdPref.setVisible(!value);
+                    return true;
+                }
+            });
+
+            serverPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    catalogsPref.setValue("0");
                     return true;
                 }
             });
