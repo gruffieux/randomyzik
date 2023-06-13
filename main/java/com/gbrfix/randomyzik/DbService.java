@@ -224,7 +224,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    public void rescan() {
-        scan(false, "0");
+    public void rescan(String catalog) {
+        scan(false, catalog);
     }
 }

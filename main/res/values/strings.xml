@@ -14,6 +14,7 @@
     <string name="dialog_yes_play">Yes and play</string>
     <string name="dialog_album">Just this album</string>
     <string name="dialog_no">No</string>
+    <string name="dialog_cancel">Cancel</string>
     <string name="switch_mode">Random mode</string>
     <string name="switch_mode_track">Track</string>
     <string name="switch_mode_album">Album</string>
@@ -33,8 +34,7 @@
 
     <!-- Ampache Preferences -->
     <string name="amp_title">Use ampache server</string>
-    <string name="amp_summary_on">Playlist read from Ampache server
-    </string>
+    <string name="amp_summary_on">Playlist read from Ampache server</string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
     <string name="amp_server">Server</string>
     <string name="amp_api">Use API key</string>
@@ -46,4 +46,9 @@
     <string name="amp_catalog">Catalog</string>
     <string name="amp_streaming_on">Play streaming</string>
     <string name="amp_streaming_off">Play remotely</string>
+
+    <!-- Rescan dialog -->
+    <string name="rescan_title">What do you want to rescan?</string>
+    <string name="rescan_current">Current catalog</string>
+    <string name="rescan_all">All catalogs</string>
 </resources>

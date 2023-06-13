@@ -562,8 +562,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 startActivity(settingsIntent);
                 return true;
             case R.id.action_rescan:
-                if (dbService.isBound()) {
-                    dbService.rescan();
+                if (ampService != null && ampService.isBound()) {
+                    RescanDialogFragment dialog = new RescanDialogFragment();
+                    dialog.show(getSupportFragmentManager(), "rescan");
+                } else if (dbService.isBound()) {
+                    dbService.rescan("0");
                 }
                 return true;
             default:

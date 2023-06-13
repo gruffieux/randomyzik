@@ -14,6 +14,7 @@
     <string name="dialog_yes_play">Si y play</string>
     <string name="dialog_album">Solo este álbum</string>
     <string name="dialog_no">No</string>
+    <string name="dialog_cancel">Cancel</string>
     <string name="switch_mode">Modo aleatorio</string>
     <string name="switch_mode_track">Pista</string>
     <string name="switch_mode_album">Álbum</string>
@@ -46,4 +47,9 @@
     <string name="amp_catalog">Catalogue</string>
     <string name="amp_streaming_on">Play streaming</string>
     <string name="amp_streaming_off">Play remotely</string>
+
+    <!-- Rescan dialog -->
+    <string name="rescan_title">What do you want to rescan?</string>
+    <string name="rescan_current">Current catalog</string>
+    <string name="rescan_all">All catalogs</string>
 </resources>
