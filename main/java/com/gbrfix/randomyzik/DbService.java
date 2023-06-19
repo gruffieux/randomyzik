@@ -82,10 +82,13 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                 String key = entry.getKey();
                                 String value = entry.getValue();
                                 if (catalogId == 0) {
-                                    catalogId = Integer.valueOf(value);
-                                    SharedPreferences.Editor editor = prefs.edit();
-                                    editor.putString("amp_catalog", value);
-                                    editor.commit();
+                                    String cat = prefs.getString("amp_catalog", "0");
+                                    if (cat.equals("0")) {
+                                        catalogId = Integer.valueOf(value);
+                                        SharedPreferences.Editor editor = prefs.edit();
+                                        editor.putString("amp_catalog", value);
+                                        editor.commit();
+                                    }
                                 }
                                 if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;

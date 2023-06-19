@@ -33,7 +33,7 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
                         updateUi();
                     }
                 })
-                .setNeutralButton(R.string.dialog_album, new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.dialog_album, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dao.open();
@@ -45,7 +45,7 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
                         updateUi();
                     }
                 })
-                .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
+                .setNeutralButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                     }

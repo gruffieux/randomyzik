@@ -19,7 +19,8 @@ public class RescanDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
         builder.setTitle(getText(R.string.rescan_title))
-                .setPositiveButton(getText(R.string.rescan_current), new DialogInterface.OnClickListener() {
+                .setMessage(getText(R.string.rescan_msg))
+                .setNegativeButton(getText(R.string.rescan_current), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (activity.dbService.isBound()) {
@@ -35,7 +36,7 @@ public class RescanDialogFragment extends DialogFragment {
 
                     }
                 })
-                .setNegativeButton(getText(R.string.rescan_all), new DialogInterface.OnClickListener() {
+                .setPositiveButton(getText(R.string.rescan_all), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (activity.dbService.isBound()) {

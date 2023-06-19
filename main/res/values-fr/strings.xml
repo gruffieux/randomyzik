@@ -49,7 +49,8 @@
     <string name="amp_streaming_off">Joue à distance</string>
 
     <!-- Rescan dialog -->
-    <string name="rescan_title">Que voulez-vous rescanner?</string>
-    <string name="rescan_current">Le catalogue courant</string>
-    <string name="rescan_all">Tous les catalogues</string>
+    <string name="rescan_title">Options de scanning Ampache</string>
+    <string name="rescan_msg">Quel catalogue voulez-vous recharger?</string>
+    <string name="rescan_current">Le courant</string>
+    <string name="rescan_all">Tous</string>
 </resources>

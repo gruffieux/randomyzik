@@ -64,13 +64,13 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(title)
-            .setPositiveButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
+            .setNegativeButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
                 }
             })
-            .setNeutralButton(R.string.dialog_yes_play, new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.dialog_yes_play, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     resetFlag();
@@ -84,7 +84,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                     }
                 }
             })
-            .setNegativeButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
+            .setNeutralButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                 }

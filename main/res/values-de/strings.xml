@@ -49,7 +49,8 @@
     <string name="amp_streaming_off">Play remotely</string>
 
     <!-- Rescan dialog -->
-    <string name="rescan_title">What do you want to rescan?</string>
-    <string name="rescan_current">Current catalog</string>
-    <string name="rescan_all">All catalogs</string>
+    <string name="rescan_title">Ampache scanning options</string>
+    <string name="rescan_msg">Which catalog would you like to refresh?</string>
+    <string name="rescan_current">Current</string>
+    <string name="rescan_all">All</string>
 </resources>
