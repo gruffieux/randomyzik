@@ -44,8 +44,7 @@
     <string name="amp_user">Username</string>
     <string name="amp_pwd">Password</string>
     <string name="amp_catalog">Catalog</string>
-    <string name="amp_streaming_on">Play streaming</string>
-    <string name="amp_streaming_off">Play remotely</string>
+    <string name="amp_streaming">Play mode</string>
 
     <!-- Rescan dialog -->
     <string name="rescan_title">Ampache scanning options</string>

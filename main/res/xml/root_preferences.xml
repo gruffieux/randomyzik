@@ -53,9 +53,9 @@
         <SwitchPreferenceCompat
             app:key="amp_streaming"
             app:dependency="amp"
-            app:title="Mode"
-            app:summaryOff="@string/amp_streaming_off"
-            app:summaryOn="@string/amp_streaming_on" />
+            app:title="@string/amp_streaming"
+            app:summaryOff="Localplay"
+            app:summaryOn="Streaming" />
 
     </PreferenceCategory>
 
