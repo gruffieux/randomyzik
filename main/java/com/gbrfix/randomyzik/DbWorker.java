@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 
@@ -74,31 +75,35 @@ public class DbWorker extends Worker {
                 return Result.failure(output);
             }
         } else {
-            contentText = String.format(context.getString(R.string.info_searching), MediaStore.Audio.Media.EXTERNAL_CONTENT_URI.getPath());
+            Uri collection;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+            } else {
+                collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+            }
+            contentText = String.format(context.getString(R.string.info_searching), collection.getPath());
             subText = "Playlist";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
             ContentResolver contentResolver = context.getContentResolver();
-            Cursor c = contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
-                    MediaStore.Audio.Media.IS_MUSIC,
+            String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+            Cursor c = contentResolver.query(collection, new String[]{
                     MediaStore.Audio.Media._ID,
                     MediaStore.Audio.Media.TRACK,
                     MediaStore.Audio.Media.TITLE,
                     MediaStore.Audio.Media.ALBUM,
                     MediaStore.Audio.Media.ARTIST,
                     MediaStore.Audio.Media.ALBUM_KEY
-            }, null, null, null);
+            }, selection, null, null);
             while (c.moveToNext()) {
-                if (c.getInt(0) != 0) {
-                    Media media = new Media();
-                    media.setMediaId(c.getInt(1));
-                    media.setFlag("unread");
-                    media.setTrackNb(c.getString(2));
-                    media.setTitle(c.getString(3));
-                    media.setAlbum(c.getString(4));
-                    media.setArtist(c.getString(5));
-                    media.setAlbumKey(c.getString(6));
-                    list.add(media);
-                }
+                Media media = new Media();
+                media.setMediaId(c.getInt(0));
+                media.setFlag("unread");
+                media.setTrackNb(c.getString(1));
+                media.setTitle(c.getString(2));
+                media.setAlbum(c.getString(3));
+                media.setArtist(c.getString(4));
+                media.setAlbumKey(c.getString(5));
+                list.add(media);
             }
         }
 
@@ -170,7 +175,7 @@ public class DbWorker extends Worker {
 
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
         Intent intent = new Intent(context, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         PendingIntent stopPendingIntent = WorkManager.getInstance(context)
                 .createCancelPendingIntent(getId());

@@ -471,12 +471,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         // Create an action intent for stopping the service
         Intent stopIntent = new Intent(this, MediaPlaybackService.class);
         stopIntent.setAction("STOP");
-        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, 0);
+        PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Notifications compatibility
