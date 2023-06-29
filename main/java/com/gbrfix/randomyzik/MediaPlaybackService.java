@@ -1,7 +1,5 @@
 package com.gbrfix.randomyzik;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
@@ -171,11 +169,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onDestroy() {
         if (player != null) {
             player.release();
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }
 
         super.onDestroy();
@@ -478,15 +471,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         stopIntent.setAction("STOP");
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
-            channel.setVibrationPattern(null);
-            channel.setShowBadge(false);
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-
         // Build notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL);
 
@@ -510,6 +494,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add an app icon and set its accent color
             // Be careful about the color
             .setSmallIcon(R.drawable.ic_stat_audio)
+            .setOngoing(true)
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(

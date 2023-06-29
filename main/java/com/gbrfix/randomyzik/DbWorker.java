@@ -1,7 +1,5 @@
 package com.gbrfix.randomyzik;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -25,18 +23,15 @@ import androidx.work.WorkerParameters;
 import java.util.ArrayList;
 
 public class DbWorker extends Worker {
-    private Context context;
-
     public DbWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
-
-        this.context = context;
     }
 
     @NonNull
     @Override
     public Result doWork() {
         boolean updated = false;
+        Context context = getApplicationContext();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String dbName = getInputData().getString("dbName");
@@ -166,28 +161,13 @@ public class DbWorker extends Worker {
     @Override
     public void onStopped() {
         super.onStopped();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.deleteNotificationChannel(DbService.NOTIFICATION_CHANNEL);
-        }
     }
 
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
+        Context context = getApplicationContext();
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-
-        PendingIntent stopPendingIntent = WorkManager.getInstance(context)
-                .createCancelPendingIntent(getId());
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(DbService.NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
-            channel.setVibrationPattern(null);
-            channel.setShowBadge(false);
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
+        PendingIntent stopPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(getId());
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, DbService.NOTIFICATION_CHANNEL);
 
@@ -199,6 +179,7 @@ public class DbWorker extends Worker {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)
+                .setOngoing(true)
                 .addAction(android.R.drawable.ic_delete, "Stop", stopPendingIntent);
 
         return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build());

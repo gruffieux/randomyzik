@@ -1,14 +1,11 @@
 package com.gbrfix.randomyzik;
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
@@ -48,11 +45,6 @@ public class AmpWorker extends Worker {
 
         if (ampBroadcastReceiver != null) {
             context.unregisterReceiver(ampBroadcastReceiver);
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager manager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-            manager.deleteNotificationChannel(AmpService.NOTIFICATION_CHANNEL);
         }
     }
 
@@ -133,10 +125,8 @@ public class AmpWorker extends Worker {
         }
 
         Intent intent = new Intent(context, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE);
-
-        PendingIntent stopPendingIntent = WorkManager.getInstance(context)
-                .createCancelPendingIntent(getId());
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent stopPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(getId());
 
         ampBroadcastReceiver = new BroadcastReceiver() {
             private boolean locked = false;
@@ -175,15 +165,6 @@ public class AmpWorker extends Worker {
         resumeIntent.setAction("resume");
         PendingIntent resumePendingIntent = PendingIntent.getBroadcast(context, 1, resumeIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Notifications compatibility
-            NotificationChannel channel = new NotificationChannel(AmpService.NOTIFICATION_CHANNEL, "Ampache notification", NotificationManager.IMPORTANCE_LOW);
-            channel.setVibrationPattern(null);
-            channel.setShowBadge(false);
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, AmpService.NOTIFICATION_CHANNEL);
 
         builder
@@ -194,6 +175,7 @@ public class AmpWorker extends Worker {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_stat_audio)
+                .setOngoing(true)
                 .addAction(new NotificationCompat.Action(
                         playing ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume", resumePendingIntent))
                 .addAction(new NotificationCompat.Action(
