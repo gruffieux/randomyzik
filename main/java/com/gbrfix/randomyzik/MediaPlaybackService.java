@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
@@ -99,6 +101,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .setAudioAttributes(attributes)
                 .setOnAudioFocusChangeListener(this)
                 .build();
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
+            notificationManager.createNotificationChannel(channel);
         }
     }
 
@@ -167,11 +174,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public void onDestroy() {
+        super.onDestroy();
+
         if (player != null) {
             player.release();
         }
 
-        super.onDestroy();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
+        }
     }
 
     @Override

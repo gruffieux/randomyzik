@@ -1,8 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -552,16 +550,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setContentView(R.layout.playlist);
         init(1);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
-            NotificationChannel channel1 = new NotificationChannel(MediaPlaybackService.NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
-            notificationManager.createNotificationChannel(channel1);
-            NotificationChannel channel2 = new NotificationChannel(DbService.NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
-            notificationManager.createNotificationChannel(channel2);
-            NotificationChannel channel3 = new NotificationChannel(AmpService.NOTIFICATION_CHANNEL, "Ampache notification", NotificationManager.IMPORTANCE_LOW);
-            notificationManager.createNotificationChannel(channel3);
-        }
     }
 
     @Override

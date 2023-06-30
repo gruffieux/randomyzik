@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
@@ -7,6 +9,7 @@ import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -185,6 +188,13 @@ public class DbService extends Service implements Observer<WorkInfo> {
         };
 
         contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     @Override
@@ -192,6 +202,11 @@ public class DbService extends Service implements Observer<WorkInfo> {
         super.onDestroy();
 
         contentResolver.unregisterContentObserver(mediaObserver);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
+        }
     }
 
     @Override
@@ -205,7 +220,7 @@ public class DbService extends Service implements Observer<WorkInfo> {
             boolean amp = prefs.getBoolean("amp", false);
             String server = prefs.getString("amp_server", "");
             String catalog = prefs.getString("amp_catalog", "0");
-            if (catalog.equals("0")) {
+            if (amp && catalog.equals("0")) {
                 scan(false, catalog);
             } else {
                 try {

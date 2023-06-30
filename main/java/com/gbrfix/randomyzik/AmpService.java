@@ -1,8 +1,11 @@
 package com.gbrfix.randomyzik;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.v4.media.session.PlaybackStateCompat;
 
@@ -121,6 +124,24 @@ public class AmpService extends Service implements Observer<WorkInfo> {
 
         if (provider == null) {
             provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Ampache notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            channel.setShowBadge(false);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }
     }
 

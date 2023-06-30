@@ -23,15 +23,16 @@ import androidx.work.WorkerParameters;
 import java.util.ArrayList;
 
 public class DbWorker extends Worker {
+    private Context context;
     public DbWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
+        this.context = context;
     }
 
     @NonNull
     @Override
     public Result doWork() {
         boolean updated = false;
-        Context context = getApplicationContext();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String dbName = getInputData().getString("dbName");
@@ -164,7 +165,6 @@ public class DbWorker extends Worker {
     }
 
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
-        Context context = getApplicationContext();
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
         PendingIntent stopPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(getId());
