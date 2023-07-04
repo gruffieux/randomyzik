@@ -58,6 +58,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private AmpSessionCallback ampSessionCallback;
     private  boolean changeFocus = true;
     private boolean streaming = false;
+    private boolean started = false;
 
     @Nullable
     @Override
@@ -268,9 +269,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             player.stop();
             player.release();
             player = null;
-        } else if (progress != null) {
-            progress.stop();
-            progress = null;
         }
 
         boolean last = provider.getTotalRead() == provider.getTotal() - 1;
@@ -279,6 +277,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.sendSessionEvent("onTrackRead", args);
 
         if (!last) {
+            started = false;
             session.getController().getTransportControls().play();
         } else {
             session.getController().getTransportControls().stop();
@@ -313,44 +312,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         @Override
-        public void onStop() {
-            if (player != null) {
-                player.stop();
-                player.release();
-                player = null;
-            }
-
-            if (progress != null) {
-                progress.stop();
-                progress = null;
-            }
-
-            try {
-                abandonAudioFocus();
-                unregisterReceiver(myNoisyAudioReceiver);
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // Upddate state
-            stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
-            session.setPlaybackState(stateBuilder.build());
-            session.setActive(false);
-
-            stopForeground(true);
-            stopSelf();
-
-            // On annule la sauvegarde de piste en cours
-            Bundle args = new Bundle();
-            args.putInt("id", 0);
-            args.putInt("position", 0);
-            session.sendSessionEvent("onTrackSave", args);
-
-            super.onStop();
-        }
-
-        @Override
         public void onPlay() {
             Media media = null;
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
@@ -364,7 +325,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
 
-                if (player == null || provider.getSelectId() > 0) {
+                if (!started || provider.getSelectId() > 0) {
                     if (progress != null) {
                         progress.stop();
                         progress = null;
@@ -423,6 +384,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
                 }
 
+                started = true;
+
                 // Upddate state
                 stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
                 session.setPlaybackState(stateBuilder.build());
@@ -469,17 +432,51 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onSkipToNext() {
+            started = false;
             provider.updateState("skip");
+            session.getController().getTransportControls().play();
+        }
+
+        @Override
+        public void onStop() {
             if (player != null) {
                 player.stop();
                 player.release();
                 player = null;
             }
-            session.getController().getTransportControls().play();
+
+            if (progress != null) {
+                progress.stop();
+                progress = null;
+            }
+
+            try {
+                abandonAudioFocus();
+                unregisterReceiver(myNoisyAudioReceiver);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // Upddate state
+            stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
+            session.setPlaybackState(stateBuilder.build());
+            session.setActive(false);
+
+            started = false;
+
+            stopForeground(true);
+            stopSelf();
+
+            // On annule la sauvegarde de piste en cours
+            Bundle args = new Bundle();
+            args.putInt("id", 0);
+            args.putInt("position", 0);
+            session.sendSessionEvent("onTrackSave", args);
         }
     }
 
-    private class AmpSessionCallback extends MediaSessionCompat.Callback {
+    private class AmpSessionCallback extends MediaSessionCallback {
         @Override
         public void onPlay() {
             try {
@@ -492,7 +489,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     startService(intent);
                 }
 
-                if (progress == null) {
+                if (!started || provider.getSelectId() > 0) {
+                    if (progress != null) {
+                        progress.stop();
+                        progress = null;
+                    }
+
                     progress = new ProgressThread();
                     final Media media = provider.selectTrack();
                     final int duration = media.getDuration() * 1000;
@@ -553,9 +555,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                     });
                 }
+
+                started = true;
+
                 // Upddate state
                 stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
                 session.setPlaybackState(stateBuilder.build());
+
                 showNotification();
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
@@ -604,6 +610,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             });
 
+            if (progress != null) {
+                progress.stop();
+                progress = null;
+            }
+
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
@@ -611,6 +622,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
             }
+
+            started = false;
 
             stopForeground(true);
             stopSelf();
@@ -620,8 +633,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             args.putInt("id", 0);
             args.putInt("position", 0);
             session.sendSessionEvent("onTrackSave", args);
-
-            super.onStop();
         }
     }
 
@@ -746,7 +757,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             Thread thisThread = Thread.currentThread();
             Bundle bundle = new Bundle();
 
-            while (currentPosition < total && blinker == thisThread) {
+            while (currentPosition < total) {
+                if (blinker != thisThread) {
+                    return; // Thread aborted
+                }
                 try {
                     Thread.sleep(1000);
                     currentPosition = mp != null ? mp.getCurrentPosition() : currentPosition + 1000;
