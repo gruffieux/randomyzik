@@ -27,7 +27,6 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-import androidx.work.Data;
 
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -52,7 +51,6 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
     DbService dbService = null;
-    AmpService ampService = null;
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     int currentId = 0;
@@ -126,100 +124,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             dbService.setBound(false);
-        }
-    };
-
-    private ServiceConnection ampConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            AmpService.LocalBinder binder = (AmpService.LocalBinder)service;
-            ampService = binder.getService();
-            ampService.setBound(true);
-            AmpService.getProvider().setDbName(dbName);
-            ampService.setAmpSignalListener(new AmpSignal() {
-                @Override
-                public void onSelect(int id, int duration, String title, String album, String artist) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            currentId = id;
-                            onTrackSelect(duration*1000, title, album, artist);
-                        }
-                    });
-                }
-
-                @Override
-                public void onProgress(int state, int position) {
-                    ImageButton playBtn = findViewById(R.id.play);
-                    ImageButton rewBtn = findViewById(R.id.rew);
-                    ImageButton fwdBtn = findViewById(R.id.fwd);
-                    int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            playBtn.setImageResource(state == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
-                            rewBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
-                            rewBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
-                            fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
-                            fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
-                            onTrackProgress(position*1000);
-                        }
-                    });
-                }
-
-                @Override
-                public void onComplete(boolean last) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            onTrackRead(last);
-                        }
-                    });
-                }
-
-                @Override
-                public void onError(String msg) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            infoMsg(msg, Color.RED);
-                        }
-                    });
-                }
-
-                @Override
-                public void onStop() {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            ImageButton playBtn = findViewById(R.id.play);
-                            ImageButton rewBtn = findViewById(R.id.rew);
-                            ImageButton fwdBtn = findViewById(R.id.fwd);
-                            TextView infoMsg = findViewById(R.id.infoMsg);
-                            TextView positionLabel = findViewById(R.id.position);
-                            TextView durationLabel = findViewById(R.id.duration);
-                            ProgressBar progressBar = findViewById(R.id.progressBar);
-                            playBtn.setEnabled(true);
-                            playBtn.setColorFilter(fetchColor(MainActivity.this, R.attr.colorAccent));
-                            playBtn.setImageResource(R.drawable.ic_action_play);
-                            rewBtn.setEnabled(false);
-                            rewBtn.setColorFilter(Color.GRAY);
-                            fwdBtn.setEnabled(false);
-                            fwdBtn.setColorFilter(Color.GRAY);
-                            infoMsg.setText("");
-                            positionLabel.setText("");
-                            durationLabel.setText("");
-                            progressBar.setProgress(0);
-                            progressBar.setMax(0);
-                        }
-                    });
-                }
-            });
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            ampService.setBound(false);
         }
     };
 
@@ -364,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
 
-            int state = ampRemote() && ampService.getMetadata() != null ? ampService.getMetadata().getInt("state", 0) : MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+            int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
 
             // Set media button state
@@ -383,19 +287,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-                if (ampRemote()) {
-                    Data metaData = ampService.getMetadata();
-                    currentId = metaData.getInt("id", 0);
-                    duration = metaData.getInt("duration", 0) * 1000;
-                    position = metaData.getInt("position", 0) * 1000;
-                    infoMsg(MediaProvider.getTrackLabel(metaData.getString("title"), metaData.getString("album"), metaData.getString("artist")), color);
-                } else {
-                    MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
-                    currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
-                    duration = (int)metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
-                    position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
-                    infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
-                }
+                MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
+                currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+                duration = (int)metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
+                position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
+                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
                 progressBar.setMax(duration);
                 progressBar.setProgress(position);
                 durationLabel.setText(dateFormat.format(new Date(duration)));
@@ -406,48 +302,26 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             playBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (ampRemote()) {
-                        if (ampService.isStarted()) {
-                            Intent resumeIntent = new Intent();
-                            resumeIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            resumeIntent.setAction("resume");
-                            sendBroadcast(resumeIntent);
-                        } else {
-                            Intent intent = new Intent(MainActivity.this, AmpService.class);
-                            intent.setAction("start");
-                            startService(intent);
-                        }
+                    int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+                    if (state == PlaybackStateCompat.STATE_PLAYING) {
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
                     } else {
-                        int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
-                        if (state == PlaybackStateCompat.STATE_PLAYING) {
-                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
-                        } else {
-                            MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
-                        }
+                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                     }
-
                 }
             });
 
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampRemote()) {
-                        ampService.rewind();
-                    } else {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
-                    }
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
                 }
             });
 
             // Handle forward button
             fwdBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    if (ampRemote()) {
-                        ampService.skipToNext();
-                    } else {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
-                    }
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
                 }
             });
 
@@ -469,21 +343,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             editor.putInt("mode", mode);
             editor.commit();
 
-            if (ampRemote()) {
-                ampService.changeMode(mode);
-            } else {
-                // Send action to browser service (Depracated)
-                Bundle args = new Bundle();
-                args.putInt("mode", mode);
-                mediaBrowser.sendCustomAction("changeMode", args, null);
-            }
+            // Send action to browser service (Depracated)
+            Bundle args = new Bundle();
+            args.putInt("mode", mode);
+            mediaBrowser.sendCustomAction("changeMode", args, null);
         }
     };
-
-    public boolean ampRemote() {
-        boolean streaming = PreferenceManager.getDefaultSharedPreferences(this).getBoolean("amp_streaming", false);
-        return ampService != null && ampService.isBound() && !streaming;
-    }
 
     public int fetchColor( Context c, int id ) {
         int[] attrs = { id };
@@ -561,13 +426,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         switch (item.getItemId()) {
             case R.id.action_settings:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 return true;
             case R.id.action_rescan:
-                if (ampService != null && ampService.isBound()) {
+                boolean amp = prefs.getBoolean("amp", false);
+                if (amp) {
                     RescanDialogFragment dialog = new RescanDialogFragment();
                     dialog.show(getSupportFragmentManager(), "rescan");
                 } else if (dbService != null && dbService.isBound()) {
@@ -597,8 +465,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         boolean amp = prefs.getBoolean("amp", false);
 
         if (amp) {
-            Intent intentAmp = new Intent(this, AmpService.class);
-            bindService(intentAmp, ampConnection, Context.BIND_AUTO_CREATE);
             String server = prefs.getString("amp_server", "");
             String catalog = prefs.getString("amp_catalog", "0");
             try {
@@ -640,11 +506,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (dbService != null) {
             unbindService(dbConnection);
             dbService = null;
-        }
-
-        if (ampService != null) {
-            unbindService(ampConnection);
-            ampService = null;
         }
 
         if (mediaBrowser != null) {
@@ -815,14 +676,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.startsWith("amp")) {
-            //Intent dbIntent = new Intent(this, DbService.class);
-            //dbIntent.setAction("stop");
-            //startService(dbIntent);
-            Intent ampIntent = new Intent(this, AmpService.class);
-            ampIntent.setAction("stop");
-            startService(ampIntent);
             Intent intent = new Intent(this, MediaPlaybackService.class);
-            intent.setAction("STOP");
+            intent.setAction("stop");
             startService(intent);
         }
     }
