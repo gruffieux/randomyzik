@@ -17,6 +17,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import androidx.annotation.NonNull;
@@ -35,6 +37,7 @@ import android.view.KeyEvent;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -489,6 +492,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     startService(intent);
                 }
 
+                long position = 0;
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                Handler handler = new Handler(Looper.getMainLooper());
+
                 if (!started || provider.getSelectId() > 0) {
                     if (progress != null) {
                         progress.stop();
@@ -510,26 +517,28 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
 
+                    // Keep CPU awake
                     PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
                     wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
                     wakeLock.acquire();
 
-                    Executors.newSingleThreadExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            AmpSession ampSession = AmpSession.getInstance();
-                            try {
-                                ampSession.localplay_add(media.getMediaId());
-                                ampSession.localplay_play();
-                                progress.start(duration, MediaPlaybackService.this);
-                            } catch (IOException e) {
-                                Bundle args = new Bundle();
-                                args.putString("message", e.getMessage());
-                                session.sendSessionEvent("onError", args);
-                            }
+                    executor.execute(() -> {
+                        AmpSession ampSession = AmpSession.getInstance();
+                        try {
+                            ampSession.localplay_add(media.getMediaId());
+                            ampSession.localplay_play();
+                        } catch (IOException e) {
+                            onStop();
+                            Bundle args = new Bundle();
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
+                            return;
                         }
+                        handler.post(() -> {
+                            progress.start(duration, MediaPlaybackService.this);
+                            started = true;
+                        });
                     });
-
 
                     Bundle bundle = new Bundle();
                     bundle.putInt("id", media.getId());
@@ -539,29 +548,27 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putInt("duration", duration);
                     session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
-                    Executors.newSingleThreadExecutor().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                AmpSession.getInstance().localplay_play();
-                                if (progress.isThreadSuspended()) {
-                                    progress.resume();
-                                }
-                            } catch (IOException e) {
-                                Bundle args = new Bundle();
-                                args.putString("message", e.getMessage());
-                                session.sendSessionEvent("onError", args);
-                            }
+                    position = session.getController().getPlaybackState().getPosition();
+                    executor.execute(() -> {
+                        try {
+                            AmpSession.getInstance().localplay_play();
+                        } catch (IOException e) {
+                            onStop();
+                            Bundle args = new Bundle();
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
+                            return;
                         }
+                        handler.post(() -> {
+                            if (progress.isThreadSuspended()) {
+                                progress.resume();
+                            }
+                            started = true;
+                        });
                     });
                 }
-
-                started = true;
-
-                // Upddate state
-                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+                stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 0);
                 session.setPlaybackState(stateBuilder.build());
-
                 showNotification();
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
@@ -577,21 +584,24 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPause() {
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        AmpSession.getInstance().localplay_pause();
-                        progress.suspend();
-                        stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, 0, 0);
-                        session.setPlaybackState(stateBuilder.build());
-                        showNotification();
-                    } catch (IOException e) {
-                        Bundle args = new Bundle();
-                        args.putString("message", e.getMessage());
-                        session.sendSessionEvent("onError", args);
-                    }
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            Handler handler = new Handler(Looper.getMainLooper());
+            executor.execute(() -> {
+                try {
+                    AmpSession.getInstance().localplay_pause();
+                } catch (IOException e) {
+                    onStop();
+                    Bundle args = new Bundle();
+                    args.putString("message", e.getMessage());
+                    session.sendSessionEvent("onError", args);
+                    return;
                 }
+                handler.post(() -> {
+                    progress.suspend();
+                    stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, session.getController().getPlaybackState().getPosition(), 0);
+                    session.setPlaybackState(stateBuilder.build());
+                    showNotification();
+                });
             });
         }
 
@@ -677,12 +687,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add an app icon and set its accent color
             // Be careful about the color
             .setSmallIcon(R.drawable.ic_stat_audio)
-            .setOngoing(true)
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
                 controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
+
+            /*.addAction(new NotificationCompat.Action(R.drawable.ic_action_rewind, "Rewind",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_REWIND)))*/
+
+            /*addAction(new NotificationCompat.Action(R.drawable.ic_action_skip, "Skip",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)))*/
+
+            /*.addAction(new NotificationCompat.Action(R.drawable.ic_action_cancel, "Stop",
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)))*/
 
             // Add a cancel button
             .addAction(new NotificationCompat.Action(
@@ -714,7 +732,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private MediaPlayer mp;
         private MediaPlayer.OnCompletionListener callback;
 
-        public void start(MediaPlayer mp) throws IOException {
+        public void start(MediaPlayer mp) {
             currentPosition = 0;
             this.mp = mp;
             total = mp.getDuration();
@@ -724,7 +742,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             this.callback = null;
         }
 
-        public void start(int duration, MediaPlayer.OnCompletionListener callback) throws IOException {
+        public void start(int duration, MediaPlayer.OnCompletionListener callback) {
             currentPosition = 0;
             total = duration;
             threadSuspended = false;
@@ -764,6 +782,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     Thread.sleep(1000);
                     currentPosition = mp != null ? mp.getCurrentPosition() : currentPosition + 1000;
+                    stateBuilder.setState(session.getController().getPlaybackState().getState(), currentPosition, 0);
+                    session.setPlaybackState(stateBuilder.build());
                     bundle.putInt("position", currentPosition);
                     session.sendSessionEvent("onTrackProgress", bundle);
                     session.setExtras(bundle);
