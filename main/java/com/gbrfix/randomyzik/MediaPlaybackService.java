@@ -158,11 +158,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             if (amp) {
-                session.setCallback(ampSessionCallback);
                 AmpSession ampSession = AmpSession.getInstance();
                 streaming = prefs.getBoolean("amp_streaming", false);
                 String server = prefs.getString("amp_server", "");
                 String catalog = prefs.getString("amp_catalog", "0");
+                session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
@@ -177,8 +177,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
                 });
             } else {
-                session.setCallback(mediaSessionCallback);
                 streaming = false;
+                session.setCallback(mediaSessionCallback);
             }
         }
 
@@ -316,7 +316,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlay() {
-            Media media = null;
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
 
             if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -340,8 +339,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     progress = new ProgressThread();
-                    media = provider.selectTrack();
+                    Media media = provider.selectTrack();
 
+                    // Prepare media player
                     if (streaming) {
                         player = new MediaPlayer();
                         String url = AmpSession.getInstance().streaming_url(media.getMediaId(), 0);
@@ -352,6 +352,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         player = MediaPlayer.create(getApplicationContext(), uri);
                     }
 
+                    // Seek position
                     int position = provider.getPosition();
                     if (provider.isTest()) {
                         player.seekTo(player.getDuration() - 10);
@@ -360,6 +361,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
                     provider.setPosition(0);
 
+                    // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
@@ -369,10 +371,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
                     session.setMetadata(metaDataBuilder.build());
 
+                    // Start player
                     progress.start(player);
                     player.setOnCompletionListener(MediaPlaybackService.this);
                     player.start();
+                    started = true;
 
+                    // Send session event
                     Bundle bundle = new Bundle();
                     bundle.putInt("id", media.getId());
                     bundle.putString("title", media.getTitle());
@@ -382,12 +387,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
                     player.start();
-                    if (progress != null && progress.isThreadSuspended()) {
-                        progress.resume();
-                    }
+                    progress.resume();
                 }
-
-                started = true;
 
                 // Upddate state
                 stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
@@ -397,14 +398,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
-                session.getController().getTransportControls().stop();
                 session.sendSessionEvent("onError", args);
+                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
-                if (media != null) {
-                    args.putInt("media_id", media.getMediaId());
-                }
                 session.sendSessionEvent("onError", args);
             }
         }
@@ -507,7 +505,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     final int duration = media.getDuration() * 1000;
                     //final int duration = 10 * 1000; // Teste
 
-                    // Set MediaMetadata
+                    // Keep CPU awake
+                    PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+                    wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
+                    wakeLock.acquire();
+
+                    // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
@@ -517,21 +520,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
 
-                    // Keep CPU awake
-                    PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-                    wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
-                    wakeLock.acquire();
-
+                    // Start localplay
                     executor.execute(() -> {
                         AmpSession ampSession = AmpSession.getInstance();
                         try {
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                         } catch (IOException e) {
-                            onStop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
+                            session.getController().getTransportControls().stop();
                             return;
                         }
                         handler.post(() -> {
@@ -540,6 +539,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         });
                     });
 
+                    // Send session event
                     Bundle bundle = new Bundle();
                     bundle.putInt("id", media.getId());
                     bundle.putString("title", media.getTitle());
@@ -553,17 +553,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             AmpSession.getInstance().localplay_play();
                         } catch (IOException e) {
-                            onStop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
+                            session.getController().getTransportControls().stop();
                             return;
                         }
                         handler.post(() -> {
-                            if (progress.isThreadSuspended()) {
-                                progress.resume();
-                            }
-                            started = true;
+                            progress.resume();
                         });
                     });
                 }
@@ -573,8 +570,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
-                session.getController().getTransportControls().stop();
                 session.sendSessionEvent("onError", args);
+                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -590,10 +587,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     AmpSession.getInstance().localplay_pause();
                 } catch (IOException e) {
-                    onStop();
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
+                    session.getController().getTransportControls().stop();
                     return;
                 }
                 handler.post(() -> {
@@ -764,10 +761,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         public void stop() {
             blinker = null;
-        }
-
-        public boolean isThreadSuspended() {
-            return threadSuspended;
         }
 
         @Override
