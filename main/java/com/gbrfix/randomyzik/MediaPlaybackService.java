@@ -344,7 +344,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     // Prepare media player
                     if (streaming) {
                         player = new MediaPlayer();
-                        String url = AmpSession.getInstance().streaming_url(media.getMediaId(), 0);
+                        AmpSession ampSession = AmpSession.getInstance();
+                        if (!ampSession.isConnected()) {
+                            throw new Exception("Ampache not connected");
+                        }
+                        String url = ampSession.streaming_url(media.getMediaId(), 0);
                         player.setDataSource(url);
                         player.prepare();
                     } else {
@@ -396,10 +400,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 showNotification();
             } catch (PlayEndException e) {
+                session.getController().getTransportControls().stop();
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
-                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -527,10 +531,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                         } catch (IOException e) {
+                            session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
-                            session.getController().getTransportControls().stop();
                             return;
                         }
                         handler.post(() -> {
@@ -553,10 +557,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             AmpSession.getInstance().localplay_play();
                         } catch (IOException e) {
+                            session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
-                            session.getController().getTransportControls().stop();
                             return;
                         }
                         handler.post(() -> {
@@ -568,10 +572,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 session.setPlaybackState(stateBuilder.build());
                 showNotification();
             } catch (PlayEndException e) {
+                session.getController().getTransportControls().stop();
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
-                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -587,10 +591,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     AmpSession.getInstance().localplay_pause();
                 } catch (IOException e) {
+                    session.getController().getTransportControls().stop();
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
-                    session.getController().getTransportControls().stop();
                     return;
                 }
                 handler.post(() -> {

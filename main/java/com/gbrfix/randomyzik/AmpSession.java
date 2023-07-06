@@ -12,6 +12,7 @@ public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
     private static AmpSession instance = null;
+    private boolean connected;
 
     public static AmpSession getInstance() {
         if (instance == null) {
@@ -23,6 +24,7 @@ public class AmpSession extends AmpRepository {
     public void connect(SharedPreferences prefs) {
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
+        connected = false;
 
         try {
             if (api) {
@@ -39,6 +41,12 @@ public class AmpSession extends AmpRepository {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        connected = true;
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
