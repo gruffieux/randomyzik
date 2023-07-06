@@ -324,6 +324,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
             try {
                 session.setActive(true);
+
                 startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
 
@@ -488,11 +489,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 session.setActive(true);
 
                 Intent intent = new Intent(getApplicationContext(), MediaPlaybackService.class);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent);
-                } else {
-                    startService(intent);
-                }
+                startService(intent);
 
                 long position = 0;
                 ExecutorService executor = Executors.newSingleThreadExecutor();
