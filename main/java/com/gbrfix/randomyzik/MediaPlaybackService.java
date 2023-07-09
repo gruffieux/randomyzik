@@ -346,7 +346,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     if (streaming) {
                         player = new MediaPlayer();
                         AmpSession ampSession = AmpSession.getInstance();
-                        if (!ampSession.isConnected()) {
+                        if (!ampSession.hasValidAuth()) {
                             throw new Exception("Ampache not connected");
                         }
                         String url = ampSession.streaming_url(media.getMediaId(), 0);

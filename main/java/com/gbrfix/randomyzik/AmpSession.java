@@ -12,7 +12,6 @@ public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
     private static AmpSession instance = null;
-    private boolean connected;
 
     public static AmpSession getInstance() {
         if (instance == null) {
@@ -21,32 +20,26 @@ public class AmpSession extends AmpRepository {
         return instance;
     }
 
-    public void connect(SharedPreferences prefs) {
-        boolean api = prefs.getBoolean("amp_api", false);
-        server = prefs.getString("amp_server", "");
-        connected = false;
-
-        try {
-            if (api) {
-                String apiKey = prefs.getString("amp_api_key", "");
-                auth = handshake(server, apiKey);
-            } else {
-                String user = prefs.getString("amp_user", "");
-                String pwd = prefs.getString("amp_pwd", "");
-                auth = handshake(server, user, pwd);
-            }
-            if (auth.isEmpty()) {
-                throw new Exception("Invalid authentication");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        connected = true;
+    public boolean hasValidAuth() {
+        return !auth.isEmpty();
     }
 
-    public boolean isConnected() {
-        return connected;
+    public void connect(SharedPreferences prefs) throws Exception {
+        boolean api = prefs.getBoolean("amp_api", false);
+        server = prefs.getString("amp_server", "");
+
+        if (api) {
+            String apiKey = prefs.getString("amp_api_key", "");
+            auth = handshake(server, apiKey);
+        } else {
+            String user = prefs.getString("amp_user", "");
+            String pwd = prefs.getString("amp_pwd", "");
+            auth = handshake(server, user, pwd);
+        }
+
+        if (auth.isEmpty()) {
+            throw new Exception("Invalid authentication");
+        }
     }
 
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
@@ -77,7 +70,7 @@ public class AmpSession extends AmpRepository {
         return localplay_stop(server, auth);
     }
 
-    public String streaming_url(int oid, int offset) {
+    public String streaming_url(int oid, int offset) throws IOException {
         return streaming_url(server, auth, oid, offset);
     }
 }
