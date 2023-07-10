@@ -44,7 +44,7 @@ import java.util.concurrent.Executors;
  * Created by gab on 14.01.2018.
  */
 
-public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, AudioManager.OnAudioFocusChangeListener {
+public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
     public final static int NOTIFICATION_ID = 1;
     final static String NOTIFICATION_CHANNEL = "MediaPlayback channel";
     private MediaSessionCompat session;
@@ -265,6 +265,32 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     @Override
+    public void onPrepared(MediaPlayer mp) {
+        mp.setOnSeekCompleteListener(this);
+        mp.setOnCompletionListener(this);
+
+        // Seek position
+        if (provider.isTest()) {
+            mp.seekTo(mp.getDuration() - 10);
+            return;
+        } else if (provider.getPosition() > 0) {
+            mp.seekTo(provider.getPosition());
+            provider.setPosition(0);
+            return;
+        }
+
+        // Start player
+        progress.start(player);
+        mp.start();
+    }
+
+    @Override
+    public void onSeekComplete(MediaPlayer mp) {
+        progress.start(player);
+        mp.start();
+    }
+
+    @Override
     public void onCompletion(MediaPlayer mp) {
         provider.updateState("read");
 
@@ -285,6 +311,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         } else {
             session.getController().getTransportControls().stop();
         }
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        session.getController().getTransportControls().stop();
+
+        return false;
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
@@ -329,6 +362,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
 
                 if (!started || provider.getSelectId() > 0) {
+                    started = true;
+
                     if (progress != null) {
                         progress.stop();
                         progress = null;
@@ -339,32 +374,26 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         player = null;
                     }
 
-                    progress = new ProgressThread();
                     Media media = provider.selectTrack();
+                    progress = new ProgressThread();
+                    player = new MediaPlayer();
+                    player.setOnPreparedListener(MediaPlaybackService.this);
+                    player.setOnErrorListener(MediaPlaybackService.this);
 
                     // Prepare media player
+                    int duration;
                     if (streaming) {
-                        player = new MediaPlayer();
                         AmpSession ampSession = AmpSession.getInstance();
-                        if (!ampSession.hasValidAuth()) {
-                            throw new Exception("Ampache not connected");
-                        }
                         String url = ampSession.streaming_url(media.getMediaId(), 0);
                         player.setDataSource(url);
-                        player.prepare();
+                        player.prepareAsync();
+                        duration = media.getDuration() * 1000;
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                        player = MediaPlayer.create(getApplicationContext(), uri);
+                        player.setDataSource(getApplicationContext(), uri);
+                        player.prepare();
+                        duration = player.getDuration();
                     }
-
-                    // Seek position
-                    int position = provider.getPosition();
-                    if (provider.isTest()) {
-                        player.seekTo(player.getDuration() - 10);
-                    } else if (position > 0) {
-                        player.seekTo(position);
-                    }
-                    provider.setPosition(0);
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
@@ -373,14 +402,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
-                            .putLong(MediaMetadata.METADATA_KEY_DURATION, player.getDuration());
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
-
-                    // Start player
-                    progress.start(player);
-                    player.setOnCompletionListener(MediaPlaybackService.this);
-                    player.start();
-                    started = true;
 
                     // Send session event
                     Bundle bundle = new Bundle();
@@ -388,7 +411,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("title", media.getTitle());
                     bundle.putString("album", media.getAlbum());
                     bundle.putString("artist", media.getArtist());
-                    bundle.putInt("duration", player.getDuration());
+                    bundle.putInt("duration", duration);
                     session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
                     player.start();

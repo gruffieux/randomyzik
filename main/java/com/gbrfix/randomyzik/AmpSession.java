@@ -21,6 +21,9 @@ public class AmpSession extends AmpRepository {
     }
 
     public boolean hasValidAuth() {
+        if (auth == null) {
+            return false;
+        }
         return !auth.isEmpty();
     }
 
