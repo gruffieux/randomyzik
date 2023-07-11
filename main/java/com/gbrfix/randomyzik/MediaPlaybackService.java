@@ -99,6 +99,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
 
+        progress = new ProgressThread();
+        player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
         //provider.setTest(true);
 
@@ -189,9 +191,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onDestroy() {
         super.onDestroy();
 
-        if (player != null) {
-            player.release();
-        }
+        player.release();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -280,25 +280,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Start player
-        progress.start(player);
+        progress.start(mp);
         mp.start();
     }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
-        progress.start(player);
+        progress.start(mp);
         mp.start();
     }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
         provider.updateState("read");
-
-        if (player != null) {
-            player.stop();
-            player.release();
-            player = null;
-        }
 
         boolean last = provider.getTotalRead() == provider.getTotal() - 1;
         Bundle args = new Bundle();
@@ -316,6 +310,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
         session.getController().getTransportControls().stop();
+
+        Bundle args = new Bundle();
+        args.putString("message", "Media player error");
+        session.sendSessionEvent("onError", args);
 
         return false;
     }
@@ -364,19 +362,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 if (!started || provider.getSelectId() > 0) {
                     started = true;
 
-                    if (progress != null) {
-                        progress.stop();
-                        progress = null;
-                    }
-
-                    if (player != null) {
-                        player.release();
-                        player = null;
-                    }
-
                     Media media = provider.selectTrack();
-                    progress = new ProgressThread();
-                    player = new MediaPlayer();
+                    progress.stop();
+                    player.reset();
                     player.setOnPreparedListener(MediaPlaybackService.this);
                     player.setOnErrorListener(MediaPlaybackService.this);
 
@@ -468,16 +456,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onStop() {
-            if (player != null) {
-                player.stop();
-                player.release();
-                player = null;
-            }
-
-            if (progress != null) {
-                progress.stop();
-                progress = null;
-            }
+            player.stop();
+            progress.stop();
 
             try {
                 abandonAudioFocus();
@@ -487,12 +467,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 e.printStackTrace();
             }
 
+            started = false;
+
             // Upddate state
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
-
-            started = false;
 
             stopForeground(true);
             stopSelf();
@@ -519,12 +499,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Handler handler = new Handler(Looper.getMainLooper());
 
                 if (!started || provider.getSelectId() > 0) {
-                    if (progress != null) {
-                        progress.stop();
-                        progress = null;
-                    }
+                    started = true;
+                    progress.stop();
 
-                    progress = new ProgressThread();
                     final Media media = provider.selectTrack();
                     final int duration = media.getDuration() * 1000;
                     //final int duration = 10 * 1000; // Teste
@@ -559,7 +536,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                         handler.post(() -> {
                             progress.start(duration, MediaPlaybackService.this);
-                            started = true;
                         });
                     });
 
@@ -641,10 +617,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             });
 
-            if (progress != null) {
-                progress.stop();
-                progress = null;
-            }
+            progress.stop();
 
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
@@ -769,6 +742,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             threadSuspended = false;
             blinker = new Thread(this);
             blinker.start();
+            mp = null;
             this.callback = callback;
         }
 
