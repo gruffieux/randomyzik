@@ -282,12 +282,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Start player
         progress.start(mp);
         mp.start();
+        started = true;
     }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
         progress.start(mp);
         mp.start();
+        started = true;
     }
 
     @Override
@@ -360,8 +362,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
 
                 if (!started || provider.getSelectId() > 0) {
-                    started = true;
-
                     Media media = provider.selectTrack();
                     progress.stop();
                     player.reset();
@@ -499,7 +499,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Handler handler = new Handler(Looper.getMainLooper());
 
                 if (!started || provider.getSelectId() > 0) {
-                    started = true;
                     progress.stop();
 
                     final Media media = provider.selectTrack();
@@ -536,6 +535,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                         handler.post(() -> {
                             progress.start(duration, MediaPlaybackService.this);
+                            started = true;
                         });
                     });
 
