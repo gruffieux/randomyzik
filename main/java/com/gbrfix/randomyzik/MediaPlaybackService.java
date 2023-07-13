@@ -101,7 +101,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         progress = new ProgressThread();
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
-        //provider.setTest(true);
+        provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -506,8 +506,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 if (!progress.isStarted()) {
                     final Media media = provider.selectTrack();
-                    final int duration = media.getDuration() * 1000;
-                    //final int duration = 10 * 1000; // Teste
+                    final int duration = provider.isTest() ? 10000 : media.getDuration() * 1000;
 
                     // Keep CPU awake
                     PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -606,7 +605,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     showNotification();
                 });
             });
-        
+        }
 
         @Override
         public void onStop() {
