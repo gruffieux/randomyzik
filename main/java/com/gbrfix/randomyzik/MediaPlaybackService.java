@@ -101,7 +101,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         progress = new ProgressThread();
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
-        provider.setTest(true);
+        //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
