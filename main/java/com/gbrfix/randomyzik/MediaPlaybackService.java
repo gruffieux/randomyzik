@@ -611,6 +611,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onStop() {
+            progress.stop();
+            
             Executors.newSingleThreadExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
@@ -623,10 +625,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
                 }
             });
-
-            player.stop();
-            progress.stop();
-            player.reset();
 
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
