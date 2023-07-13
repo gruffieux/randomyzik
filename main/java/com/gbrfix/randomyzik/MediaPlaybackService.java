@@ -311,6 +311,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.sendSessionEvent("onTrackRead", args);
 
         if (!last) {
+            progress.stop();
             session.getController().getTransportControls().play();
         } else {
             session.getController().getTransportControls().stop();
@@ -799,8 +800,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     return;
                 }
             }
-
-            stop();
 
             if (callback != null) {
                 callback.onCompletion(null);
