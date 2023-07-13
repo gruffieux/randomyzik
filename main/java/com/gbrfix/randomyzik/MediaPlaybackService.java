@@ -139,10 +139,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         if (action.equals("selectTrack")) {
+            progress.stop();
             provider.setSelectId(extras.getInt("id"));
         }
 
         if (action.equals("restoreTrack")) {
+            progress.stop();
             provider.setSelectId(extras.getInt("id"));
             provider.setPosition(extras.getInt("position"));
         }
@@ -370,9 +372,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
 
-                if (!progress.isStarted() || provider.getSelectId() > 0) {
-                    progress.stop();
-                    player.stop();
+                if (!progress.isStarted()) {
                     player.reset();
                     player.setOnPreparedListener(MediaPlaybackService.this);
                     player.setOnErrorListener(MediaPlaybackService.this);
@@ -451,6 +451,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onRewind() {
+            progress.stop();
             provider.setSelectId(provider.getCurrentId());
             session.getController().getTransportControls().play();
         }
@@ -503,9 +504,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
 
-                if (!progress.isStarted() || provider.getSelectId() > 0) {
-                    progress.stop();
-
+                if (!progress.isStarted()) {
                     final Media media = provider.selectTrack();
                     final int duration = media.getDuration() * 1000;
                     //final int duration = 10 * 1000; // Teste
@@ -607,7 +606,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     showNotification();
                 });
             });
-        }
+        
 
         @Override
         public void onStop() {
