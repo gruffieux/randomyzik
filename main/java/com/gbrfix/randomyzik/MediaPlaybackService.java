@@ -50,8 +50,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
     private MediaMetadataCompat.Builder metaDataBuilder;
-    private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
-    private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
     private MediaPlayer player = null;
     private MediaProvider provider = null;
     private ProgressThread progress = null;
@@ -322,7 +320,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        session.getController().getTransportControls().stop();
+        //session.getController().getTransportControls().stop();
 
         Bundle args = new Bundle();
         args.putString("message", "Media player error");
@@ -332,6 +330,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
+        private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
+        private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        private boolean myNoisyAudioRegistred = false;
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
             KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
@@ -371,6 +372,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
+                myNoisyAudioRegistred = true;
 
                 if (!progress.isStarted()) {
                     player.reset();
@@ -420,10 +422,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     showNotification();
                 }
             } catch (PlayEndException e) {
-                session.getController().getTransportControls().stop();
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
+                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -435,12 +437,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onPause() {
             player.pause();
             progress.suspend();
+
+            abandonAudioFocus();
+
+            if (myNoisyAudioRegistred) {
+                unregisterReceiver(myNoisyAudioReceiver);
+                myNoisyAudioRegistred = false;
+            }
+
             stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, player.getCurrentPosition(), 0);
             session.setPlaybackState(stateBuilder.build());
 
             showNotification();
-            abandonAudioFocus();
-            unregisterReceiver(myNoisyAudioReceiver);
 
             // On sauvegarde la position de piste en cours
             Bundle args = new Bundle();
@@ -469,7 +477,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
 
             abandonAudioFocus();
-            unregisterReceiver(myNoisyAudioReceiver);
+
+            if (myNoisyAudioRegistred) {
+                unregisterReceiver(myNoisyAudioReceiver);
+                myNoisyAudioRegistred = false;
+            }
 
             // On annule la sauvegarde de piste en cours
             Bundle args = new Bundle();
@@ -525,7 +537,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                         } catch (IOException e) {
-                            session.getController().getTransportControls().stop();
+                            //session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
@@ -553,7 +565,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             AmpSession.getInstance().localplay_play();
                         } catch (IOException e) {
-                            session.getController().getTransportControls().stop();
+                            //session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
@@ -568,10 +580,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     });
                 }
             } catch (PlayEndException e) {
-                session.getController().getTransportControls().stop();
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
+                session.getController().getTransportControls().stop();
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -587,7 +599,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     AmpSession.getInstance().localplay_pause();
                 } catch (IOException e) {
-                    session.getController().getTransportControls().stop();
+                    //session.getController().getTransportControls().stop();
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
