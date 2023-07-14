@@ -468,27 +468,22 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             player.stop();
             progress.stop();
 
-            try {
-                abandonAudioFocus();
-                unregisterReceiver(myNoisyAudioReceiver);
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // Upddate state
-            stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
-            session.setPlaybackState(stateBuilder.build());
-            session.setActive(false);
-
-            stopForeground(true);
-            stopSelf();
+            abandonAudioFocus();
+            unregisterReceiver(myNoisyAudioReceiver);
 
             // On annule la sauvegarde de piste en cours
             Bundle args = new Bundle();
             args.putInt("id", 0);
             args.putInt("position", 0);
             session.sendSessionEvent("onTrackSave", args);
+
+            // Upddate state
+            stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
+            session.setPlaybackState(stateBuilder.build());
+            session.setActive(false);
+            
+            stopForeground(true);
+            stopSelf();
         }
     }
 
@@ -624,6 +619,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             });
 
+            // On annule la sauvegarde de piste en cours
+            Bundle args = new Bundle();
+            args.putInt("id", 0);
+            args.putInt("position", 0);
+            session.sendSessionEvent("onTrackSave", args);
+
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
@@ -634,12 +635,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
             stopForeground(true);
             stopSelf();
-
-            // On annule la sauvegarde de piste en cours
-            Bundle args = new Bundle();
-            args.putInt("id", 0);
-            args.putInt("position", 0);
-            session.sendSessionEvent("onTrackSave", args);
         }
     }
 
