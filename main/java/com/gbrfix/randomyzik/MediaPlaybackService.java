@@ -111,6 +111,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .setAudioAttributes(attributes)
                 .setOnAudioFocusChangeListener(this)
                 .build();
+            player.setAudioAttributes(attributes);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "MediaPlayback notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
@@ -203,9 +204,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_GAIN: // Your app has been granted audio focus again
                 // Raise volume to normal, restart playback if necessary
-                if (player != null) {
-                    player.setVolume(1f, 1f);
-                }
+                player.setVolume(1f, 1f);
                 changeFocus = true;
                 session.getController().getTransportControls().play();
                 break;
@@ -215,9 +214,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 session.getController().getTransportControls().play();
                 break;
             case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-                if (player != null) {
-                    player.setVolume(1f, 1f);
-                }
+                player.setVolume(1f, 1f);
                 break;
             case AudioManager.AUDIOFOCUS_LOSS: // Permanent loss of audio focus
                 changeFocus = true;
@@ -228,9 +225,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 session.getController().getTransportControls().pause();
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: // Lower the volume, keep playing
-                if (player != null) {
-                    player.setVolume(0.5f, 0.5f);
-                }
+                player.setVolume(0.5f, 0.5f);
                 break;
         }
     }
