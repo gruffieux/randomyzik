@@ -763,11 +763,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         public void stop() {
+            blinker.interrupt();
             blinker = null;
         }
 
         public boolean isStarted() {
-            return blinker != null;
+            return blinker != null && !blinker.isInterrupted();
         }
 
         @Override
