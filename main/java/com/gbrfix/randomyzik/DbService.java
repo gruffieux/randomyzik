@@ -211,11 +211,11 @@ public class DbService extends Service implements Observer<WorkInfo> {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction().equals("stop")) {
+        if (intent.getAction() == "stop") {
             WorkManager.getInstance(this).cancelAllWorkByTag("db");
         }
 
-        if (intent.getAction().equals("start")) {
+        if (intent.getAction() == "start") {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             String server = prefs.getString("amp_server", "");

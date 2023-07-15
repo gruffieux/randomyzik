@@ -235,7 +235,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             return AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
         }
 
-        AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager manager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return manager.requestAudioFocus(focusRequest);
@@ -249,7 +249,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             return;
         }
 
-        AudioManager manager = (AudioManager) getApplicationContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager manager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             manager.abandonAudioFocusRequest(focusRequest);
@@ -365,7 +365,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             try {
                 session.setActive(true);
 
-                startService(new Intent(getApplicationContext(), MediaPlaybackService.class));
+                startService(new Intent(MediaPlaybackService.this, MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
                 myNoisyAudioRegistred = true;
 
@@ -386,7 +386,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         duration = media.getDuration() * 1000;
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                        player.setDataSource(getApplicationContext(), uri);
+                        player.setDataSource(MediaPlaybackService.this, uri);
                         player.prepare();
                         duration = player.getDuration();
                     }
@@ -500,7 +500,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             try {
                 session.setActive(true);
 
-                Intent intent = new Intent(getApplicationContext(), MediaPlaybackService.class);
+                Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
                 startService(intent);
 
                 ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -655,8 +655,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String contentText = MediaProvider.getTrackLabel("", album, artist);
 
         // Create an explicit intent for an Activity in your app
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        Intent intent = new Intent(MediaPlaybackService.this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(MediaPlaybackService.this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         // Create an action intent for stopping the service
         Intent stopIntent = new Intent(this, MediaPlaybackService.class);
@@ -724,7 +724,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private class ProgressThread implements Runnable {
-        private Thread blinker;
+        private Thread blinker = null;
         private boolean threadSuspended;
         private int currentPosition;
         private int total;
@@ -763,8 +763,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         public void stop() {
-            blinker.interrupt();
-            blinker = null;
+            if (blinker != null) {
+                blinker.interrupt();
+                blinker = null;
+            }
         }
 
         public boolean isStarted() {
@@ -773,13 +775,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void run() {
-            Thread thisThread = Thread.currentThread();
             Bundle bundle = new Bundle();
 
             while (currentPosition < total) {
-                if (blinker != thisThread) {
-                    return; // Thread aborted
-                }
                 try {
                     Thread.sleep(1000);
                     currentPosition = mp != null ? mp.getCurrentPosition() : currentPosition + 1000;
