@@ -57,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     String dbName = DAOBase.DEFAULT_NAME;
 
     private ServiceConnection dbConnection = new ServiceConnection() {
+        Intent intent = new Intent(MainActivity.this, DbService.class);
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             final ImageButton playBtn = findViewById(R.id.play);
@@ -116,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             });
 
-            Intent intent = new Intent(MainActivity.this, DbService.class);
             intent.setAction("start");
             startService(intent);
         }
@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
             dbService.setBound(false);
+            stopService(intent);
         }
     };
 
