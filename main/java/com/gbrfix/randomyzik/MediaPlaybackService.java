@@ -33,6 +33,7 @@ import androidx.preference.PreferenceManager;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -315,11 +316,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        //session.getController().getTransportControls().stop();
-
-        Bundle args = new Bundle();
-        args.putString("message", "Media player error");
-        session.sendSessionEvent("onError", args);
+        Log.v("MediaPlayer error", "(" + what + ", " + extra + ")");
 
         return false;
     }
@@ -375,21 +372,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.setOnErrorListener(MediaPlaybackService.this);
 
                     Media media = provider.selectTrack();
-
-                    // Prepare media player
-                    int duration;
-                    if (streaming) {
-                        AmpSession ampSession = AmpSession.getInstance();
-                        String url = ampSession.streaming_url(media.getMediaId(), 0);
-                        player.setDataSource(url);
-                        player.prepareAsync();
-                        duration = media.getDuration() * 1000;
-                    } else {
-                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                        player.setDataSource(MediaPlaybackService.this, uri);
-                        player.prepare();
-                        duration = player.getDuration();
-                    }
+                    int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
@@ -409,6 +392,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("artist", media.getArtist());
                     bundle.putInt("duration", duration);
                     session.sendSessionEvent("onTrackSelect", bundle);
+
+                    // Prepare media player
+                    if (streaming) {
+                        AmpSession ampSession = AmpSession.getInstance();
+                        String url = ampSession.streaming_url(media.getMediaId(), 0);
+                        player.setDataSource(url);
+                        player.prepareAsync();
+                    } else {
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                        player.setDataSource(MediaPlaybackService.this, uri);
+                        player.prepare();
+                    }
                 } else {
                     player.start();
                     progress.resume();
@@ -531,15 +526,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
+                            progress.start(duration, MediaPlaybackService.this);
                         } catch (IOException e) {
-                            //session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
                         }
                         handler.post(() -> {
-                            progress.start(duration, MediaPlaybackService.this);
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
@@ -559,15 +553,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     executor.execute(() -> {
                         try {
                             AmpSession.getInstance().localplay_play();
+                            progress.resume();
                         } catch (IOException e) {
-                            //session.getController().getTransportControls().stop();
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
                         }
                         handler.post(() -> {
-                            progress.resume();
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 0);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
@@ -593,15 +586,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             executor.execute(() -> {
                 try {
                     AmpSession.getInstance().localplay_pause();
+                    progress.suspend();
                 } catch (IOException e) {
-                    //session.getController().getTransportControls().stop();
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
                     return;
                 }
                 handler.post(() -> {
-                    progress.suspend();
                     stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, session.getController().getPlaybackState().getPosition(), 0);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
