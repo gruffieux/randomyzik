@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
@@ -33,21 +34,16 @@ import java.util.concurrent.Executors;
  * Created by gab on 27.08.2017.
  */
 
-public class DbService extends Service implements Observer<WorkInfo> {
+public class DbService implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 3;
     final static String NOTIFICATION_CHANNEL = "Database channel";
-    private final IBinder binder = new DbBinder();
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
-    private boolean bound;
+    private Context context;
 
-    public boolean isBound() {
-        return bound;
-    }
-
-    public void setBound(boolean bound) {
-        this.bound = bound;
+    public DbService(Context context) {
+        this.context = context;
     }
 
     public void setDbSignalListener(DbSignal listener) {
@@ -57,13 +53,14 @@ public class DbService extends Service implements Observer<WorkInfo> {
     // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
     // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
     // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-    private void scan(boolean onChange, String catalog) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    public void scan(boolean onChange, String catalog) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
 
+        WorkManager.getInstance(context).cancelAllWorkByTag("db");
+
         if (amp && !onChange) {
-            WorkManager.getInstance(this).cancelAllWorkByTag("db");
             AmpSession ampSession = AmpSession.getInstance();
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
@@ -108,11 +105,11 @@ public class DbService extends Service implements Observer<WorkInfo> {
                                         .addTag("db")
                                         .build();
                                 if (workContinuation == null) {
-                                    workContinuation = WorkManager.getInstance(this).beginWith(workRequest);
+                                    workContinuation = WorkManager.getInstance(context).beginWith(workRequest);
                                 } else {
                                     workContinuation = workContinuation.then(workRequest);
                                 }
-                                WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
+                                WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
                             }
                             workContinuation.enqueue();
                         } catch (Exception e) {
@@ -133,8 +130,8 @@ public class DbService extends Service implements Observer<WorkInfo> {
                     )
                     .addTag("db")
                     .build();
-            WorkManager.getInstance(this).enqueue(workRequest);
-            WorkManager.getInstance(this).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
+            WorkManager.getInstance(context).enqueue(workRequest);
+            WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
         }
     }
 
@@ -142,13 +139,12 @@ public class DbService extends Service implements Observer<WorkInfo> {
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
             if (workInfo.getState().isFinished()) {
-                WorkManager.getInstance(this).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
-                stopSelf();
-                stopForeground(true);
+                WorkManager.getInstance(context).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is succeeded");
-                        dbSignalListener.onScanCompleted(workInfo.getOutputData().getBoolean("updated", false));
+                        boolean updated = workInfo.getOutputData().getBoolean("updated", false);
+                        dbSignalListener.onScanCompleted(updated);
                         break;
                     case FAILED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is failed");
@@ -161,23 +157,8 @@ public class DbService extends Service implements Observer<WorkInfo> {
             }
         }
     }
-
-    public class DbBinder extends Binder {
-        DbService getService() {
-            return DbService.this;
-        }
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        contentResolver = getContentResolver();
+    public void register() {
+        contentResolver = context.getContentResolver();
 
         mediaObserver = new ContentObserver(new Handler()) {
             @Override
@@ -190,59 +171,44 @@ public class DbService extends Service implements Observer<WorkInfo> {
         contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaObserver);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Database notification", NotificationManager.IMPORTANCE_LOW);
             channel.setVibrationPattern(null);
             notificationManager.createNotificationChannel(channel);
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
+    public void unregister() {
         contentResolver.unregisterContentObserver(mediaObserver);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            NotificationManager manager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
             manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent.getAction() == "stop") {
-            WorkManager.getInstance(this).cancelAllWorkByTag("db");
-        }
+    public void check() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean amp = prefs.getBoolean("amp", false);
+        String server = prefs.getString("amp_server", "");
+        String catalog = prefs.getString("amp_catalog", "0");
 
-        if (intent.getAction() == "start") {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean amp = prefs.getBoolean("amp", false);
-            String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "0");
-            if (amp && catalog.equals("0")) {
-                scan(false, catalog);
-            } else {
-                try {
-                    String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-                    MediaDAO dao = new MediaDAO(this, dbName);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAll();
-                    int total = cursor.getCount();
-                    dao.close();
-                    if (total == 0) {
-                        scan(false, catalog);
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+        if (amp && catalog.equals("0")) {
+            scan(false, catalog);
+        } else {
+            try {
+                String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                MediaDAO dao = new MediaDAO(context, dbName);
+                dao.open();
+                SQLiteCursor cursor = dao.getAll();
+                int total = cursor.getCount();
+                dao.close();
+                if (total == 0) {
+                    scan(false, catalog);
                 }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
-
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    public void rescan(String catalog) {
-        scan(false, catalog);
     }
 }

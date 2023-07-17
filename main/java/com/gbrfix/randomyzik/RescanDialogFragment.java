@@ -23,11 +23,9 @@ public class RescanDialogFragment extends DialogFragment {
                 .setNegativeButton(getText(R.string.rescan_current), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (activity.dbService.isBound()) {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-                            String catalog = prefs.getString("amp_catalog", "0");
-                            activity.dbService.rescan(catalog);
-                        }
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                        String catalog = prefs.getString("amp_catalog", "0");
+                        activity.dbService.scan(false, catalog);
                     }
                 })
                 .setNeutralButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
@@ -39,9 +37,7 @@ public class RescanDialogFragment extends DialogFragment {
                 .setPositiveButton(getText(R.string.rescan_all), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (activity.dbService.isBound()) {
-                            activity.dbService.rescan("0");
-                        }
+                        activity.dbService.scan(false,"0");
                     }
                 });
 

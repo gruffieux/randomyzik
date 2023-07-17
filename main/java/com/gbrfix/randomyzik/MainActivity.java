@@ -56,78 +56,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     int currentId = 0;
     String dbName = DAOBase.DEFAULT_NAME;
 
-    private ServiceConnection dbConnection = new ServiceConnection() {
-        Intent intent = new Intent(MainActivity.this, DbService.class);
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            final ImageButton playBtn = findViewById(R.id.play);
-            final ImageButton rewBtn = findViewById(R.id.rew);
-            final ImageButton fwdBtn = findViewById(R.id.fwd);
-
-            // Service de scanning
-            DbService.DbBinder binder = (DbService.DbBinder)iBinder;
-            dbService = binder.getService();
-            dbService.setBound(true);
-            dbService.setDbSignalListener(new DbSignal() {
-                @Override
-                public void onScanStart() {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                            infoMsg(getString(R.string.info_scanning), color);
-                        }
-                    });
-                }
-
-                @Override
-                public void onScanCompleted(final boolean update) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            playBtn.setEnabled(true);
-                            if (update) {
-                                try {
-                                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-                                    dao.open();
-                                    SQLiteCursor cursor = dao.getAllOrdered();
-                                    ListView listView = findViewById(R.id.playlist);
-                                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                                    adapter.changeCursor(cursor);
-                                    dao.close();
-                                } catch (SQLException e) {
-                                    Log.v("SQLException", e.getMessage());
-                                }
-                            }
-                        }
-                    });
-                }
-
-                @Override
-                public void onError(String msg) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            infoMsg(msg, Color.RED);
-                            playBtn.setEnabled(false);
-                            rewBtn.setEnabled(false);
-                            fwdBtn.setEnabled(false);
-                        }
-                    });
-                }
-            });
-
-            intent.setAction("start");
-            startService(intent);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            dbService.setBound(false);
-            stopService(intent);
-        }
-    };
-
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
@@ -439,8 +367,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 if (amp) {
                     RescanDialogFragment dialog = new RescanDialogFragment();
                     dialog.show(getSupportFragmentManager(), "rescan");
-                } else if (dbService != null && dbService.isBound()) {
-                    dbService.rescan("0");
+                } else {
+                    dbService.scan(false, "0");
                 }
                 return true;
             default:
@@ -486,9 +414,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         adapter.changeCursor(cursor);
         dao.close();
 
-        // Bind to DbService
-        Intent intent = new Intent(this, DbService.class);
-        bindService(intent, dbConnection, Context.BIND_AUTO_CREATE);
+        dbService.check();
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -503,11 +429,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         /*if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
         }*/
-
-        if (dbService != null) {
-            unbindService(dbConnection);
-            dbService = null;
-        }
 
         if (mediaBrowser != null) {
             mediaBrowser.disconnect();
@@ -585,8 +506,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
 
-                Intent intent = new Intent(this, DbService.class);
-                bindService(intent, dbConnection, Context.BIND_AUTO_CREATE);
+                dbService = new DbService(this);
+                dbService.register();
+                dbService.check();
 
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
                 MediaDAO dao = new MediaDAO(this, dbName);
@@ -600,6 +522,56 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 listView.setAdapter(adapter);
 
                 dao.close();
+
+                dbService.setDbSignalListener(new DbSignal() {
+                    @Override
+                    public void onScanStart() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                                infoMsg(getString(R.string.info_scanning), color);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onScanCompleted(final boolean update) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                playBtn.setEnabled(true);
+                                if (update) {
+                                    try {
+                                        // TODO: Trouver un autre moyen de rafra'chir proprement le bon catalogue
+                                        String catalog = prefs.getString("amp_catalog", "0");
+                                        dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                                        MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
+                                        dao.open();
+                                        SQLiteCursor cursor = dao.getAllOrdered();
+                                        adapter.changeCursor(cursor);
+                                        dao.close();
+                                    } catch (SQLException | MalformedURLException e) {
+                                        Log.v("SQLException", e.getMessage());
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String msg) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                infoMsg(msg, Color.RED);
+                                playBtn.setEnabled(false);
+                                rewBtn.setEnabled(false);
+                                fwdBtn.setEnabled(false);
+                            }
+                        });
+                    }
+                });
             }
             else {
                 throw new Exception(getString(R.string.err_no_perms));
@@ -670,6 +642,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        dbService.unregister();
 
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
     }
