@@ -544,8 +544,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                 if (update) {
                                     try {
                                         // TODO: Trouver un autre moyen de rafra'chir proprement le bon catalogue
-                                        String catalog = prefs.getString("amp_catalog", "0");
-                                        dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                                        //String catalog = prefs.getString("amp_catalog", "0");
+                                        //dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
                                         MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
                                         dao.open();
                                         SQLiteCursor cursor = dao.getAllOrdered();
@@ -561,7 +561,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                     @Override
                     public void onNoDb(String dbName) {
-                        this.dbName = dbName;
+                        MainActivity.this.dbName = dbName;
                     }
 
                     @Override
