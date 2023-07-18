@@ -560,6 +560,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
 
                     @Override
+                    public void onNoDb(String dbName) {
+                        this.dbName = dbName;
+                    }
+
+                    @Override
                     public void onError(String msg) {
                         runOnUiThread(new Runnable() {
                             @Override
