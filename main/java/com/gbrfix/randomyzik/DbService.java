@@ -85,7 +85,7 @@ public class DbService implements Observer<WorkInfo> {
                                 if (catalogId == 0) {
                                     String cat = prefs.getString("amp_catalog", "0");
                                     if (cat.equals("0")) {
-                                        dbSignalListener.onNoDb(value);
+                                        dbSignalListener.onEmpty(value, dbName);
                                         catalogId = Integer.valueOf(value);
                                     }
                                 }
