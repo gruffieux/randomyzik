@@ -560,8 +560,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
 
                     @Override
-                    public void onNoDb(String dbName) {
-                        MainActivity.this.dbName = dbName;
+                    public void onEmpty(String defaultCat, String defaultDbName) {
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("amp_catalog", defaultCat);
+                        editor.commit();
+                        dbName = defaultDbName;
                     }
 
                     @Override
