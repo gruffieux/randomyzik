@@ -6,7 +6,7 @@ package com.gbrfix.randomyzik;
 
 interface DbSignal {
     void onError(String msg);
-    void onNoDb(String dbName);
+    void onEmpty(String defaultCat, String defaultDbName);
     void onScanStart();
     void onScanCompleted(boolean update);
 }
