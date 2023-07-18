@@ -81,19 +81,17 @@ public class DbService implements Observer<WorkInfo> {
                             for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                                 String key = entry.getKey();
                                 String value = entry.getValue();
+                                String dbName = AmpRepository.dbName(server, value);
                                 if (catalogId == 0) {
                                     String cat = prefs.getString("amp_catalog", "0");
                                     if (cat.equals("0")) {
+                                        dbSignalListener.onNoDb(value);
                                         catalogId = Integer.valueOf(value);
-                                        SharedPreferences.Editor editor = prefs.edit();
-                                        editor.putString("amp_catalog", value);
-                                        editor.commit();
                                     }
                                 }
                                 if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;
                                 }
-                                String dbName = AmpRepository.dbName(server, value);
                                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                         .setInputData(
                                                 new Data.Builder()
