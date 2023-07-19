@@ -75,20 +75,21 @@ public class DbService implements Observer<WorkInfo> {
                 final Map<String, String> catalogs = cats;
                 if (catalogs != null) {
                     handler.post(() -> {
-                        int catalogId = Integer.valueOf(catalog);
+                        //int catalogId = Integer.valueOf(catalog); // DEPRACATED: cf ci-dessous
                         try {
                             WorkContinuation workContinuation = null;
                             for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                                 String key = entry.getKey();
                                 String value = entry.getValue();
                                 String dbName = AmpRepository.dbName(server, value);
-                                if (catalogId == 0) {
+                                // DEPRACATED: Cause trop de bugs!
+                                /*if (catalogId == 0) {
                                     String cat = prefs.getString("amp_catalog", "0");
                                     if (cat.equals("0")) {
                                         dbSignalListener.onEmpty(value, dbName);
                                         catalogId = Integer.valueOf(value);
                                     }
-                                }
+                                }*/
                                 if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;
                                 }
@@ -141,8 +142,9 @@ public class DbService implements Observer<WorkInfo> {
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is succeeded");
+                        int catId = workInfo.getOutputData().getInt("catId", 0);
                         boolean updated = workInfo.getOutputData().getBoolean("updated", false);
-                        dbSignalListener.onScanCompleted(updated);
+                        dbSignalListener.onScanCompleted(catId, updated);
                         break;
                     case FAILED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is failed");

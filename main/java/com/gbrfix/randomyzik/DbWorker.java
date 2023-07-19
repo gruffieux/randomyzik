@@ -148,12 +148,8 @@ public class DbWorker extends Worker {
 
         dao.close();
 
-        if (updated && amp) {
-            String catalog = prefs.getString("amp_catalog", "0");
-            updated = catalogId != 0 && Integer.valueOf(catalog) == catalogId;
-        }
-
         Data output = new Data.Builder()
+                .putInt("catId", catalogId)
                 .putBoolean("updated", updated)
                 .build();
         return Result.success(output);

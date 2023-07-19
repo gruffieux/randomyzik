@@ -343,7 +343,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         setContentView(R.layout.playlist);
         init(1);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     @Override
@@ -536,35 +535,29 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
 
                     @Override
-                    public void onScanCompleted(final boolean update) {
+                    public void onScanCompleted(int catalogId, boolean update) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                String catalog = prefs.getString("amp_catalog", "0");
+                                if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
+                                    return;
+                                }
                                 playBtn.setEnabled(true);
-                                if (update) {
-                                    try {
-                                        // TODO: Trouver un autre moyen de rafra'chir proprement le bon catalogue
-                                        //String catalog = prefs.getString("amp_catalog", "0");
-                                        //dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-                                        MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-                                        dao.open();
-                                        SQLiteCursor cursor = dao.getAllOrdered();
-                                        adapter.changeCursor(cursor);
-                                        dao.close();
-                                    } catch (SQLException | MalformedURLException e) {
-                                        Log.v("SQLException", e.getMessage());
-                                    }
+                                if (!update) {
+                                    return;
+                                }
+                                try {
+                                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
+                                    dao.open();
+                                    SQLiteCursor cursor = dao.getAllOrdered();
+                                    adapter.changeCursor(cursor);
+                                    dao.close();
+                                } catch (SQLException e) {
+                                    Log.v("SQLException", e.getMessage());
                                 }
                             }
                         });
-                    }
-
-                    @Override
-                    public void onEmpty(String defaultCat, String defaultDbName) {
-                        SharedPreferences.Editor editor = prefs.edit();
-                        editor.putString("amp_catalog", defaultCat);
-                        editor.commit();
-                        dbName = defaultDbName;
                     }
 
                     @Override
@@ -629,6 +622,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             }
         });
+
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     public void infoMsg(String msg, int color) {

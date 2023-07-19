@@ -372,6 +372,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.setOnErrorListener(MediaPlaybackService.this);
 
                     Media media = provider.selectTrack();
+
+                    // Prepare media player
+                    if (streaming) {
+                        AmpSession ampSession = AmpSession.getInstance();
+                        String url = ampSession.streaming_url(media.getMediaId(), 0);
+                        player.setDataSource(url);
+                        player.prepareAsync();
+                    } else {
+                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                        player.setDataSource(MediaPlaybackService.this, uri);
+                        player.prepare();
+                    }
+
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
 
                     // Set session MediaMetadata
@@ -392,18 +405,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("artist", media.getArtist());
                     bundle.putInt("duration", duration);
                     session.sendSessionEvent("onTrackSelect", bundle);
-
-                    // Prepare media player
-                    if (streaming) {
-                        AmpSession ampSession = AmpSession.getInstance();
-                        String url = ampSession.streaming_url(media.getMediaId(), 0);
-                        player.setDataSource(url);
-                        player.prepareAsync();
-                    } else {
-                        Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                        player.setDataSource(MediaPlaybackService.this, uri);
-                        player.prepare();
-                    }
                 } else {
                     player.start();
                     progress.resume();
