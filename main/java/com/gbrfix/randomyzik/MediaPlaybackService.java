@@ -279,7 +279,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mp.start();
 
         // Upddate state
-        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 1.0f);
         session.setPlaybackState(stateBuilder.build());
 
         showNotification();
@@ -291,7 +291,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mp.start();
 
         // Upddate state
-        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 1.0f);
         session.setPlaybackState(stateBuilder.build());
 
         showNotification();
@@ -408,7 +408,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 } else {
                     player.start();
                     progress.resume();
-                    stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 0);
+                    stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 1.0f);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
                 }
@@ -535,7 +535,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             return;
                         }
                         handler.post(() -> {
-                            stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 0);
+                            stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
                         });
@@ -562,7 +562,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             return;
                         }
                         handler.post(() -> {
-                            stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 0);
+                            stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
                         });
@@ -774,16 +774,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     Thread.sleep(1000);
                     currentPosition = mp != null ? mp.getCurrentPosition() : currentPosition + 1000;
-                    stateBuilder.setState(session.getController().getPlaybackState().getState(), currentPosition, 0);
+                    PlaybackStateCompat state = session.getController().getPlaybackState();
+                    stateBuilder.setState(state.getState(), currentPosition, state.getPlaybackSpeed());
                     session.setPlaybackState(stateBuilder.build());
                     bundle.putInt("position", currentPosition);
                     session.sendSessionEvent("onTrackProgress", bundle);
                     session.setExtras(bundle);
                     if (threadSuspended) {
                         synchronized (blinker) {
-                            while (threadSuspended) {
+                            blinker.wait(); // A tester
+                            /*while (threadSuspended) {
                                 blinker.wait();
-                            }
+                            }*/
                         }
                     }
                 } catch (Exception e) {
