@@ -392,8 +392,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
-                            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1) // A tester
-                            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
+                            .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
+                            .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
 
