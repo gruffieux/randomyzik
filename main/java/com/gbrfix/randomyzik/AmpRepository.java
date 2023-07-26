@@ -50,6 +50,14 @@ abstract class AmpRepository {
         return authToken;
     }
 
+    public static String ping(String server, String auth) throws IOException {
+        URL url = new URL(server+"/server/xml.server.php?action=ping&auth="+auth);
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        String res = conn.getResponseMessage();
+        conn.disconnect();
+        return res;
+    }
+
     public static List advanced_search(String server, String auth, int offset, int catalogId) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
