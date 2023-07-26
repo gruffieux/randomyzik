@@ -73,6 +73,10 @@ public class AmpSession extends AmpRepository {
         return localplay_stop(server, auth);
     }
 
+    public String ping() throws IOException {
+        return ping(server, auth);
+    }
+
     public String streaming_url(int oid, int offset) throws IOException {
         return streaming_url(server, auth, oid, offset);
     }
