@@ -1,16 +1,21 @@
 package com.gbrfix.randomyzik;
 
 import android.content.SharedPreferences;
+import android.os.Bundle;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
+    private String expire;
     private static AmpSession instance = null;
 
     public static AmpSession getInstance() {
@@ -18,6 +23,16 @@ public class AmpSession extends AmpRepository {
             instance = new AmpSession();
         }
         return instance;
+    }
+
+    public boolean hasExpired() throws ParseException {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Date date = new Date();
+        String dateTime = format.format(date);
+        Date now = format.parse(dateTime);
+        Date expired = format.parse(expire);
+
+        return now.compareTo(expired) >= 0;
     }
 
     public boolean hasValidAuth() {
@@ -30,17 +45,25 @@ public class AmpSession extends AmpRepository {
     public void connect(SharedPreferences prefs) throws Exception {
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
+        Bundle data = null;
 
-        if (api) {
-            String apiKey = prefs.getString("amp_api_key", "");
-            auth = handshake(server, apiKey);
+        if (hasValidAuth() && !hasExpired()) {
+            data = ping(server, auth);
         } else {
-            String user = prefs.getString("amp_user", "");
-            String pwd = prefs.getString("amp_pwd", "");
-            auth = handshake(server, user, pwd);
+            if (api) {
+                String apiKey = prefs.getString("amp_api_key", "");
+                data = handshake(server, apiKey);
+            } else {
+                String user = prefs.getString("amp_user", "");
+                String pwd = prefs.getString("amp_pwd", "");
+                data = handshake(server, user, pwd);
+            }
         }
 
-        if (auth.isEmpty()) {
+        auth = data.getString("auth");
+        expire = data.getString("session_expire");
+
+        if (auth == null) {
             throw new Exception("Invalid authentication");
         }
     }
@@ -73,7 +96,7 @@ public class AmpSession extends AmpRepository {
         return localplay_stop(server, auth);
     }
 
-    public String ping() throws IOException {
+    public Bundle ping() throws IOException, XmlPullParserException {
         return ping(server, auth);
     }
 

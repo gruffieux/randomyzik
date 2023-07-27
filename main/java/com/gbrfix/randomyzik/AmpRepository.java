@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.os.Bundle;
+
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -23,16 +25,16 @@ abstract class AmpRepository {
         return sb.toString();
     }
 
-    public static String handshake(String server, String apiKey) throws IOException, XmlPullParserException {
+    public static Bundle handshake(String server, String apiKey) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+apiKey);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        String authToken = parser.parseText(conn.getInputStream(), "auth");
+        Bundle user = parser.parseUser(conn.getInputStream());
         conn.disconnect();
-        return authToken;
+        return user;
     }
 
-    public static String handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
+    public Bundle handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(pwd.getBytes());
         byte[] md1 = md.digest();
@@ -45,17 +47,18 @@ abstract class AmpRepository {
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+pass+"&timestamp="+time+"&user="+user);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        String authToken = parser.parseText(conn.getInputStream(), "auth");
+        Bundle data = parser.parseUser(conn.getInputStream());
         conn.disconnect();
-        return authToken;
+        return data;
     }
 
-    public static String ping(String server, String auth) throws IOException {
+    public static Bundle ping(String server, String auth) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=ping&auth="+auth);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
-        String res = conn.getResponseMessage();
+        AmpXmlParser parser = new AmpXmlParser();
+        Bundle user = parser.parseUser(conn.getInputStream());
         conn.disconnect();
-        return res;
+        return user;
     }
 
     public static List advanced_search(String server, String auth, int offset, int catalogId) throws IOException, XmlPullParserException {

@@ -231,6 +231,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
     }
 
+    private void prepareMediaStreaming(int mediaId) throws IOException {
+        AmpSession ampSession = AmpSession.getInstance();
+        String url = ampSession.streaming_url(mediaId, 0);
+        player.setDataSource(url);
+        player.prepareAsync();
+    }
+
     private int requestAudioFocus() {
         if (!changeFocus) {
             return AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
@@ -372,13 +379,30 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.setOnErrorListener(MediaPlaybackService.this);
 
                     Media media = provider.selectTrack();
+                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                    Handler handler = new Handler(Looper.getMainLooper());
 
                     // Prepare media player
                     if (streaming) {
                         AmpSession ampSession = AmpSession.getInstance();
-                        String url = ampSession.streaming_url(media.getMediaId(), 0);
-                        player.setDataSource(url);
-                        player.prepareAsync();
+                        if (ampSession.hasExpired()) {
+                            executor.execute(() -> {
+                                try {
+                                    ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                                handler.post(() -> {
+                                    try {
+                                        prepareMediaStreaming(media.getMediaId());
+                                    } catch (IOException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                });
+                            });
+                        } else {
+                            prepareMediaStreaming(media.getMediaId());
+                        }
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                         player.setDataSource(MediaPlaybackService.this, uri);

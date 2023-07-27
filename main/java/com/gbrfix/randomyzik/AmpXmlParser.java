@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.os.Bundle;
 import android.util.Pair;
 import android.util.Xml;
 
@@ -146,6 +147,29 @@ public class AmpXmlParser {
         return catalogs;
     }
 
+    private Bundle readUser(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "root");
+        String auth = null;
+        String sessionExpire = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("auth")) {
+                auth = readTag(parser, "auth");
+            }  else if (name.equals("session_expire")) {
+                sessionExpire = readTag(parser, "session_expire");
+            } else {
+                skip(parser);
+            }
+        }
+        Bundle user = new Bundle();
+        user.putString("auth", auth);
+        user.putString("session_expire", sessionExpire);
+        return user;
+    }
+
     // Processes tags in the feed.
     private String readTag(XmlPullParser parser, String name) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, name);
@@ -212,6 +236,18 @@ public class AmpXmlParser {
             parser.setInput(new BufferedInputStream(in), null);
             parser.nextTag();
             return readCatalogs(parser);
+        } finally {
+            in.close();
+        }
+    }
+
+    public Bundle parseUser(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readUser(parser);
         } finally {
             in.close();
         }
