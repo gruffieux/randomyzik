@@ -34,7 +34,6 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".DbService" />
         <service
             android:name=".MediaPlaybackService"
             android:exported="false" >
