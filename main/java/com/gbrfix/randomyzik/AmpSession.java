@@ -63,7 +63,7 @@ public class AmpSession extends AmpRepository {
         auth = data.getString("auth");
         expire = data.getString("session_expire");
 
-        if (auth == null) {
+        if (!hasValidAuth()) {
             throw new Exception("Invalid authentication");
         }
     }
