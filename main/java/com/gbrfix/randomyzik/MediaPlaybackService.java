@@ -390,13 +390,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 try {
                                     ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                                 } catch (Exception e) {
-                                    throw new RuntimeException(e);
+                                    Bundle args = new Bundle();
+                                    args.putString("message", e.getMessage());
+                                    session.sendSessionEvent("onError", args);
+                                    return;
                                 }
                                 handler.post(() -> {
                                     try {
                                         prepareMediaStreaming(media.getMediaId());
                                     } catch (IOException e) {
-                                        throw new RuntimeException(e);
+                                        Bundle args = new Bundle();
+                                        args.putString("message", e.getMessage());
+                                        session.sendSessionEvent("onError", args);
+                                        return;
                                     }
                                 });
                             });
@@ -523,6 +529,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
                 startService(intent);
 
+                AmpSession ampSession = AmpSession.getInstance();
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
 
@@ -547,12 +554,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     // Start localplay
                     executor.execute(() -> {
-                        AmpSession ampSession = AmpSession.getInstance();
                         try {
+                            if (ampSession.hasExpired()) {
+                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                            }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                             progress.start(duration, MediaPlaybackService.this);
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
@@ -577,9 +586,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     long position = session.getController().getPlaybackState().getPosition();
                     executor.execute(() -> {
                         try {
-                            AmpSession.getInstance().localplay_play();
+                            if (ampSession.hasExpired()) {
+                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                            }
+                            ampSession.localplay_play();
                             progress.resume();
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
@@ -608,11 +620,15 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onPause() {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
+            AmpSession ampSession = AmpSession.getInstance();
             executor.execute(() -> {
                 try {
-                    AmpSession.getInstance().localplay_pause();
+                    if (ampSession.hasExpired()) {
+                        ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                    }
+                    ampSession.localplay_pause();
                     progress.suspend();
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
@@ -633,9 +649,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             Executors.newSingleThreadExecutor().execute(new Runnable() {
                 @Override
                 public void run() {
+                    AmpSession ampSession = AmpSession.getInstance();
                     try {
-                        AmpSession.getInstance().localplay_stop();
-                    } catch (IOException e) {
+                        if (ampSession.hasExpired()) {
+                            ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                        }
+                        ampSession.localplay_stop();
+                    } catch (Exception e) {
                         Bundle args = new Bundle();
                         args.putString("message", e.getMessage());
                         session.sendSessionEvent("onError", args);
