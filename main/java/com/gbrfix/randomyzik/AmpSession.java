@@ -96,10 +96,6 @@ public class AmpSession extends AmpRepository {
         return localplay_stop(server, auth);
     }
 
-    public Bundle ping() throws IOException, XmlPullParserException {
-        return ping(server, auth);
-    }
-
     public String streaming_url(int oid, int offset) throws IOException {
         return streaming_url(server, auth, oid, offset);
     }
