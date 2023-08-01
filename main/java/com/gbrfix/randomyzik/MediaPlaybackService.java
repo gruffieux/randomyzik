@@ -123,7 +123,21 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Arrêt forcé, on sauve la piste en cours
         if (intent.getAction() == "stop") {
+            Bundle args = new Bundle();
+            args.putInt("id", provider.getCurrentId());
+            args.putInt("position", (int)session.getController().getPlaybackState().getPosition());
+            session.sendSessionEvent("onTrackSave", args);
+            session.getController().getTransportControls().stop();
+        }
+
+        // Arrêt intentionnel, on annule la sauvegarde
+        if (intent.getAction() == "close") {
+            Bundle args = new Bundle();
+            args.putInt("id", 0);
+            args.putInt("position", 0);
+            session.sendSessionEvent("onTrackSave", args);
             session.getController().getTransportControls().stop();
         }
 
@@ -504,12 +518,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 myNoisyAudioRegistred = false;
             }
 
-            // On annule la sauvegarde de piste en cours
-            Bundle args = new Bundle();
-            args.putInt("id", 0);
-            args.putInt("position", 0);
-            session.sendSessionEvent("onTrackSave", args);
-
             // Upddate state
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
@@ -663,12 +671,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             });
 
-            // On annule la sauvegarde de piste en cours
-            Bundle args = new Bundle();
-            args.putInt("id", 0);
-            args.putInt("position", 0);
-            session.sendSessionEvent("onTrackSave", args);
-
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
@@ -697,7 +699,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Create an action intent for stopping the service
         Intent stopIntent = new Intent(this, MediaPlaybackService.class);
-        stopIntent.setAction("stop");
+        stopIntent.setAction("close");
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
 
         // Build notification
