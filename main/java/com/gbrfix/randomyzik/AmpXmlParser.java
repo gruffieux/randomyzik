@@ -147,6 +147,25 @@ public class AmpXmlParser {
         return catalogs;
     }
 
+    private Bundle readStatus(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "status");
+        String state = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("state")) {
+                state = readTag(parser, "state");
+            } else {
+                skip(parser);
+            }
+        }
+        Bundle status = new Bundle();
+        status.putString("state", state);
+        return status;
+    }
+
     private Bundle readUser(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "root");
         String auth = null;
