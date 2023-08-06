@@ -116,9 +116,9 @@ abstract class AmpRepository {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=status");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Bundle status = parser.parseStatus(conn.getInputStream());
+        String state = parser.parseText(conn.getInputStream(), "state");
         conn.disconnect();
-        return status;
+        return state;
     }
 
     public static String localplay_stop(String server, String auth) throws IOException {
