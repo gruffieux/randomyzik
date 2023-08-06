@@ -112,6 +112,15 @@ abstract class AmpRepository {
         return res;
     }
 
+    public static Bundle localplay_status(String server, String auth) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=status");
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        AmpXmlParser parser = new AmpXmlParser();
+        Bundle status = parser.parseStatus(conn.getInputStream());
+        conn.disconnect();
+        return status;
+    }
+
     public static String localplay_stop(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=stop");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
