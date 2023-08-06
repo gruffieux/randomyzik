@@ -260,6 +260,18 @@ public class AmpXmlParser {
         }
     }
 
+    public Bundle parseStatus(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readStatus(parser);
+        } finally {
+            in.close();
+        }
+    }
+
     public Bundle parseUser(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
