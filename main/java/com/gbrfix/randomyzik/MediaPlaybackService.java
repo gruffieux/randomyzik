@@ -531,8 +531,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class AmpSessionCallback extends MediaSessionCallback {
         @Override
         public void onPlay() {
-            boolean checkStatus = !session.isActive();
-
             try {
                 Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
                 startService(intent);
@@ -566,7 +564,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
-                            if (checkStatus) {
+                            if (!session.isActive()) {
                                 Bundle status = ampSession.localplay_status();
                                 if (status.getString("state") != "stop") {
                                     throw new Exception("Ampache localplay not allowed now");
