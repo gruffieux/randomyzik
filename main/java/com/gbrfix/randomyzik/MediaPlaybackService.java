@@ -543,11 +543,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     final Media media = provider.selectTrack();
                     final int duration = provider.isTest() ? 10000 : media.getDuration() * 1000;
 
-                    // Keep CPU awake
-                    PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-                    wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
-                    wakeLock.acquire();
-
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
@@ -580,22 +575,28 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             return;
                         }
                         handler.post(() -> {
+                            session.setActive(true);
+
+                            // Keep CPU awake
+                            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+                            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
+                            wakeLock.acquire();
+
+                            // Send session event
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("id", media.getId());
+                            bundle.putString("title", media.getTitle());
+                            bundle.putString("album", media.getAlbum());
+                            bundle.putString("artist", media.getArtist());
+                            bundle.putInt("duration", duration);
+                            session.sendSessionEvent("onTrackSelect", bundle);
+
+                            // Update state and notif
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
                         });
                     });
-
-                    session.setActive(true);
-
-                    // Send session event
-                    Bundle bundle = new Bundle();
-                    bundle.putInt("id", media.getId());
-                    bundle.putString("title", media.getTitle());
-                    bundle.putString("album", media.getAlbum());
-                    bundle.putString("artist", media.getArtist());
-                    bundle.putInt("duration", duration);
-                    session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
                     long position = session.getController().getPlaybackState().getPosition();
                     executor.execute(() -> {
