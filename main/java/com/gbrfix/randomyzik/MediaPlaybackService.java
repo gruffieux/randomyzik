@@ -381,8 +381,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
 
             try {
-                session.setActive(true);
-
                 startService(new Intent(MediaPlaybackService.this, MediaPlaybackService.class));
                 registerReceiver(myNoisyAudioReceiver, intentFilter);
                 myNoisyAudioRegistred = true;
@@ -430,6 +428,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
+
+                    session.setActive(true);
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
@@ -534,8 +534,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             boolean checkStatus = !session.isActive();
 
             try {
-                session.setActive(true);
-
                 Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
                 startService(intent);
 
@@ -589,6 +587,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             showNotification();
                         });
                     });
+
+                    session.setActive(true);
 
                     // Send session event
                     Bundle bundle = new Bundle();
