@@ -531,6 +531,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class AmpSessionCallback extends MediaSessionCallback {
         @Override
         public void onPlay() {
+            boolean checkStatus = !session.isActive();
+
             try {
                 session.setActive(true);
 
@@ -565,6 +567,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                            }
+                            if (checkStatus) {
+                                Bundle status = ampSession.localplay_status();
+                                if (status.getString("state") != "stop") {
+                                    throw new Exception("Ampache localplay not allowed now");
+                                }
                             }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();

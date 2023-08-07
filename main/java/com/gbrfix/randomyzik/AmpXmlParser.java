@@ -266,6 +266,9 @@ public class AmpXmlParser {
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(new BufferedInputStream(in), null);
             parser.nextTag();
+            parser.nextTag();
+            parser.nextTag();
+            parser.nextTag();
             return readStatus(parser);
         } finally {
             in.close();

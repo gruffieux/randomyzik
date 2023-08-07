@@ -92,6 +92,10 @@ public class AmpSession extends AmpRepository {
         return localplay_play(server, auth);
     }
 
+    public Bundle localplay_status() throws IOException, XmlPullParserException {
+        return localplay_status(server, auth);
+    }
+
     public String localplay_stop() throws IOException {
         return localplay_stop(server, auth);
     }
