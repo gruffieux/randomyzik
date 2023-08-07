@@ -150,6 +150,9 @@ public class AmpXmlParser {
     private Bundle readStatus(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "status");
         String state = null;
+        String title = null;
+        String artist = null;
+        String album = null;
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
@@ -157,12 +160,21 @@ public class AmpXmlParser {
             String name = parser.getName();
             if (name.equals("state")) {
                 state = readTag(parser, "state");
+            } else if (name.equals("track_title") {
+                title = readTag(parser, "track_title");
+            } else if (name.equals("track_artist") {
+                artist = readTag(parser, "track_artist");
+            } else if (name.equals("track_album") {
+                album = readTag(parser, "track_album");
             } else {
                 skip(parser);
             }
         }
         Bundle status = new Bundle();
         status.putString("state", state);
+        status.putString("title", title);
+        status.putString("artist", artist);
+        status.putString("album", album);
         return status;
     }
 
