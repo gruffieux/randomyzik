@@ -178,6 +178,55 @@ public class AmpXmlParser {
         return status;
     }
 
+    private List readActivities(XmlPullParser parser) throws XmlPullParserException, IOException {
+        List<Bundle> activities = new ArrayList();
+        parser.require(XmlPullParser.START_TAG, ns, "root");
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            // Starts by looking for the entry tag
+            if (name.equals("activity")) {
+                songs.add(readActivity(parser));
+            } else {
+                skip(parser);
+            }
+        }
+        return activities;
+    }
+
+    private Media readActivity(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "activity");
+        int date = 0;
+        String type = null;
+        int oid = 0;
+        String action = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("date")) {
+                date = Integer.valueOf(readTag(parser, "date"));
+            }  else if (name.equals("object_type")) {
+                type = readTag(parser, "object_type");
+            } else if (name.equals("object_id")) {
+                oid = Integer.valueOf(readTag(parser, "object_id"));
+            } else if (name.equals("action")) {
+                action = readTag(parser, "action");
+            } else {
+                skip(parser);
+            }
+        }
+        Bundle activity = new Bundke();
+        activity.putInt("date", date);
+        activity.putString("type", type);
+        activity.putInt("oid", oid);
+        activity.putString("action", action);
+        return activity;
+    }
+
     private Bundle readUser(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "root");
         String auth = null;
