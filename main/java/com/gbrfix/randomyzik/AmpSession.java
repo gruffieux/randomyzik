@@ -16,6 +16,7 @@ public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
     private String expire;
+    private String username;
     private static AmpSession instance = null;
 
     public static AmpSession getInstance() {
@@ -78,6 +79,10 @@ public class AmpSession extends AmpRepository {
 
     public Map catalogs() throws IOException, XmlPullParserException {
         return catalogs(server, auth);
+    }
+
+    public Bundle lastPlayActivity(int oid) throws IOException, XmlPullParserException {
+        Bundle activity = timeline(username, oid, 1);
     }
 
     public String localplay_add(int oid) throws IOException {
