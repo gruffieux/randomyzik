@@ -32,7 +32,8 @@ public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
 
-    private String readText(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
+    private List readActivities(XmlPullParser parser) throws XmlPullParserException, IOException {
+        List<Bundle> activities = new ArrayList();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -40,17 +41,66 @@ public class AmpXmlParser {
             }
             String name = parser.getName();
             // Starts by looking for the entry tag
-            if (name.equals(tag)) {
-                return readTag(parser, tag);
+            if (name.equals("activity")) {
+                activities.add(readActivity(parser));
             } else {
                 skip(parser);
             }
         }
-        return "";
+        return activities;
     }
 
-    private List readSongs(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Media> songs = new ArrayList();
+    private Bundle readActivity(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "activity");
+        int date = 0;
+        String type = null;
+        int oid = 0;
+        String action = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("date")) {
+                date = Integer.valueOf(readTag(parser, "date"));
+            }  else if (name.equals("object_type")) {
+                type = readTag(parser, "object_type");
+            } else if (name.equals("object_id")) {
+                oid = Integer.valueOf(readTag(parser, "object_id"));
+            } else if (name.equals("action")) {
+                action = readTag(parser, "action");
+            } else {
+                skip(parser);
+            }
+        }
+        Bundle activity = new Bundle();
+        activity.putInt("date", date);
+        activity.putString("type", type);
+        activity.putInt("oid", oid);
+        activity.putString("action", action);
+        return activity;
+    }
+
+    private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "catalog");
+        String value = parser.getAttributeValue(0);
+        String key = null;
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("name")) {
+                key = readTag(parser, "name");
+            } else {
+                skip(parser);
+            }
+        }
+        return new Pair(key, value);
+    }
+
+    private Map readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
+        Map catalogs = new HashMap<String, String>();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -58,13 +108,14 @@ public class AmpXmlParser {
             }
             String name = parser.getName();
             // Starts by looking for the entry tag
-            if (name.equals("song")) {
-                songs.add(readSong(parser));
+            if (name.equals("catalog")) {
+                Pair pair = readCatalog(parser);
+                catalogs.put(pair.first, pair.second);
             } else {
                 skip(parser);
             }
         }
-        return songs;
+        return catalogs;
     }
 
     // Parses the contents of an entry. If it encounters a song, hands them off
@@ -110,26 +161,8 @@ public class AmpXmlParser {
         return media;
     }
 
-    private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "catalog");
-        String value = parser.getAttributeValue(0);
-        String key = null;
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("name")) {
-                key = readTag(parser, "name");
-            } else {
-                skip(parser);
-            }
-        }
-        return new Pair(key, value);
-    }
-
-    private Map readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Map catalogs = new HashMap<String, String>();
+    private List readSongs(XmlPullParser parser) throws XmlPullParserException, IOException {
+        List<Media> songs = new ArrayList();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -137,14 +170,13 @@ public class AmpXmlParser {
             }
             String name = parser.getName();
             // Starts by looking for the entry tag
-            if (name.equals("catalog")) {
-                Pair pair = readCatalog(parser);
-                catalogs.put(pair.first, pair.second);
+            if (name.equals("song")) {
+                songs.add(readSong(parser));
             } else {
                 skip(parser);
             }
         }
-        return catalogs;
+        return songs;
     }
 
     private Bundle readStatus(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -160,11 +192,11 @@ public class AmpXmlParser {
             String name = parser.getName();
             if (name.equals("state")) {
                 state = readTag(parser, "state");
-            } else if (name.equals("track_title") {
+            } else if (name.equals("track_title")) {
                 title = readTag(parser, "track_title");
-            } else if (name.equals("track_artist") {
+            } else if (name.equals("track_artist")) {
                 artist = readTag(parser, "track_artist");
-            } else if (name.equals("track_album") {
+            } else if (name.equals("track_album")) {
                 album = readTag(parser, "track_album");
             } else {
                 skip(parser);
@@ -176,55 +208,6 @@ public class AmpXmlParser {
         status.putString("artist", artist);
         status.putString("album", album);
         return status;
-    }
-
-    private List readActivities(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Bundle> activities = new ArrayList();
-        parser.require(XmlPullParser.START_TAG, ns, "root");
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            // Starts by looking for the entry tag
-            if (name.equals("activity")) {
-                songs.add(readActivity(parser));
-            } else {
-                skip(parser);
-            }
-        }
-        return activities;
-    }
-
-    private Media readActivity(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "activity");
-        int date = 0;
-        String type = null;
-        int oid = 0;
-        String action = null;
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("date")) {
-                date = Integer.valueOf(readTag(parser, "date"));
-            }  else if (name.equals("object_type")) {
-                type = readTag(parser, "object_type");
-            } else if (name.equals("object_id")) {
-                oid = Integer.valueOf(readTag(parser, "object_id"));
-            } else if (name.equals("action")) {
-                action = readTag(parser, "action");
-            } else {
-                skip(parser);
-            }
-        }
-        Bundle activity = new Bundke();
-        activity.putInt("date", date);
-        activity.putString("type", type);
-        activity.putInt("oid", oid);
-        activity.putString("action", action);
-        return activity;
     }
 
     private Bundle readUser(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -258,6 +241,23 @@ public class AmpXmlParser {
         return tag;
     }
 
+    private String readText(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "root");
+        while (parser.next() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            // Starts by looking for the entry tag
+            if (name.equals(tag)) {
+                return readTag(parser, tag);
+            } else {
+                skip(parser);
+            }
+        }
+        return "";
+    }
+
     // For the tags, extracts their text values.
     private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = "";
@@ -285,13 +285,13 @@ public class AmpXmlParser {
         }
     }
 
-    public String parseText(InputStream in, String name) throws XmlPullParserException, IOException {
+    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(new BufferedInputStream(in), null);
             parser.nextTag();
-            return readText(parser, name);
+            return readCatalogs(parser);
         } finally {
             in.close();
         }
@@ -309,18 +309,6 @@ public class AmpXmlParser {
         }
     }
 
-    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readCatalogs(parser);
-        } finally {
-            in.close();
-        }
-    }
-
     public Bundle parseStatus(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
@@ -331,6 +319,18 @@ public class AmpXmlParser {
             parser.nextTag();
             parser.nextTag();
             return readStatus(parser);
+        } finally {
+            in.close();
+        }
+    }
+
+    public String parseText(InputStream in, String name) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readText(parser, name);
         } finally {
             in.close();
         }
