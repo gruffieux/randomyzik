@@ -285,6 +285,18 @@ public class AmpXmlParser {
         }
     }
 
+    public List parseActivities(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readActivities(parser);
+        } finally {
+            in.close();
+        }
+    }
+
     public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
