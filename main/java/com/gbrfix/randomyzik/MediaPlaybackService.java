@@ -561,7 +561,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             }
                             if (!session.isActive()) {
                                 Bundle status = ampSession.localplay_status();
-                                if (status.getString("state") != "stop") {
+                                if (!status.getString("state").equals("stop")) {
                                     throw new Exception("Ampache localplay not allowed now");
                                 }
                             }

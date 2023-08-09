@@ -8,6 +8,8 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,7 @@ public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
     private String expire;
-    private String username;
+    private String user;
     private static AmpSession instance = null;
 
     public static AmpSession getInstance() {
@@ -51,11 +53,11 @@ public class AmpSession extends AmpRepository {
         if (hasValidAuth() && !hasExpired()) {
             data = ping(server, auth);
         } else {
-            if (api) {
+            if (api) { // DEPRACATED
                 String apiKey = prefs.getString("amp_api_key", "");
                 data = handshake(server, apiKey);
             } else {
-                String user = prefs.getString("amp_user", "");
+                user = prefs.getString("amp_user", "");
                 String pwd = prefs.getString("amp_pwd", "");
                 data = handshake(server, user, pwd);
             }
@@ -81,8 +83,22 @@ public class AmpSession extends AmpRepository {
         return catalogs(server, auth);
     }
 
-    public Bundle lastPlayActivity(int oid) throws IOException, XmlPullParserException {
-        Bundle activity = timeline(username, oid, 1);
+    public Bundle lastPlayActivity(int oid) throws Exception {
+        long now = Calendar.getInstance().getTimeInMillis() / 1000;
+
+        List<Bundle> activities = timeline(server, auth, user, 1, now);
+
+        if (activities.isEmpty()) {
+            throw new Exception("No activity found");
+        }
+
+        Bundle activity = activities.get(0);
+
+        if (activity.getInt("oid") != oid) {
+            throw new Exception("Activity mismatch");
+        }
+
+        return activity;
     }
 
     public String localplay_add(int oid) throws IOException {

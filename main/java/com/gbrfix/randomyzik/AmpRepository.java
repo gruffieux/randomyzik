@@ -88,7 +88,7 @@ abstract class AmpRepository {
         return map;
     }
 
-    public static List timeline(String server, String auth, String user, int limit, int since) throws IOException, XmlPullParserException {
+    public static List timeline(String server, String auth, String user, int limit, long since) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=timeline&auth="+auth+"&username="+user+"&limit="+limit+"&since="+since);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
