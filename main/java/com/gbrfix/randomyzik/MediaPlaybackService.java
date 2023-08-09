@@ -567,6 +567,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
+                            ampSession.savePlayActivity(media.getMediaId());
                             progress.start(duration, MediaPlaybackService.this);
                         } catch (Exception e) {
                             Bundle args = new Bundle();
@@ -603,6 +604,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         try {
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                            }
+                            Bundle status = ampSession.localplay_status();
+                            if (!status.getString("state").equals("pause")) {
+                                throw new Exception("Ampache state error");
+                            }
+                            int oid = provider.getMediaId(status.getString("title"), status.getString("artist"), status.getString("album"));
+                            if (!ampSession.checkPlayActivity(oid)) {
+                                throw new Exception("Ampache media error");
                             }
                             ampSession.localplay_play();
                             progress.resume();
