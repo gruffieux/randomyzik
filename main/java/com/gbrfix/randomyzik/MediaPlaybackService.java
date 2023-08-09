@@ -567,7 +567,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
-                            ampSession.savePlayActivity(media.getMediaId());
+                            ampSession.setLastPlayActivity(ampSession.lastPlayActivity(media.getMediaId()));
                             progress.start(duration, MediaPlaybackService.this);
                         } catch (Exception e) {
                             Bundle args = new Bundle();
