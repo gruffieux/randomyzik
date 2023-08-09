@@ -77,17 +77,13 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        int date = lastPlayActivity.getInt("date");
-        List<Bundle> activities = timeline(server, auth, user, 3, date);
+        Bundle activity = lastPlayActivity(oid);
 
-        for (int i = 0; i < activities.size(); i++) {
-            Bundle activity = activities.get(i);
-            if (activity.getInt("oid") == oid && activity.getString("action").equals("play") && activity.getInt("date") == date) {
-                return true;
-            }
+        if (activity.getInt("date") != lastPlayActivity.getInt("date")) {
+            return false;
         }
 
-        return false;
+        return true;
     }
 
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
