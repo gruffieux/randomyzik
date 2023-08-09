@@ -122,7 +122,11 @@ public class AmpSession extends AmpRepository {
         return localplay_stop(server, auth);
     }
 
-    public void savePlayActivity(int oid) throws Exception {
+    public void setLastPlayActivity(Bundle activity) {
+        lastPlayActivity = activity;
+    }
+
+    public Bundle lastPlayActivity(int oid) throws Exception {
         long now = Calendar.getInstance().getTimeInMillis() / 1000;
 
         List<Bundle> activities = timeline(server, auth, user, 1, now);
@@ -137,7 +141,7 @@ public class AmpSession extends AmpRepository {
             throw new Exception("Activity mismatch");
         }
 
-        lastPlayActivity = activity;
+        return activity;
     }
 
     public String streaming_url(int oid, int offset) throws IOException {
