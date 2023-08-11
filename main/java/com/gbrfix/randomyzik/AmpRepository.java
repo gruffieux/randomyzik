@@ -88,6 +88,15 @@ abstract class AmpRepository {
         return map;
     }
 
+    public static List stats(String server, String auth, String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=stats&auth="+auth+"&type="+type+"&filter="+filter+"&user_id="+userId+"&limit="+limit);
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        AmpXmlParser parser = new AmpXmlParser();
+        List list = parser.parseSongs(conn.getInputStream());
+        conn.disconnect();
+        return list;
+    }
+
     public static List timeline(String server, String auth, String user, int limit, long since) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=timeline&auth="+auth+"&username="+user+"&limit="+limit+"&since="+since);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();

@@ -72,7 +72,7 @@ public class AmpSession extends AmpRepository {
         }
     }
 
-    public boolean checkPlayActivity(int oid) throws XmlPullParserException, IOException {
+    public boolean checkPlayActivity(int oid) throws Exception {
         if (lastPlayActivity == null) {
             return false;
         }
@@ -92,6 +92,10 @@ public class AmpSession extends AmpRepository {
 
     public List songs(int offset) throws IOException, XmlPullParserException {
         return songs(server, auth, offset);
+    }
+
+    public List stats(String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
+        return stats(server, auth, type, filter, userId, limit);
     }
 
     public Map catalogs() throws IOException, XmlPullParserException {

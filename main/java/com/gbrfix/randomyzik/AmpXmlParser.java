@@ -22,10 +22,12 @@ https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&au
 Catalogs:
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=catalogs&auth=a967f8fadc3053112edf87eac271ed76
 Advanced search:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth=a967f8fadc3053112edf87eac271ed76&operator=or&type=song&offset=0&limit=10&random=0&rule_1=Catalog&rule_1_operator=4&rule_1_input=gab
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth=8e4f767d679d81345871b298b4f29ee7&operator=and&type=song&rule_1=recent_played&rule_1_operator=0&rule_1_input=1691618400
 Local play:
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=add&oid=12697&type=song&clear=1
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=status
+Stats:
+https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=stats&auth=8e4f767d679d81345871b298b4f29ee7&type=song&filter=recent&limit=10&user_id=0
 */
 
 public class AmpXmlParser {
