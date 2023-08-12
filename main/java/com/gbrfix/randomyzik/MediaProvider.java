@@ -47,13 +47,13 @@ public class MediaProvider {
         return currentId;
     }
 
-    public int getMediaId(String title, String artist, String album) {
+    public int getId(String title, String artist, String album) {
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
 
-        SQLiteCursor cursor = dao.getFromTrack(title, artist, album);
+        SQLiteCursor cursor = dao.getId(title, artist, album);
         cursor.moveToFirst();
-        int mediaId = cursor.getInt(cursor.getColumnIndex("media_id"));
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
 
         dao.close();
 
