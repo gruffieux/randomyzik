@@ -112,9 +112,9 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
-    public SQLiteCursor getFromTrack(String title, String artist, String album) {
+    public SQLiteCursor getId(String title, String artist, String album) {
         ArrayList<String> args = new ArrayList<String>();
-        String query = "SELECT * FROM `medias` WHERE";
+        String query = "SELECT `id` FROM `medias` WHERE";
 
         if (title != null && !title.isEmpty()) {
             query += " `title`=?";
