@@ -19,7 +19,6 @@ public class AmpSession extends AmpRepository {
     private String auth;
     private String expire;
     private String user;
-    private Bundle lastPlayActivity = null;
     private static AmpSession instance = null;
 
     public static AmpSession getInstance() {
@@ -72,20 +71,6 @@ public class AmpSession extends AmpRepository {
         }
     }
 
-    public boolean checkPlayActivity(int oid) throws Exception {
-        if (lastPlayActivity == null) {
-            return false;
-        }
-
-        Bundle activity = lastPlayActivity(oid);
-
-        if (activity.getInt("date") != lastPlayActivity.getInt("date")) {
-            return false;
-        }
-
-        return true;
-    }
-
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
         return advanced_search(server, auth, offset, catalogId);
     }
@@ -120,28 +105,6 @@ public class AmpSession extends AmpRepository {
 
     public String localplay_stop() throws IOException {
         return localplay_stop(server, auth);
-    }
-
-    public void setLastPlayActivity(Bundle activity) {
-        lastPlayActivity = activity;
-    }
-
-    public Bundle lastPlayActivity(int oid) throws Exception {
-        long now = Calendar.getInstance().getTimeInMillis() / 1000;
-
-        List<Bundle> activities = timeline(server, auth, user, 1, now);
-
-        if (activities.isEmpty()) {
-            throw new Exception("No activity found");
-        }
-
-        Bundle activity = activities.get(0);
-
-        if (activity.getInt("oid") != oid || !activity.getString("action").equals("play")) {
-            throw new Exception("Activity mismatch");
-        }
-
-        return activity;
     }
 
     public String streaming_url(int oid, int offset) throws IOException {
