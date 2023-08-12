@@ -609,8 +609,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (!status.getString("state").equals("pause")) {
                                 throw new Exception("Ampache state error");
                             }
-                            int oid = provider.getMediaId(status.getString("title"), status.getString("artist"), status.getString("album"));
-                            if (!ampSession.checkPlayActivity(oid)) {
+                            int id = provider.getId(status.getString("title"), status.getString("artist"), status.getString("album"));
+                            if (id != provider.getCurrentId()) {
                                 throw new Exception("Ampache media error");
                             }
                             ampSession.localplay_play();
