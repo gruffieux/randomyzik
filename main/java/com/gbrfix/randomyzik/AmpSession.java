@@ -45,6 +45,31 @@ public class AmpSession extends AmpRepository {
         return !auth.isEmpty();
     }
 
+    public boolean canPlay() {
+        Bundle status = localplay_status(server, auth);
+
+        String state = status.getString("state");
+        String title = status.getString("title");
+        String artist = status.getString("artist");
+        String album = status.getString("album");
+
+        if (state != "stop") {
+            return false;
+        }
+
+        if (title || artist || album) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public boolean canPause() {
+    }
+
+    public boolean canResume() {
+    }
+
     public void connect(SharedPreferences prefs) throws Exception {
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
