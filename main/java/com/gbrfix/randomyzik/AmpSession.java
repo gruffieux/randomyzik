@@ -53,7 +53,7 @@ public class AmpSession extends AmpRepository {
         if (hasValidAuth() && !hasExpired()) {
             data = ping(server, auth);
         } else {
-            if (api) { // DEPRACATED
+            if (api) {
                 String apiKey = prefs.getString("amp_api_key", "");
                 data = handshake(server, apiKey);
             } else {
@@ -75,10 +75,12 @@ public class AmpSession extends AmpRepository {
         return advanced_search(server, auth, offset, catalogId);
     }
 
+    //DEPRACATED
     public List songs(int offset) throws IOException, XmlPullParserException {
         return songs(server, auth, offset);
     }
 
+    //DEPRACATED
     public List stats(String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
         return stats(server, auth, type, filter, userId, limit);
     }
@@ -89,6 +91,10 @@ public class AmpSession extends AmpRepository {
 
     public String localplay_add(int oid) throws IOException {
         return localplay_add(server, auth, oid);
+    }
+
+    public String localplay_delete() throws IOException {
+        return localplay_delete(server, auth);
     }
 
     public String localplay_pause() throws IOException {

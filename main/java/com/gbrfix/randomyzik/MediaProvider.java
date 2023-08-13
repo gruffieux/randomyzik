@@ -57,7 +57,7 @@ public class MediaProvider {
 
         dao.close();
 
-        return mediaId;
+        return id;
     }
 
     public int getTotal() {

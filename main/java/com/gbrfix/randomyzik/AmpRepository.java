@@ -88,6 +88,7 @@ abstract class AmpRepository {
         return map;
     }
 
+    //DEPRACATED
     public static List stats(String server, String auth, String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=stats&auth="+auth+"&type="+type+"&filter="+filter+"&user_id="+userId+"&limit="+limit);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
@@ -97,6 +98,7 @@ abstract class AmpRepository {
         return list;
     }
 
+    //DEPRACATED
     public static List timeline(String server, String auth, String user, int limit, long since) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=timeline&auth="+auth+"&username="+user+"&limit="+limit+"&since="+since);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
@@ -108,6 +110,14 @@ abstract class AmpRepository {
 
     public static String localplay_add(String server, String auth, int oid) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=add&type=song&oid="+oid+"&clear=1");
+        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
+        String res = conn.getResponseMessage();
+        conn.disconnect();
+        return res;
+    }
+
+    public static String localplay_delete(String server, String auth) throws IOException {
+        URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=delete_all");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
         String res = conn.getResponseMessage();
         conn.disconnect();

@@ -678,6 +678,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                         }
                         ampSession.localplay_stop();
+                        ampSession.localplay_delete();
                     } catch (Exception e) {
                         Bundle args = new Bundle();
                         args.putString("message", e.getMessage());
