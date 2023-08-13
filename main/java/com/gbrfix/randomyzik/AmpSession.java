@@ -64,10 +64,38 @@ public class AmpSession extends AmpRepository {
         return true;
     }
 
-    public boolean canPause() {
+    public boolean canPause(MediaProvider provider) {
+        Bundle status = localplay_status(server, auth);
+
+        String state = status.getString("state");
+        String title = status.getString("title");
+        String artist = status.getString("artist");
+        String album = status.getString("album");
+
+        if (state != "play") {
+            return false;
+        }
+
+        int id = provider.getId(title, artist, album);
+
+        return id == provider.getCurrentId();
     }
 
-    public boolean canResume() {
+    public boolean canResume(MediaProvider provider) {
+        Bundle status = localplay_status(server, auth);
+
+        String state = status.getString("state");
+        String title = status.getString("title");
+        String artist = status.getString("artist");
+        String album = status.getString("album");
+
+        if (state != "pause") {
+            return false;
+        }
+
+        int id = provider.getId(title, artist, album);
+
+        return id == provider.getCurrentId();
     }
 
     public void connect(SharedPreferences prefs) throws Exception {
