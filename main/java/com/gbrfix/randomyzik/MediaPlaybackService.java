@@ -560,9 +560,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
                             if (!session.isActive()) {
-                                Bundle status = ampSession.localplay_status();
-                                if (!status.getString("state").equals("stop")) {
-                                    throw new Exception("Ampache localplay not allowed now");
+                                if (!ampSession.canPlay()) {
+                                    throw new Exception("Ampache localplay cannot play now");
                                 }
                             }
                             ampSession.localplay_add(media.getMediaId());
@@ -605,12 +604,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
                             Bundle status = ampSession.localplay_status();
-                            if (!status.getString("state").equals("pause")) {
-                                throw new Exception("Ampache state error");
-                            }
-                            int id = provider.getId(status.getString("title"), status.getString("artist"), status.getString("album"));
-                            if (id != provider.getCurrentId()) {
-                                throw new Exception("Ampache media error");
+                            if (!ampSession.canResume()) {
+                                throw new Exception("Ampache localplay cannot resume now");
                             }
                             ampSession.localplay_play();
                             progress.resume();
@@ -648,6 +643,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 try {
                     if (ampSession.hasExpired()) {
                         ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                    }
+                    if (!ampSession.canPause()) {
+                        throw new Exception("Ampache localplay cannot pause now");
                     }
                     ampSession.localplay_pause();
                     progress.suspend();
