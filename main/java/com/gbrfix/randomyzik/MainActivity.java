@@ -123,7 +123,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     onTrackProgress(position);
                     break;
                 case "onTrackRead":
-                    onTrackRead(extras.getBoolean("last"));
+                    boolean last = extras.getBoolean("last");
+                    onTrackRead(last);
+                    if (last) {
+                        editor.putInt("currentId", 0);
+                        editor.putInt("position", 0);
+                        editor.commit();
+                    }
                     break;
                 case "onError":
                     infoMsg(extras.getString("message"), Color.RED);
