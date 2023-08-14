@@ -57,7 +57,7 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        if (title || artist || album) {
+        if (title != "" || artist != "" || album != "") {
             return false;
         }
 
