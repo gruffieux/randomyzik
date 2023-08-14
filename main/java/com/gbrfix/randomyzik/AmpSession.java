@@ -53,11 +53,19 @@ public class AmpSession extends AmpRepository {
         String artist = status.getString("artist");
         String album = status.getString("album");
 
-        if (state != "stop") {
+        if (!state.equals("stop")) {
             return false;
         }
 
-        if (title != "" || artist != "" || album != "") {
+        if (title != null && !title.isEmpty()) {
+            return false;
+        }
+
+        if (artist != null && !artist.isEmpty()) {
+            return false;
+        }
+
+        if (album != null && !album.isEmpty()) {
             return false;
         }
 
@@ -72,7 +80,7 @@ public class AmpSession extends AmpRepository {
         String artist = status.getString("artist");
         String album = status.getString("album");
 
-        if (state != "play") {
+        if (!state.equals("play")) {
             return false;
         }
 
@@ -89,7 +97,7 @@ public class AmpSession extends AmpRepository {
         String artist = status.getString("artist");
         String album = status.getString("album");
 
-        if (state != "pause") {
+        if (!state.equals("pause")) {
             return false;
         }
 
