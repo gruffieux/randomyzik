@@ -45,7 +45,7 @@ public class AmpSession extends AmpRepository {
         return !auth.isEmpty();
     }
 
-    public boolean canPlay() {
+    public boolean canPlay() throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -72,7 +72,7 @@ public class AmpSession extends AmpRepository {
         return true;
     }
 
-    public boolean canPause(MediaProvider provider) {
+    public boolean canPause(MediaProvider provider) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -89,7 +89,7 @@ public class AmpSession extends AmpRepository {
         return id == provider.getCurrentId();
     }
 
-    public boolean canResume(MediaProvider provider) {
+    public boolean canResume(MediaProvider provider) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -164,10 +164,6 @@ public class AmpSession extends AmpRepository {
 
     public String localplay_play() throws IOException {
         return localplay_play(server, auth);
-    }
-
-    public Bundle localplay_status() throws IOException, XmlPullParserException {
-        return localplay_status(server, auth);
     }
 
     public String localplay_stop() throws IOException {
