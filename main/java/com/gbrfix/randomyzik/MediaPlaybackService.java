@@ -280,6 +280,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         manager.abandonAudioFocus(this);
     }
 
+    private void keepAwake() {
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
+        wakeLock.acquire();
+    }
+
+    private void letSleep() {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
+        }
+    }
+
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.setOnSeekCompleteListener(this);
@@ -577,9 +589,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             session.setActive(true);
 
                             // Keep CPU awake
-                            PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-                            wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
-                            wakeLock.acquire();
+                            keepAwake();
 
                             // Send session event
                             Bundle bundle = new Bundle();
@@ -615,6 +625,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             return;
                         }
                         handler.post(() -> {
+                            keepAwake();
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
@@ -658,6 +669,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, session.getController().getPlaybackState().getPosition(), 0);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
+                    letSleep();
                 });
             });
         }
@@ -688,10 +700,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
 
-            if (wakeLock != null && wakeLock.isHeld()) {
-                wakeLock.release();
-            }
-
+            letSleep();
             stopForeground(true);
             stopSelf();
         }
