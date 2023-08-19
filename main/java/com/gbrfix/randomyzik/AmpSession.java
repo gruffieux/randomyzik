@@ -8,8 +8,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +70,7 @@ public class AmpSession extends AmpRepository {
         return true;
     }
 
-    public boolean canPause(MediaMetadataCompat metadata) throws XmlPullParserException, IOException {
+    public boolean canPause(Media media) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -84,22 +82,10 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        if (!title.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE)) {
-            return false;
-        }
-
-        if (!artist.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)) {
-            return false;
-        }
-
-        if (!album.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)) {
-            return false;
-        }
-
-        return true;
+        return title.equals(media.getTitle()) && artist.equals(media.getArtist()) && album.equals(media.getAlbum());
     }
 
-    public boolean canResume(MediaMetadataCompat metadata) throws XmlPullParserException, IOException {
+    public boolean canResume(Media media) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -111,19 +97,7 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        if (!title.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE)) {
-            return false;
-        }
-
-        if (!artist.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)) {
-            return false;
-        }
-
-        if (!album.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)) {
-            return false;
-        }
-
-        return true;
+        return title.equals(media.getTitle()) && artist.equals(media.getArtist()) && album.equals(media.getAlbum());
     }
 
     public void connect(SharedPreferences prefs) throws Exception {

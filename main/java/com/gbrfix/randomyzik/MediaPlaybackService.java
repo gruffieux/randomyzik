@@ -292,6 +292,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
     }
 
+    private Media mediaFromMetadata() {
+        Media media = new Media();
+
+        MediaMetadataCompat metadata = session.getController().getMetadata();
+
+        media.setId(Integer.valueOf(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)));
+        media.setTitle(metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
+        media.setAlbum(metadata.getString(MediaMetadata.METADATA_KEY_ALBUM));
+        media.setArtist(metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
+        media.setDuration((int)metadata.getLong(MediaMetadata.METADATA_KEY_DURATION));
+
+        return media;
+    }
+
     @Override
     public void onPrepared(MediaPlayer mp) {
         mp.setOnSeekCompleteListener(this);
@@ -613,7 +627,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
-                            if (!ampSession.canResume(session.getController().getMetadata())) {
+                            if (!ampSession.canResume(mediaFromMetadata())) {
                                 throw new Exception("Ampache localplay cannot resume now");
                             }
                             ampSession.localplay_play();
@@ -654,7 +668,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     if (ampSession.hasExpired()) {
                         ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                     }
-                    if (!ampSession.canPause(session.getController().getMetadata())) {
+                    if (!ampSession.canPause(mediaFromMetadata())) {
                         throw new Exception("Ampache localplay cannot pause now");
                     }
                     ampSession.localplay_pause();
