@@ -613,7 +613,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
-                            if (!ampSession.canResume(provider)) {
+                            if (!ampSession.canResume(session.getController().getMetadata())) {
                                 throw new Exception("Ampache localplay cannot resume now");
                             }
                             ampSession.localplay_play();
@@ -654,7 +654,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     if (ampSession.hasExpired()) {
                         ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                     }
-                    if (!ampSession.canPause(provider)) {
+                    if (!ampSession.canPause(session.getController().getMetadata())) {
                         throw new Exception("Ampache localplay cannot pause now");
                     }
                     ampSession.localplay_pause();
