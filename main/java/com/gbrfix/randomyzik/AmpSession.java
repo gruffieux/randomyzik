@@ -72,7 +72,7 @@ public class AmpSession extends AmpRepository {
         return true;
     }
 
-    public boolean canPause(MediaProvider provider) throws XmlPullParserException, IOException {
+    public boolean canPause(MediaMetadataCompat metadata) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -84,12 +84,22 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        int id = provider.getId(title, artist, album);
+        if (!title.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE)) {
+            return false;
+        }
 
-        return id == provider.getCurrentId();
+        if (!artist.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)) {
+            return false;
+        }
+
+        if (!album.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)) {
+            return false;
+        }
+
+        return true;
     }
 
-    public boolean canResume(MediaProvider provider) throws XmlPullParserException, IOException {
+    public boolean canResume(MediaMetadataCompat metadata) throws XmlPullParserException, IOException {
         Bundle status = localplay_status(server, auth);
 
         String state = status.getString("state");
@@ -101,9 +111,19 @@ public class AmpSession extends AmpRepository {
             return false;
         }
 
-        int id = provider.getId(title, artist, album);
+        if (!title.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE)) {
+            return false;
+        }
 
-        return id == provider.getCurrentId();
+        if (!artist.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST)) {
+            return false;
+        }
+
+        if (!album.equals(metadata.getString(MediaMetadataCompat.METADATA_KEY_ALBUM)) {
+            return false;
+        }
+
+        return true;
     }
 
     public void connect(SharedPreferences prefs) throws Exception {
