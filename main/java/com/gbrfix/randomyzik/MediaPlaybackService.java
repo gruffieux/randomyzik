@@ -586,9 +586,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
                             if (!session.isActive()) {
-                                if (!ampSession.canPlay()) {
-                                    throw new Exception("Ampache localplay cannot play now");
-                                }
+                                ampSession.checkAction("stop", new Media());
                             }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
@@ -627,9 +625,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
-                            if (!ampSession.canResume(mediaFromMetadata())) {
-                                throw new Exception("Ampache localplay cannot resume now");
-                            }
+                            ampSession.checkAction("pause", mediaFromMetadata());
                             ampSession.localplay_play();
                             progress.resume();
                         } catch (Exception e) {
@@ -668,9 +664,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     if (ampSession.hasExpired()) {
                         ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                     }
-                    if (!ampSession.canPause(mediaFromMetadata())) {
-                        throw new Exception("Ampache localplay cannot pause now");
-                    }
+                    ampSession.checkAction("play", mediaFromMetadata());
                     ampSession.localplay_pause();
                     progress.suspend();
                 } catch (Exception e) {
