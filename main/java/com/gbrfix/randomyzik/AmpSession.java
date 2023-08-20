@@ -100,6 +100,23 @@ public class AmpSession extends AmpRepository {
         return title.equals(media.getTitle()) && artist.equals(media.getArtist()) && album.equals(media.getAlbum());
     }
 
+    public void checkAction(String reqState, Media media) throws XmlPullParserException, IOException {
+        Bundle status = localplay_status(server, auth);
+        
+        String state = status.getString("state");
+        String title = status.getString("title");
+        String artist = status.getString("artist");
+        String album = status.getString("album");
+
+        if (!state.equals(reqState)) {
+            throw new Exception("Ampache localplay current state is '" + state + "' but '" + reqState + "' is excepted");
+        }
+
+        if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
+            throw new Exception("Ampache localplay current track is not as excepted"
+        }
+    }
+
     public void connect(SharedPreferences prefs) throws Exception {
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
