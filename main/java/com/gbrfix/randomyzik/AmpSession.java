@@ -43,64 +43,7 @@ public class AmpSession extends AmpRepository {
         return !auth.isEmpty();
     }
 
-    public boolean canPlay() throws XmlPullParserException, IOException {
-        Bundle status = localplay_status(server, auth);
-
-        String state = status.getString("state");
-        String title = status.getString("title");
-        String artist = status.getString("artist");
-        String album = status.getString("album");
-
-        if (!state.equals("stop")) {
-            return false;
-        }
-
-        if (title != null && !title.isEmpty()) {
-            return false;
-        }
-
-        if (artist != null && !artist.isEmpty()) {
-            return false;
-        }
-
-        if (album != null && !album.isEmpty()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public boolean canPause(Media media) throws XmlPullParserException, IOException {
-        Bundle status = localplay_status(server, auth);
-
-        String state = status.getString("state");
-        String title = status.getString("title");
-        String artist = status.getString("artist");
-        String album = status.getString("album");
-
-        if (!state.equals("play")) {
-            return false;
-        }
-
-        return title.equals(media.getTitle()) && artist.equals(media.getArtist()) && album.equals(media.getAlbum());
-    }
-
-    public boolean canResume(Media media) throws XmlPullParserException, IOException {
-        Bundle status = localplay_status(server, auth);
-
-        String state = status.getString("state");
-        String title = status.getString("title");
-        String artist = status.getString("artist");
-        String album = status.getString("album");
-
-        if (!state.equals("pause")) {
-            return false;
-        }
-
-        return title.equals(media.getTitle()) && artist.equals(media.getArtist()) && album.equals(media.getAlbum());
-    }
-
-    public void checkAction(String reqState, Media media) throws XmlPullParserException, IOException {
+    public void checkAction(String reqState, Media media) throws Exception {
         Bundle status = localplay_status(server, auth);
         
         String state = status.getString("state");
@@ -109,11 +52,11 @@ public class AmpSession extends AmpRepository {
         String album = status.getString("album");
 
         if (!state.equals(reqState)) {
-            throw new Exception("Ampache localplay current state is '" + state + "' but '" + reqState + "' is excepted");
+            throw new Exception("Localplay current state (" + state + ") is not as excepted (" + reqState + ")");
         }
 
         if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
-            throw new Exception("Ampache localplay current track is not as excepted"
+            throw new Exception("Localplay current track is not as excepted");
         }
     }
 
@@ -145,16 +88,6 @@ public class AmpSession extends AmpRepository {
 
     public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
         return advanced_search(server, auth, offset, catalogId);
-    }
-
-    //DEPRACATED
-    public List songs(int offset) throws IOException, XmlPullParserException {
-        return songs(server, auth, offset);
-    }
-
-    //DEPRACATED
-    public List stats(String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
-        return stats(server, auth, type, filter, userId, limit);
     }
 
     public Map catalogs() throws IOException, XmlPullParserException {

@@ -16,7 +16,8 @@ public class Media {
     private String album_key;
 
     public Media() {
-        id = 0;
+        id = media_id = duration = 0;
+        flag = track_nb = title = album = artist = album_key = "";
     }
 
     public int getId() {

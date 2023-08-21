@@ -70,15 +70,6 @@ abstract class AmpRepository {
         return list;
     }
 
-    public static List songs(String server, String auth, int offset) throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=songs&auth="+auth+"&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST);
-        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
-        AmpXmlParser parser = new AmpXmlParser();
-        List list = parser.parseSongs(conn.getInputStream());
-        conn.disconnect();
-        return list;
-    }
-
     public static Map catalogs(String server, String auth) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=catalogs&auth="+auth);
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
@@ -86,26 +77,6 @@ abstract class AmpRepository {
         Map<String, Integer> map = parser.parseCatalogs(conn.getInputStream());
         conn.disconnect();
         return map;
-    }
-
-    //DEPRACATED
-    public static List stats(String server, String auth, String type, String filter, int userId, int limit) throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=stats&auth="+auth+"&type="+type+"&filter="+filter+"&user_id="+userId+"&limit="+limit);
-        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
-        AmpXmlParser parser = new AmpXmlParser();
-        List list = parser.parseSongs(conn.getInputStream());
-        conn.disconnect();
-        return list;
-    }
-
-    //DEPRACATED
-    public static List timeline(String server, String auth, String user, int limit, long since) throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=timeline&auth="+auth+"&username="+user+"&limit="+limit+"&since="+since);
-        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
-        AmpXmlParser parser = new AmpXmlParser();
-        List list = parser.parseActivities(conn.getInputStream());
-        conn.disconnect();
-        return list;
     }
 
     public static String localplay_add(String server, String auth, int oid) throws IOException {

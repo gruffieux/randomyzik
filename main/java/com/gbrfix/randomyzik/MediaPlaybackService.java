@@ -591,6 +591,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                             progress.start(duration, MediaPlaybackService.this);
+                            keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
@@ -599,9 +600,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                         handler.post(() -> {
                             session.setActive(true);
-
-                            // Keep CPU awake
-                            keepAwake();
 
                             // Send session event
                             Bundle bundle = new Bundle();
@@ -628,6 +626,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             ampSession.checkAction("pause", mediaFromMetadata());
                             ampSession.localplay_play();
                             progress.resume();
+                            keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
@@ -635,7 +634,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             return;
                         }
                         handler.post(() -> {
-                            keepAwake();
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
@@ -667,6 +665,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     ampSession.checkAction("play", mediaFromMetadata());
                     ampSession.localplay_pause();
                     progress.suspend();
+                    letSleep();
                 } catch (Exception e) {
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
@@ -677,7 +676,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, session.getController().getPlaybackState().getPosition(), 0);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
-                    letSleep();
                 });
             });
         }
@@ -685,24 +683,26 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onStop() {
             progress.stop();
-            
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    AmpSession ampSession = AmpSession.getInstance();
-                    try {
-                        if (ampSession.hasExpired()) {
-                            ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+
+            if (session.isActive()) {
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        AmpSession ampSession = AmpSession.getInstance();
+                        try {
+                            if (ampSession.hasExpired()) {
+                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                            }
+                            ampSession.localplay_stop();
+                            ampSession.localplay_delete();
+                        } catch (Exception e) {
+                            Bundle args = new Bundle();
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
                         }
-                        ampSession.localplay_stop();
-                        ampSession.localplay_delete();
-                    } catch (Exception e) {
-                        Bundle args = new Bundle();
-                        args.putString("message", e.getMessage());
-                        session.sendSessionEvent("onError", args);
                     }
-                }
-            });
+                });
+            }
 
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
