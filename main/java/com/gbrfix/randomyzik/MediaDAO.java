@@ -112,43 +112,6 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
-    public SQLiteCursor getId(String title, String artist, String album) {
-        ArrayList<String> args = new ArrayList<String>();
-        String query = "SELECT `id` FROM `medias` WHERE";
-
-        if (title != null && !title.isEmpty()) {
-            query += " `title`=?";
-            args.add(title);
-        } else {
-            query += " `title` IS NULL";
-        }
-
-        if (artist != null && !artist.isEmpty()) {
-            query += " AND `artist`=?";
-            args.add(artist);
-        }
-
-        if (album != null && !album.isEmpty()) {
-            query += " AND `album`=?";
-            args.add(album);
-        }
-
-        String[] arr = null;
-        switch (args.size()) {
-            case 1:
-                arr = new String[] {args.get(0)};
-                break;
-            case 2:
-                arr = new String[] {args.get(0), args.get(1)};
-                break;
-            case 3:
-                arr = new String[] {args.get(0), args.get(1), args.get(2)};
-                break;
-        }
-
-        return (SQLiteCursor) this.db.rawQuery(query, arr);
-    }
-
     public void updateFlag(int id, String flag) {
         ContentValues values = new ContentValues();
         values.put("flag", flag);

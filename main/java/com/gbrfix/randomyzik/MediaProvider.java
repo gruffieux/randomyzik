@@ -47,19 +47,6 @@ public class MediaProvider {
         return currentId;
     }
 
-    public int getId(String title, String artist, String album) {
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-
-        SQLiteCursor cursor = dao.getId(title, artist, album);
-        cursor.moveToFirst();
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-
-        dao.close();
-
-        return id;
-    }
-
     public int getTotal() {
         return total;
     }
