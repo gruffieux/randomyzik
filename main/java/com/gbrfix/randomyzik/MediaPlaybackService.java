@@ -594,6 +594,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
+                            args.putInt("amp", 1);
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
@@ -629,6 +630,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
+                            args.putInt("amp", 1);
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
@@ -668,6 +670,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     letSleep();
                 } catch (Exception e) {
                     Bundle args = new Bundle();
+                    args.putInt("amp", 1);
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
                     return;
