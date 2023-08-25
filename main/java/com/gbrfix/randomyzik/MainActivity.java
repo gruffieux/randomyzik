@@ -132,6 +132,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
                     break;
                 case "onError":
+                    if (extras.getInt("amp") == 1) {
+                        Intent intent = new Intent(this, MediaPlaybackService.class);
+                        intent.setAction("stop");
+                        startService(intent);
+                    }
+                    // TODO: show an autocancel notification
                     infoMsg(extras.getString("message"), Color.RED);
                     break;
             }
