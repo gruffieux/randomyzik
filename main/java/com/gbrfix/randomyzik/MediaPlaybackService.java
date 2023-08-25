@@ -696,6 +696,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (ampSession.hasExpired()) {
                                 ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
                             }
+                            ampSession.checkAction("playOrPause", mediaFromMetadata());
                             ampSession.localplay_stop();
                             ampSession.localplay_delete();
                         } catch (Exception e) {
