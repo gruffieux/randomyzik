@@ -1,6 +1,10 @@
 package com.gbrfix.randomyzik;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +20,8 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import android.support.v4.media.MediaBrowserCompat;
@@ -24,6 +30,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.media.session.MediaButtonReceiver;
 import androidx.preference.PreferenceManager;
 
 import android.os.Bundle;
@@ -48,6 +55,8 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
+    public final static int NOTIFICATION_ID = 2;
+    final static String NOTIFICATION_CHANNEL = "Information channel";
     DbService dbService = null;
     MediaBrowserCompat mediaBrowser = null;
     SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
@@ -72,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
 
-            if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
+            /*if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
                 TextView infoMsg = findViewById(R.id.infoMsg);
                 TextView positionLabel = findViewById(R.id.position);
                 TextView durationLabel = findViewById(R.id.duration);
@@ -86,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 durationLabel.setText("");
                 progressBar.setProgress(0);
                 progressBar.setMax(0);
-            }
+            }*/
         }
 
         @Override
@@ -132,13 +141,17 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
                     break;
                 case "onError":
-                    if (extras.getInt("amp") == 1) {
-                        Intent intent = new Intent(this, MediaPlaybackService.class);
+                    int code = extras.getInt("code");
+                    String errorMsg = extras.getString("message");
+                    infoMsg(errorMsg, Color.RED);
+                    if (code >= 1) {
+                        infoNotification("Error", errorMsg);
+                    }
+                    if (code >= 2) {
+                        Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("stop");
                         startService(intent);
                     }
-                    // TODO: show an autocancel notification
-                    infoMsg(extras.getString("message"), Color.RED);
                     break;
             }
 
@@ -349,6 +362,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERSMISSIONS_REQUEST_STORAGE);
                 return;
             }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL, "Information notification", NotificationManager.IMPORTANCE_LOW);
+            channel.setVibrationPattern(null);
+            notificationManager.createNotificationChannel(channel);
         }
 
         setContentView(R.layout.playlist);
@@ -640,6 +660,42 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         TextView infoMsg = findViewById(R.id.infoMsg);
         infoMsg.setTextColor(color);
         infoMsg.setText(msg);
+    }
+
+    @SuppressLint("MissingPermission")
+    public void infoNotification(String contentTitle, String contentText) {
+        // Create an explicit intent for an Activity in your app
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+
+        // Build notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL);
+
+        builder
+                // Add the metadata for the currently playing track
+                .setContentTitle(contentTitle)
+                .setContentText(contentText)
+
+                // Enable launching the app by clicking the notification
+                .setContentIntent(pendingIntent)
+
+                .setAutoCancel(true)
+
+                // Make the transport controls visible on the lockscreen
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+                // Add an app icon and set its accent color
+                // Be careful about the color
+                .setSmallIcon(R.drawable.ic_stat_audio)
+
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(contentText));
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 
     @Override
