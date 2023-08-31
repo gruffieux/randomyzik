@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
@@ -30,7 +31,6 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.media.session.MediaButtonReceiver;
 import androidx.preference.PreferenceManager;
 
 import android.os.Bundle;
@@ -81,21 +81,20 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
 
-            /*if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
+            if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
                 TextView infoMsg = findViewById(R.id.infoMsg);
                 TextView positionLabel = findViewById(R.id.position);
                 TextView durationLabel = findViewById(R.id.duration);
                 ProgressBar progressBar = findViewById(R.id.progressBar);
-
-                if (!infoMsg.getText().equals(getText(R.string.info_play_end)) && !infoMsg.getText().equals(getText(R.string.err_all_read))) {
+                ColorStateList colors = infoMsg.getTextColors();
+                if (colors.getDefaultColor() == fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
                     infoMsg.setText("");
                 }
-
                 positionLabel.setText("");
                 durationLabel.setText("");
                 progressBar.setProgress(0);
                 progressBar.setMax(0);
-            }*/
+            }
         }
 
         @Override
@@ -503,6 +502,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (last) {
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             infoMsg(getString(R.string.info_play_end), color);
+            infoNotification("Info", getString(R.string.info_play_end));
         }
     }
 

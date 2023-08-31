@@ -484,6 +484,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
+                args.putInt("code", 1);
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
                 session.getController().getTransportControls().stop();
