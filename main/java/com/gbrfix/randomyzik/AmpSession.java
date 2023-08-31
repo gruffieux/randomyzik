@@ -51,11 +51,11 @@ public class AmpSession extends AmpRepository {
         String artist = status.getString("artist");
         String album = status.getString("album");
 
-        if (reqState.equals("playOrPause") && !state.equals("play") && !state.equals("pause")) {
-            throw new Exception("Localplay current state (" + state + ") is not as excepted");
-        }
-
-        if (!state.equals(reqState)) {
+        if (reqState.equals("playOrPause") {
+            if (!state.equals("play") || !state.equals("pause")) {
+                throw new Exception("Localplay current state (" + state + ") is not as excepted");
+            }
+        } else if (!state.equals(reqState)) {
             throw new Exception("Localplay current state (" + state + ") is not as excepted (" + reqState + ")");
         }
 
