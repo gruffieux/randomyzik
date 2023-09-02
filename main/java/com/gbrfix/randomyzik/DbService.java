@@ -57,13 +57,13 @@ public class DbService implements Observer<WorkInfo> {
         WorkManager.getInstance(context).cancelAllWorkByTag("db");
 
         if (amp && !onChange) {
-            AmpSession ampSession = AmpSession.getInstance();
+            AmpSession ampSession = AmpSession.getInstance(context);
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
             executor.execute(() -> {
                 Map<String, String> cats;
                 try {
-                    ampSession.connect(prefs);
+                    ampSession.connect();
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
                     cats = null;

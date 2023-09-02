@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">RandoMyZik</string>
-    <string name="err_no_file">Aucun fichier audio trouvé dans le dossier music</string>
-    <string name="err_no_perms">Permissions en lecture/écriture nécessaires</string>
-    <string name="err_all_read">Il n\'y a plus rien à lire</string>
-    <string name="info_play_end">Liste de lecture terminée</string>
-    <string name="info_track_summary">Piste: %1$d/%2$d Liste lue: %3$.1f%%</string>
+
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Indiquer cette piste comme non lue?</string>
     <string name="edit_all_tracks_title">%1$d pistes</string>
@@ -52,4 +48,16 @@
     <string name="rescan_msg">Quel catalogue voulez-vous recharger?</string>
     <string name="rescan_current">Le courant</string>
     <string name="rescan_all">Tous</string>
+
+    <!-- Info & error -->
+    <string name="info">Info</string>
+    <string name="info_play_end">Liste de lecture terminée</string>
+    <string name="info_track_summary">Piste: %1$d/%2$d Liste lue: %3$.1f%%</string>
+    <string name="error">Erreur</string>
+    <string name="err_no_file">Aucun fichier audio trouvé dans le dossier music</string>
+    <string name="err_no_perms">Permissions en lecture/écriture nécessaires</string>
+    <string name="err_all_read">Il n\'y a plus rien à lire</string>
+    <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
+    <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
+    <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
 </resources>

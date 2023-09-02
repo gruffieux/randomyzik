@@ -175,7 +175,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             if (amp) {
-                AmpSession ampSession = AmpSession.getInstance();
+                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 streaming = prefs.getBoolean("amp_streaming", false);
                 String server = prefs.getString("amp_server", "");
                 String catalog = prefs.getString("amp_catalog", "0");
@@ -185,7 +185,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     public void run() {
                         try {
                             provider.setDbName(AmpRepository.dbName(server, catalog));
-                            ampSession.connect(prefs);
+                            ampSession.connect();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
@@ -246,7 +246,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private void prepareMediaStreaming(int mediaId) throws IOException {
-        AmpSession ampSession = AmpSession.getInstance();
+        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
         String url = ampSession.streaming_url(mediaId, 0);
         player.setDataSource(url);
         player.prepareAsync();
@@ -422,11 +422,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     // Prepare media player
                     if (streaming) {
-                        AmpSession ampSession = AmpSession.getInstance();
+                        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         if (ampSession.hasExpired()) {
                             executor.execute(() -> {
                                 try {
-                                    ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                                    ampSession.connect();
                                 } catch (Exception e) {
                                     Bundle args = new Bundle();
                                     args.putString("message", e.getMessage());
@@ -562,7 +562,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
                 startService(intent);
 
-                AmpSession ampSession = AmpSession.getInstance();
+                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
 
@@ -584,7 +584,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     executor.execute(() -> {
                         try {
                             if (ampSession.hasExpired()) {
-                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                                ampSession.connect();
                             }
                             if (!session.isActive()) {
                                 ampSession.checkAction("stop", new Media());
@@ -623,7 +623,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     executor.execute(() -> {
                         try {
                             if (ampSession.hasExpired()) {
-                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                                ampSession.connect();
                             }
                             ampSession.checkAction("pause", mediaFromMetadata());
                             ampSession.localplay_play();
@@ -659,11 +659,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onPause() {
             ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
-            AmpSession ampSession = AmpSession.getInstance();
+            AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
             executor.execute(() -> {
                 try {
                     if (ampSession.hasExpired()) {
-                        ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                        ampSession.connect();
                     }
                     ampSession.checkAction("play", mediaFromMetadata());
                     ampSession.localplay_pause();
@@ -677,9 +677,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     return;
                 }
                 handler.post(() -> {
-                    stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, session.getController().getPlaybackState().getPosition(), 0);
+                    int position = (int)session.getController().getPlaybackState().getPosition();
+                    stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, position, 0);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
+                    Bundle args = new Bundle();
+                    args.putInt("id", provider.getCurrentId());
+                    args.putInt("position", position);
+                    session.sendSessionEvent("onTrackSave", args);
                 });
             });
         }
@@ -692,10 +697,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        AmpSession ampSession = AmpSession.getInstance();
+                        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         try {
                             if (ampSession.hasExpired()) {
-                                ampSession.connect(PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this));
+                                ampSession.connect();
                             }
                             ampSession.checkAction("playOrPause", mediaFromMetadata());
                             ampSession.localplay_stop();

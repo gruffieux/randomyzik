@@ -48,8 +48,8 @@ public class SettingsActivity extends AppCompatActivity {
             executor.execute(() -> {
                 Map<String, String> cats;
                 try {
-                    AmpSession ampSession = AmpSession.getInstance();
-                    ampSession.connect(prefs);
+                    AmpSession ampSession = AmpSession.getInstance(getContext());
+                    ampSession.connect();
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
                     cats = null;

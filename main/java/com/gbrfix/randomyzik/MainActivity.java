@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String errorMsg = extras.getString("message");
                     infoMsg(errorMsg, Color.RED);
                     if (code >= 1) {
-                        infoNotification("Error", errorMsg);
+                        infoNotification(getString(R.string.error), errorMsg);
                     }
                     if (code >= 2) {
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
@@ -502,7 +502,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (last) {
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             infoMsg(getString(R.string.info_play_end), color);
-            infoNotification("Info", getString(R.string.info_play_end));
+            infoNotification(getString(R.string.info), getString(R.string.info_play_end));
         }
     }
 

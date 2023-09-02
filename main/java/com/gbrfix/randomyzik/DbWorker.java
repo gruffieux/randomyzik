@@ -50,9 +50,9 @@ public class DbWorker extends Worker {
             contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
             subText = "Ampache playlist";
             setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            AmpSession ampSession = AmpSession.getInstance();
+            AmpSession ampSession = AmpSession.getInstance(context);
             try {
-                ampSession.connect(prefs);
+                ampSession.connect();
                 if (catalogId == 0) {
                     throw new Exception("No catalog found");
                 }

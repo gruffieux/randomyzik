@@ -1,7 +1,10 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+
+import androidx.preference.PreferenceManager;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -18,10 +21,15 @@ public class AmpSession extends AmpRepository {
     private String expire;
     private String user;
     private static AmpSession instance = null;
+    private Context context;
 
-    public static AmpSession getInstance() {
+    private AmpSession(Context context) {
+        this.context = context;
+    }
+
+    public static AmpSession getInstance(Context context) {
         if (instance == null) {
-            instance = new AmpSession();
+            instance = new AmpSession(context);
         }
         return instance;
     }
@@ -53,18 +61,19 @@ public class AmpSession extends AmpRepository {
 
         if (reqState.equals("playOrPause")) {
             if (!state.equals("play") && !state.equals("pause")) {
-                throw new Exception("Localplay current state (" + state + ") is not as excepted");
+                throw new Exception(context.getString(R.string.err_amp_state_unexcepted, state));
             }
         } else if (!state.equals(reqState)) {
-            throw new Exception("Localplay current state (" + state + ") is not as excepted (" + reqState + ")");
+            throw new Exception(context.getString(R.string.err_amp_excepted_state, state, reqState));
         }
 
         if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
-            throw new Exception("Localplay current track is not as excepted");
+            throw new Exception(context.getString((R.string.err_amp_track_unexcepted)));
         }
     }
 
-    public void connect(SharedPreferences prefs) throws Exception {
+    public void connect() throws Exception {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
         Bundle data = null;
