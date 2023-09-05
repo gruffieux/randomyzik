@@ -16,14 +16,7 @@
     <string name="action_settings">Settings</string>
     <string name="action_rescan">Rescan</string>
     <string name="title_activity_settings">Settings</string>
-
-    <!-- Scanning -->
-    <string name="info_scanning">Scanning audio files, please wait...</string>
-    <string name="info_searching">Searching in local directory: %1$s</string>
-    <string name="info_cat_searching">Searching in catalog: %1$s</string>
-    <string name="info_inserting">Inserting tracks...</string>
-    <string name="info_updating">Updating tracks...</string>
-
+ 
     <!-- Preference Titles -->
     <string name="amp_header">Ampache server</string>
 
@@ -47,14 +40,22 @@
     <string name="rescan_current">Current</string>
     <string name="rescan_all">All</string>
 
-    <!-- Info & error -->
+    <!-- Info -->
     <string name="info">Info</string>
     <string name="info_play_end">Playlist ended</string>
     <string name="info_track_summary">Track: %1$d/%2$d Playlist read: %3$.1f%%</string>
+    <string name="info_scanning">Scanning audio files, please wait...</string>
+    <string name="info_searching">Searching in local directory: %1$s</string>
+    <string name="info_cat_searching">Searching in catalog: %1$s</string>
+    <string name="info_inserting">Inserting tracks...</string>
+    <string name="info_updating">Updating tracks...</string>
+
+    <!-- Error -->
     <string name="error">Error</string>
     <string name="err_no_file">No audio file found in music directory</string>
     <string name="err_no_perms">Read/write storage permissions required</string>
     <string name="err_all_read">Nothing else to read</string>
+    <string name="err_amp_invalid_auth">Invalid authentication</string>
     <string name="err_amp_state_unexcepted">Localplay current state (%1$s) is not as excepted</string>
     <string name="err_amp_excepted_state">Localplay current state (%1$s) is not as excepted (%2$s)</string>
     <string name="err_amp_track_unexcepted">Localplay current track is not as excepted</string>
