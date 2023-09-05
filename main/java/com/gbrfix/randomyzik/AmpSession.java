@@ -20,8 +20,8 @@ public class AmpSession extends AmpRepository {
     private String auth;
     private String expire;
     private String user;
-    private static AmpSession instance = null;
     private Context context;
+    private static AmpSession instance = null;
 
     private AmpSession(Context context) {
         this.context = context;
@@ -68,7 +68,7 @@ public class AmpSession extends AmpRepository {
         }
 
         if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
-            throw new Exception(context.getString((R.string.err_amp_track_unexcepted)));
+            throw new Exception(context.getString(R.string.err_amp_track_unexcepted));
         }
     }
 
@@ -95,7 +95,7 @@ public class AmpSession extends AmpRepository {
         expire = data.getString("session_expire");
 
         if (!hasValidAuth()) {
-            throw new Exception("Invalid authentication");
+            throw new Exception(context.getString(R.string.err_amp_invalid_auth));
         }
     }
 
