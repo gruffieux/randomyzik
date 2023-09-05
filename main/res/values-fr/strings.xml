@@ -18,13 +18,6 @@
     <string name="action_rescan">Rescan</string>
     <string name="title_activity_settings">Settings</string>
 
-    <!-- Scanning -->
-    <string name="info_scanning">Scan des fichiers audio, veuillez patienter...</string>
-    <string name="info_searching">Recherche dans le dossier audio interne: %1$s</string>
-    <string name="info_cat_searching">Recherche dans le catalogue: %1$s</string>
-    <string name="info_inserting">Ajout des pistes...</string>
-    <string name="info_updating">Mise à jour des pistes...</string>
-
     <!-- Preference Titles -->
     <string name="amp_header">Ampache server</string>
 
@@ -49,14 +42,22 @@
     <string name="rescan_current">Le courant</string>
     <string name="rescan_all">Tous</string>
 
-    <!-- Info & error -->
+    <!-- Info -->
     <string name="info">Info</string>
     <string name="info_play_end">Liste de lecture terminée</string>
     <string name="info_track_summary">Piste: %1$d/%2$d Liste lue: %3$.1f%%</string>
+    <string name="info_scanning">Scan des fichiers audio, veuillez patienter...</string>
+    <string name="info_searching">Recherche dans le dossier audio interne: %1$s</string>
+    <string name="info_cat_searching">Recherche dans le catalogue: %1$s</string>
+    <string name="info_inserting">Ajout des pistes...</string>
+    <string name="info_updating">Mise à jour des pistes...</string>
+
+    <!-- Error -->
     <string name="error">Erreur</string>
     <string name="err_no_file">Aucun fichier audio trouvé dans le dossier music</string>
     <string name="err_no_perms">Permissions en lecture/écriture nécessaires</string>
     <string name="err_all_read">Il n\'y a plus rien à lire</string>
+    <string name="err_amp_invalid_auth">Erreur d\'authentification</string>
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
     <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
