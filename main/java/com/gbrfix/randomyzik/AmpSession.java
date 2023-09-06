@@ -113,10 +113,6 @@ public class AmpSession extends AmpRepository {
         return localplay_add(server, auth, oid);
     }
 
-    public String localplay_delete() throws IOException {
-        return localplay_delete(server, auth);
-    }
-
     public String localplay_pause() throws IOException {
         return localplay_pause(server, auth);
     }

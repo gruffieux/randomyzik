@@ -87,14 +87,6 @@ abstract class AmpRepository {
         return res;
     }
 
-    public static String localplay_delete(String server, String auth) throws IOException {
-        URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=delete_all");
-        HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
-        String res = conn.getResponseMessage();
-        conn.disconnect();
-        return res;
-    }
-
     public static String localplay_pause(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=pause");
         HttpsURLConnection conn = (HttpsURLConnection)url.openConnection();
