@@ -588,7 +588,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 ampSession.connect();
                             }
                             if (!session.isActive()) {
-                                ampSession.checkAction("stop", new Media());
+                                ampSession.checkAction("stop", null);
                             }
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
@@ -705,7 +705,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             }
                             ampSession.checkAction("playOrPause", mediaFromMetadata());
                             ampSession.localplay_stop();
-                            ampSession.localplay_delete();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());

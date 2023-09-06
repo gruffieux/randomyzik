@@ -174,9 +174,9 @@ public class DbWorker extends Worker {
                 .setContentIntent(pendingIntent)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.drawable.ic_stat_audio)
+                .setSmallIcon(R.drawable.ic_action_rescan)
                 .setOngoing(true)
-                .addAction(android.R.drawable.ic_delete, "Stop", stopPendingIntent);
+                .addAction(R.drawable.ic_action_cancel, "Stop", stopPendingIntent);
 
         return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build());
     }

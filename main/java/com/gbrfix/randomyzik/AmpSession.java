@@ -67,8 +67,10 @@ public class AmpSession extends AmpRepository {
             throw new Exception(context.getString(R.string.err_amp_excepted_state, state, reqState));
         }
 
-        if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
-            throw new Exception(context.getString(R.string.err_amp_track_unexcepted));
+        if (media != null) {
+            if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
+                throw new Exception(context.getString(R.string.err_amp_track_unexcepted));
+            }
         }
     }
 

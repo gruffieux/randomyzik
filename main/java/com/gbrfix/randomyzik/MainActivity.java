@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String errorMsg = extras.getString("message");
                     infoMsg(errorMsg, Color.RED);
                     if (code >= 1) {
-                        infoNotification(getString(R.string.error), errorMsg);
+                        infoNotification(1, errorMsg);
                     }
                     if (code >= 2) {
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
@@ -502,7 +502,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (last) {
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
             infoMsg(getString(R.string.info_play_end), color);
-            infoNotification(getString(R.string.info), getString(R.string.info_play_end));
+            infoNotification(0, getString(R.string.info_play_end));
         }
     }
 
@@ -663,7 +663,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     @SuppressLint("MissingPermission")
-    public void infoNotification(String contentTitle, String contentText) {
+    public void infoNotification(int level, String contentText) {
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -674,7 +674,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         builder
                 // Add the metadata for the currently playing track
-                .setContentTitle(contentTitle)
+                .setContentTitle(getString(level > 0 ? R.string.error : R.string.info))
                 .setContentText(contentText)
 
                 // Enable launching the app by clicking the notification
@@ -688,7 +688,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                 // Add an app icon and set its accent color
                 // Be careful about the color
-                .setSmallIcon(R.drawable.ic_stat_audio)
+                .setSmallIcon(level > 0 ? android.R.drawable.ic_delete : android.R.drawable.ic_dialog_info)
 
                 .setStyle(new NotificationCompat.BigTextStyle()
                         .bigText(contentText));
