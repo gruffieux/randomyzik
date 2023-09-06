@@ -23,8 +23,7 @@
 
     <!-- Ampache Preferences -->
     <string name="amp_title">Use ampache server</string>
-    <string name="amp_summary_on">Playlist read from Ampache server
-    </string>
+    <string name="amp_summary_on">Playlist read from Ampache server</string>
     <string name="amp_summary_off">Playlist read from local media folder</string>
     <string name="amp_server">Serveur</string>
     <string name="amp_api">Use API key</string>
@@ -61,4 +60,5 @@
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
     <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
+
 </resources>
