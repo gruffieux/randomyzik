@@ -150,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("stop");
                         startService(intent);
+                        finish();
                     }
                     break;
             }
