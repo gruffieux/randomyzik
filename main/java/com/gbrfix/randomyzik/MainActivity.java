@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteCursor;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
+import android.net.Uri;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
@@ -25,6 +26,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -430,6 +433,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
+            if (!prefs.getBoolean("amp_streaming", false)) {
+                ignoreBatteryOptimization();
+            }
         } else {
             dbName = DAOBase.DEFAULT_NAME;
         }
@@ -729,4 +735,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             startService(intent);
         }
     }
+
+    public void ignoreBatteryOptimization(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent intent = new Intent();
+            String packageName = getPackageName();
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + packageName));
+                startActivity(intent);
+            }
+        }
+    }
 }
+git 
