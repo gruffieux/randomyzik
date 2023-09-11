@@ -59,12 +59,10 @@ public class AmpSession extends AmpRepository {
         String artist = status.getString("artist");
         String album = status.getString("album");
 
-        if (reqState.equals("any")) {
-            if (!state.equals("play") && !state.equals("pause") && !state.equals("stop")) {
-                throw new Exception(context.getString(R.string.err_amp_state_unexcepted, state));
+        if (reqState != null && !reqState.isEmpty()) {
+            if (!state.equals(reqState)) {
+                throw new Exception(context.getString(R.string.err_amp_excepted_state, state, reqState));
             }
-        } else if (!state.equals(reqState)) {
-            throw new Exception(context.getString(R.string.err_amp_excepted_state, state, reqState));
         }
 
         if (media != null) {

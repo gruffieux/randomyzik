@@ -33,6 +33,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
@@ -244,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
-                duration = (int)metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
+                duration = (int) metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
                 position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
                 infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
                 progressBar.setMax(duration);
@@ -290,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         void changeMode(boolean b) {
-            int mode =  b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+            int mode = b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
             // Save mode as preferences
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
@@ -305,10 +306,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
     };
 
-    public int fetchColor( Context c, int id ) {
-        int[] attrs = { id };
-        TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs );
-        int color = ta.getColor( 0, Color.BLACK );
+    public int fetchColor(Context c, int id) {
+        int[] attrs = {id};
+        TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs);
+        int color = ta.getColor(0, Color.BLACK);
         return color;
     }
 
@@ -497,7 +498,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         progressBar.setProgress(position);
     }
 
-    protected  void onTrackRead(boolean last) {
+    protected void onTrackRead(boolean last) {
         MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getAllOrdered();
@@ -610,12 +611,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         });
                     }
                 });
-            }
-            else {
+            } else {
                 throw new Exception(getString(R.string.err_no_perms));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             playBtn.setEnabled(false);
             rewBtn.setEnabled(false);
             fwdBtn.setEnabled(false);
@@ -629,7 +628,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
-                dialog.setId((int)id);
+                dialog.setId((int) id);
                 dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
             }
         });
@@ -639,7 +638,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 AllTracksDialogFragment dialog = new AllTracksDialogFragment();
-                dialog.setId((int)id);
+                dialog.setId((int) id);
                 dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
                 return true;
             }
@@ -651,7 +650,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             @Override
             public void onClick(View v) {
                 if (currentId > 0) {
-                    TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                     int pos = adapter.findView(currentId);
                     if (pos != -1) {
                         listView.setSelection(pos);
@@ -669,8 +668,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         infoMsg.setText(msg);
     }
 
-    @SuppressLint("MissingPermission")
     public void infoNotification(int level, String contentText) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(this, MainActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
