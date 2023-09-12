@@ -107,6 +107,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
+            TextView positionLabel = findViewById(R.id.position);
+            TextView durationLabel = findViewById(R.id.duration);
+            ProgressBar progressBar = findViewById(R.id.progressBar);
             SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
 
             switch (event) {
@@ -116,28 +119,38 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String title = extras.getString("title");
                     String album = extras.getString("album");
                     String artist = extras.getString("artist");
-
-                    onTrackSelect(duration, title, album, artist);
-
-                    // Sauvegarde piste en cours
+                    positionLabel.setText(dateFormat.format(new Date(0)));
+                    durationLabel.setText(dateFormat.format(new Date(duration)));
+                    progressBar.setProgress(0);
+                    progressBar.setMax(duration);
+                    String label = MediaProvider.getTrackLabel(title, album, artist);
+                    infoMsg(label, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
                     editor.putInt("currentId", currentId);
                     editor.putInt("position", 0);
                     editor.commit();
                     break;
                 case "onTrackSave":
-                    // Sauvegarde piste en cours
                     editor.putInt("currentId", extras.getInt("id"));
                     editor.putInt("position", extras.getInt("position"));
                     editor.commit();
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
-                    onTrackProgress(position);
+                    positionLabel.setText(dateFormat.format(new Date(position)));
+                    progressBar.setProgress(position);
                     break;
                 case "onTrackRead":
                     boolean last = extras.getBoolean("last");
-                    onTrackRead(last);
+                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAllOrdered();
+                    ListView listView = findViewById(R.id.playlist);
+                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                    adapter.changeCursor(cursor);
+                    dao.close();
                     if (last) {
+                        infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
+                        infoNotification(0, getString(R.string.info_play_end));
                         editor.putInt("currentId", 0);
                         editor.putInt("position", 0);
                         editor.commit();
@@ -468,49 +481,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         if (mediaBrowser != null) {
             mediaBrowser.disconnect();
-        }
-    }
-
-    protected void onTrackSelect(int duration, String title, String album, String artist) {
-        TextView positionLabel = findViewById(R.id.position);
-        TextView durationLabel = findViewById(R.id.duration);
-        ProgressBar progressBar = findViewById(R.id.progressBar);
-
-        // Libellé de position et durée
-        positionLabel.setText(dateFormat.format(new Date(0)));
-        durationLabel.setText(dateFormat.format(new Date(duration)));
-
-        // Barre de progression
-        progressBar.setProgress(0);
-        progressBar.setMax(duration);
-
-        // Titre en cours
-        String label = MediaProvider.getTrackLabel(title, album, artist);
-        int color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
-        infoMsg(label, color);
-    }
-
-    protected void onTrackProgress(int position) {
-        TextView positionLabel = findViewById(R.id.position);
-        ProgressBar progressBar = findViewById(R.id.progressBar);
-
-        positionLabel.setText(dateFormat.format(new Date(position)));
-        progressBar.setProgress(position);
-    }
-
-    protected void onTrackRead(boolean last) {
-        MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-        dao.open();
-        SQLiteCursor cursor = dao.getAllOrdered();
-        ListView listView = findViewById(R.id.playlist);
-        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        adapter.changeCursor(cursor);
-        dao.close();
-
-        if (last) {
-            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-            infoMsg(getString(R.string.info_play_end), color);
-            infoNotification(0, getString(R.string.info_play_end));
         }
     }
 
