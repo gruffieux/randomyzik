@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView positionLabel = findViewById(R.id.position);
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
-            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).edit();
 
             switch (event) {
                 case "onTrackSelect":
@@ -125,14 +124,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     progressBar.setMax(duration);
                     String label = MediaProvider.getTrackLabel(title, album, artist);
                     infoMsg(label, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
-                    editor.putInt("currentId", currentId);
-                    editor.putInt("position", 0);
-                    editor.commit();
-                    break;
-                case "onTrackSave":
-                    editor.putInt("currentId", extras.getInt("id"));
-                    editor.putInt("position", extras.getInt("position"));
-                    editor.commit();
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
@@ -151,9 +142,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end));
-                        editor.putInt("currentId", 0);
-                        editor.putInt("position", 0);
-                        editor.commit();
                     }
                     break;
                 case "onError":

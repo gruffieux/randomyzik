@@ -123,21 +123,21 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+
         // Arrêt forcé, on sauve la piste en cours
         if (intent.getAction() == "stop") {
-            Bundle args = new Bundle();
-            args.putInt("id", provider.getCurrentId());
-            args.putInt("position", (int)session.getController().getPlaybackState().getPosition());
-            session.sendSessionEvent("onTrackSave", args);
+            editor.putInt("currentId", provider.getCurrentId());
+            editor.putInt("position", (int)session.getController().getPlaybackState().getPosition());
+            editor.commit();
             session.getController().getTransportControls().stop();
         }
 
         // Arrêt intentionnel, on annule la sauvegarde
         if (intent.getAction() == "close") {
-            Bundle args = new Bundle();
-            args.putInt("id", 0);
-            args.putInt("position", 0);
-            session.sendSessionEvent("onTrackSave", args);
+            editor.putInt("currentId", 0);
+            editor.putInt("position", 0);
+            editor.commit();
             session.getController().getTransportControls().stop();
         }
 
@@ -357,6 +357,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
             session.getController().getTransportControls().play();
         } else {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+            editor.putInt("currentId", 0);
+            editor.putInt("position", 0);
+            editor.commit();
             session.getController().getTransportControls().stop();
         }
     }
@@ -476,6 +480,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("artist", media.getArtist());
                     bundle.putInt("duration", duration);
                     session.sendSessionEvent("onTrackSelect", bundle);
+
+                    // Save current track
+                    SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this).edit();
+                    editor.putInt("currentId", media.getId());
+                    editor.putInt("position", 0);
+                    editor.commit();
                 } else {
                     player.start();
                     progress.resume();
@@ -514,10 +524,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             showNotification();
 
             // On sauvegarde la position de piste en cours
-            Bundle args = new Bundle();
-            args.putInt("id", provider.getCurrentId());
-            args.putInt("position", player.getCurrentPosition());
-            session.sendSessionEvent("onTrackSave", args);
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this).edit();
+            editor.putInt("currentId", provider.getCurrentId());
+            editor.putInt("position", player.getCurrentPosition());
+            editor.commit();
         }
 
         @Override
@@ -613,6 +623,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             bundle.putInt("duration", duration);
                             session.sendSessionEvent("onTrackSelect", bundle);
 
+                            // Save current track
+                            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this).edit();
+                            editor.putInt("currentId", media.getId());
+                            editor.putInt("position", 0);
+                            editor.commit();
+
                             // Update state and notif
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
@@ -682,10 +698,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, position, 0);
                     session.setPlaybackState(stateBuilder.build());
                     showNotification();
-                    Bundle args = new Bundle();
-                    args.putInt("id", provider.getCurrentId());
-                    args.putInt("position", position);
-                    session.sendSessionEvent("onTrackSave", args);
+                    SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this).edit();
+                    editor.putInt("currentId", provider.getCurrentId());
+                    editor.putInt("position", position);
+                    editor.commit();
                 });
             });
         }
