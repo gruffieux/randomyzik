@@ -429,12 +429,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (amp) {
             String server = prefs.getString("amp_server", "");
             String catalog = prefs.getString("amp_catalog", "0");
+            boolean streaming = prefs.getBoolean("amp_streaming", false);
             try {
                 dbName = AmpRepository.dbName(server, catalog);
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
-            if (!prefs.getBoolean("amp_streaming", false)) {
+            if (!streaming) {
                 ignoreBatteryOptimization();
             }
         } else {
