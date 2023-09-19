@@ -26,62 +26,11 @@ https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_sea
 Local play:
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=add&oid=12697&type=song&clear=1
 https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=status
-Stats:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=stats&auth=8e4f767d679d81345871b298b4f29ee7&type=song&filter=recent&limit=10&user_id=0
 */
 
 public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
-
-    private List readActivities(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Bundle> activities = new ArrayList();
-        parser.require(XmlPullParser.START_TAG, ns, "root");
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            // Starts by looking for the entry tag
-            if (name.equals("activity")) {
-                activities.add(readActivity(parser));
-            } else {
-                skip(parser);
-            }
-        }
-        return activities;
-    }
-
-    private Bundle readActivity(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "activity");
-        int date = 0;
-        String type = null;
-        int oid = 0;
-        String action = null;
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("date")) {
-                date = Integer.valueOf(readTag(parser, "date"));
-            }  else if (name.equals("object_type")) {
-                type = readTag(parser, "object_type");
-            } else if (name.equals("object_id")) {
-                oid = Integer.valueOf(readTag(parser, "object_id"));
-            } else if (name.equals("action")) {
-                action = readTag(parser, "action");
-            } else {
-                skip(parser);
-            }
-        }
-        Bundle activity = new Bundle();
-        activity.putInt("date", date);
-        activity.putString("type", type);
-        activity.putInt("oid", oid);
-        activity.putString("action", action);
-        return activity;
-    }
 
     private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "catalog");
@@ -243,23 +192,6 @@ public class AmpXmlParser {
         return tag;
     }
 
-    private String readText(XmlPullParser parser, String tag) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "root");
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            // Starts by looking for the entry tag
-            if (name.equals(tag)) {
-                return readTag(parser, tag);
-            } else {
-                skip(parser);
-            }
-        }
-        return "";
-    }
-
     // For the tags, extracts their text values.
     private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = "";
@@ -284,18 +216,6 @@ public class AmpXmlParser {
                     depth++;
                     break;
             }
-        }
-    }
-
-    public List parseActivities(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readActivities(parser);
-        } finally {
-            in.close();
         }
     }
 
@@ -333,18 +253,6 @@ public class AmpXmlParser {
             parser.nextTag();
             parser.nextTag();
             return readStatus(parser);
-        } finally {
-            in.close();
-        }
-    }
-
-    public String parseText(InputStream in, String name) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readText(parser, name);
         } finally {
             in.close();
         }

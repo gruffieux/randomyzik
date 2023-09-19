@@ -6,13 +6,13 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
-import javax.net.ssl.HttpsURLConnection;
 
 abstract class AmpRepository {
     public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
@@ -30,7 +30,6 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         Bundle user = parser.parseUser(conn.getInputStream());
-        conn.disconnect();
         return user;
     }
 
@@ -48,7 +47,6 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         Bundle data = parser.parseUser(conn.getInputStream());
-        conn.disconnect();
         return data;
     }
 
@@ -57,7 +55,6 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         Bundle user = parser.parseUser(conn.getInputStream());
-        conn.disconnect();
         return user;
     }
 
@@ -66,7 +63,6 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         List list = parser.parseSongs(conn.getInputStream());
-        conn.disconnect();
         return list;
     }
 
@@ -75,32 +71,25 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         Map<String, Integer> map = parser.parseCatalogs(conn.getInputStream());
-        conn.disconnect();
         return map;
     }
 
-    public static String localplay_add(String server, String auth, int oid) throws IOException {
+    public static void localplay_add(String server, String auth, int oid) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=add&type=song&oid="+oid+"&clear=1");
         URLConnection conn = url.openConnection();
-        String res = conn.getResponseMessage();
-        conn.disconnect();
-        return res;
+        conn.getContent();
     }
 
-    public static String localplay_pause(String server, String auth) throws IOException {
+    public static void localplay_pause(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=pause");
         URLConnection conn = url.openConnection();
-        String res = conn.getResponseMessage();
-        conn.disconnect();
-        return res;
+        conn.getContent();
     }
 
-    public static String localplay_play(String server, String auth) throws IOException {
+    public static void localplay_play(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=play");
         URLConnection conn = url.openConnection();
-        String res = conn.getResponseMessage();
-        conn.disconnect();
-        return res;
+        conn.getContent();
     }
 
     public static Bundle localplay_status(String server, String auth) throws IOException, XmlPullParserException {
@@ -108,16 +97,13 @@ abstract class AmpRepository {
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         Bundle status = parser.parseStatus(conn.getInputStream());
-        conn.disconnect();
         return status;
     }
 
-    public static String localplay_stop(String server, String auth) throws IOException {
+    public static void localplay_stop(String server, String auth) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=stop");
         URLConnection conn = url.openConnection();
-        String res = conn.getResponseMessage();
-        conn.disconnect();
-        return res;
+        conn.getContent();
     }
 
     public static String streaming_url(String server, String auth, int oid, int offset) {

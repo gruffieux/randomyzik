@@ -107,23 +107,23 @@ public class AmpSession extends AmpRepository {
         return catalogs(server, auth);
     }
 
-    public String localplay_add(int oid) throws IOException {
-        return localplay_add(server, auth, oid);
+    public void localplay_add(int oid) throws IOException {
+        localplay_add(server, auth, oid);
     }
 
-    public String localplay_pause() throws IOException {
-        return localplay_pause(server, auth);
+    public void localplay_pause() throws IOException {
+        localplay_pause(server, auth);
     }
 
-    public String localplay_play() throws IOException {
-        return localplay_play(server, auth);
+    public void localplay_play() throws IOException {
+        localplay_play(server, auth);
     }
 
-    public String localplay_stop() throws IOException {
-        return localplay_stop(server, auth);
+    public void localplay_stop() throws IOException {
+        localplay_stop(server, auth);
     }
 
-    public String streaming_url(int oid, int offset) throws IOException {
+    public String streaming_url(int oid, int offset) {
         return streaming_url(server, auth, oid, offset);
     }
 }
