@@ -524,17 +524,27 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                TextView infoMsg = findViewById(R.id.infoMsg);
+                                ColorStateList colors = infoMsg.getTextColors();
                                 int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                                infoMsg(getString(R.string.info_scanning), color);
+                                if (infoMsg.getText().equals("") || colors.getDefaultColor() != fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
+                                    infoMsg(getString(R.string.info_scanning), color);
+                                }
                             }
                         });
                     }
 
                     @Override
-                    public void onScanCompleted(int catalogId, boolean update) {
+                    public void onScanCompleted(int catalogId, boolean update, boolean all) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
+                                if (all) {
+                                    TextView infoMsg = findViewById(R.id.infoMsg);
+                                    if (infoMsg.getText().equals(getString(R.string.info_scanning))) {
+                                        infoMsg.setText("");
+                                    }
+                                }
                                 String catalog = prefs.getString("amp_catalog", "0");
                                 if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
                                     return;
