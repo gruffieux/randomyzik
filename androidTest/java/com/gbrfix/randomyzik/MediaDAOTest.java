@@ -3,8 +3,9 @@ package com.gbrfix.randomyzik;
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
 import android.provider.MediaStore;
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,16 +23,13 @@ import static org.junit.Assert.assertTrue;
 public class MediaDAOTest {
     public static String TEST_DBNAME = "playlist-test.db";
     private int mediaTotalExcepted;
-    private  MediaDAO dao;
-
-    public MediaDAOTest() {
-        Context c = InstrumentationRegistry.getTargetContext();
-        mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
-        dao = new MediaDAO(c, TEST_DBNAME);
-    }
+    private MediaDAO dao;
 
     @Before
-    public void init() {
+    public void setUp() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
+        dao = new MediaDAO(c, TEST_DBNAME);
         dao.open();
     }
 

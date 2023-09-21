@@ -12,14 +12,12 @@ import java.util.Random;
 public class MediaProvider {
     public final static int MODE_TRACK = 0;
     public final static int MODE_ALBUM = 1;
-
     private int currentId, selectId, position;
     private int total, totalRead;
     private int mode;
     private boolean lastOfAlbum;
     private Context context;
     private String dbName;
-    private boolean test;
 
     public MediaProvider(Context context, String dbName) {
         currentId = selectId = position = 0;
@@ -28,7 +26,6 @@ public class MediaProvider {
         lastOfAlbum = false;
         this.context = context;
         this.dbName = dbName;
-        test = false;
     }
 
     public int getPosition() { return position; }
@@ -61,14 +58,6 @@ public class MediaProvider {
 
     public void setDbName(String dbName) {
         this.dbName = dbName;
-    }
-
-    public boolean isTest() {
-        return test;
-    }
-
-    public void setTest(boolean test) {
-        this.test = test;
     }
 
     public Media selectTrack() throws Exception {

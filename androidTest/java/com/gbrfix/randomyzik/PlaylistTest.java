@@ -2,9 +2,9 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -35,7 +35,7 @@ public class PlaylistTest {
     public void playAllTracks() throws Exception {
         activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_TRACKS;
 
-        Context c = InstrumentationRegistry.getTargetContext();
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
@@ -56,7 +56,7 @@ public class PlaylistTest {
     public void playAllAlbums() throws Exception {
         activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_ALBUMS;
 
-        Context c = InstrumentationRegistry.getTargetContext();
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
@@ -77,7 +77,7 @@ public class PlaylistTest {
     public void playLastTrack() throws Exception {
         activity.currentTest = PlaylistActivity.TEST_PLAY_LAST_TRACK;
 
-        Context c = InstrumentationRegistry.getTargetContext();
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
@@ -113,7 +113,7 @@ public class PlaylistTest {
     public void playEndedList() throws Exception {
         activity.currentTest = PlaylistActivity.TEST_PLAY_ENDED_LIST;
 
-        Context c = InstrumentationRegistry.getTargetContext();
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();

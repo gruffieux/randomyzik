@@ -58,8 +58,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private AudioFocusRequest focusRequest;
     private MediaSessionCallback mediaSessionCallback;
     private AmpSessionCallback ampSessionCallback;
-    private  boolean changeFocus = true;
+    private boolean changeFocus = true;
     private boolean streaming = false;
+    private boolean test = true;
 
     @Nullable
     @Override
@@ -100,7 +101,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         progress = new ProgressThread();
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
-        //provider.setTest(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -164,7 +164,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         if (action.equals("test")) {
-            provider.setTest(true);
+            test = true;
         }
 
         if (action.equals("stop")) {
@@ -312,7 +312,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mp.setOnCompletionListener(this);
 
         // Seek position
-        if (provider.isTest()) {
+        if (test) {
             mp.seekTo(mp.getDuration() - 10);
             return;
         } else if (provider.getPosition() > 0) {
@@ -578,7 +578,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 if (!progress.isStarted()) {
                     final Media media = provider.selectTrack();
-                    final int duration = provider.isTest() ? 10000 : media.getDuration() * 1000;
+                    final int duration = test ? 10000 : media.getDuration() * 1000;
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
