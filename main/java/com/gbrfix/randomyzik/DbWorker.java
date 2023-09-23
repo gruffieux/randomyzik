@@ -63,7 +63,12 @@ public class DbWorker extends Worker {
                     elements = (ArrayList<Media>) ampSession.advanced_search(offset, catalogId);
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
-                } while (elements.size() >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
+                    int total = elements.size();
+                    setProgressAsync(new Data.Builder()
+                        .putInt("catalogId", catalogId)
+                        .putInt("total", total)
+                        .build());
+                } while (total >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
             } catch (Exception e) {
                 Data output = new Data.Builder()
                         .putString("msg", e.getMessage())
