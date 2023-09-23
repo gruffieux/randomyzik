@@ -31,12 +31,16 @@ public class PlaylistDbTest {
         c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         dbService = new DbService(c);
         //TODO: Rechercher toutes les base donnees test et les vider
-        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
+        String[] dbNames = c.databaseList();
+        for (String dbName : dbNames) {
+            c.deleteDatabase(dbName);
+        }
+        /*MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.getDb().delete("medias", null, null);
         SQLiteCursor cursor = dao.getAll();
         assertEquals(0, cursor.getCount());
-        dao.close();
+        dao.close();*/
     }
 
     @Test
