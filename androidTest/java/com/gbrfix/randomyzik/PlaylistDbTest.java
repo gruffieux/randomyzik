@@ -45,13 +45,17 @@ public class PlaylistDbTest {
 
     @Test
     public void createAmpacheCatalog() {
-        // TODO: requete vers ampache
         mediaTotalExcepted = 0;
 
         dbService.setDbSignalListener(new DbSignal() {
             @Override
             public void onScanStart() {
 
+            }
+
+            @Override
+            public void onScanProgress(int catalogId, int total) {
+                mediaTotalExcepted += total;
             }
 
             @Override
@@ -80,6 +84,10 @@ public class PlaylistDbTest {
             @Override
             public void onScanStart() {
 
+            }
+
+            @Override
+            public void onScanProgress(int catalogId, int total) {
             }
 
             @Override
