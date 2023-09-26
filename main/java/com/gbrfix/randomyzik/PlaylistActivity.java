@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.content.ComponentName;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import androidx.annotation.Nullable;
@@ -46,7 +47,7 @@ public class PlaylistActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public void createList(int mediaTotalExcepted) {
+    public void createList(int mediaTotalExcepted) throws InterruptedException {
         DbService dbService = new DbService(this);
         
         dbService.setDbSignalListener(new DbSignal() {
@@ -61,8 +62,9 @@ public class PlaylistActivity extends AppCompatActivity {
 
             @Override
             public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                MediaDAO dao = new MediaDAO(PlaylistActivity.this,"test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
-                cursor = dao.getAll();
+                SQLiteCursor cursor = dao.getAll();
                 assertEquals(mediaTotalExcepted, cursor.getCount());
                 dao.close();
             }
