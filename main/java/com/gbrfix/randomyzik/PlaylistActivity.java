@@ -46,7 +46,7 @@ public class PlaylistActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    public void CreateList() {
+    public void createList(int mediaTotalExcepted) {
         DbService dbService = new DbService(this);
         
         dbService.setDbSignalListener(new DbSignal() {
