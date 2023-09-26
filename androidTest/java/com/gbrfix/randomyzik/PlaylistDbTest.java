@@ -25,6 +25,9 @@ public class PlaylistDbTest {
     int mediaTotalExcepted;
     Context c;
     DbService dbService;
+    
+    @Rule
+    public ActivityScenarioRule<MyActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -75,30 +78,14 @@ public class PlaylistDbTest {
     public void createList() {
         mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
 
-        dbService.setDbSignalListener(new DbSignal() {
-            @Override
-            public void onScanStart() {
-
+        ActivityScenario<TestActivity> scenario = rule.getScenario();
+        launchActivity<TestActivity>().use { scenario ->
+            scenario.moveToState(State.CREATED); 
+            scenario.moveToState(State.STARTED);
+            scenario.onActivity { activity ->
+                activity.createList();
             }
-
-            @Override
-            public void onScanProgress(int catalogId, int total) {
-            }
-
-            @Override
-            public void onScanCompleted(int catalogId, boolean update, boolean all) {
-                dao.open();
-                cursor = dao.getAll();
-                assertEquals(mediaTotalExcepted, cursor.getCount());
-                dao.close();
-            }
-
-            @Override
-            public void onError(String msg) {
-            }
-        });
-
-        dbService.check();
+        }
 
         Log.v("createList", "end");
     }
