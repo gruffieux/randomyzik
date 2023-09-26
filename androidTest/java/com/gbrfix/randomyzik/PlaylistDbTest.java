@@ -83,7 +83,7 @@ public class PlaylistDbTest {
             scenario.moveToState(State.CREATED); 
             scenario.moveToState(State.STARTED);
             scenario.onActivity { activity ->
-                activity.createList();
+                activity.createList(mediaTotalExcepted);
             }
         }
 
