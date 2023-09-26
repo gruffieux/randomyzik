@@ -60,7 +60,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private AmpSessionCallback ampSessionCallback;
     private boolean changeFocus = true;
     private boolean streaming = false;
-    private boolean test = true;
 
     @Nullable
     @Override
@@ -161,10 +160,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
             provider.setSelectId(extras.getInt("id"));
             provider.setPosition(extras.getInt("position"));
-        }
-
-        if (action.equals("test")) {
-            test = true;
         }
 
         if (action.equals("stop")) {
@@ -310,6 +305,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onPrepared(MediaPlayer mp) {
         mp.setOnSeekCompleteListener(this);
         mp.setOnCompletionListener(this);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
 
         // Seek position
         if (test) {
@@ -578,6 +576,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                 if (!progress.isStarted()) {
                     final Media media = provider.selectTrack();
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
+                    boolean test = prefs.getBoolean("test", false);
                     final int duration = test ? 10000 : media.getDuration() * 1000;
 
                     // Set session MediaMetadata
@@ -623,7 +623,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             session.sendSessionEvent("onTrackSelect", bundle);
 
                             // Save current track
-                            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this).edit();
+                            SharedPreferences.Editor editor = prefs.edit();
                             editor.putInt("currentId", media.getId());
                             editor.putInt("position", 0);
                             editor.commit();

@@ -54,6 +54,7 @@ public class DbService implements Observer<WorkInfo> {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
+        boolean test = prefs.getBoolean("test", false);
 
         WorkManager.getInstance(context).cancelAllWorkByTag("db");
 
@@ -79,6 +80,9 @@ public class DbService implements Observer<WorkInfo> {
                                 String key = entry.getKey();
                                 String value = entry.getValue();
                                 String dbName = AmpRepository.dbName(server, value);
+                                if (test) {
+                                    dbName = "test-" + dbName;
+                                }
                                 if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;
                                 }
@@ -111,6 +115,9 @@ public class DbService implements Observer<WorkInfo> {
         } else {
             total = 1;
             String dbName = DAOBase.DEFAULT_NAME;
+            if (test) {
+                dbName = "test-" + dbName;
+            }
             WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                     .setInputData(
                             new Data.Builder()
@@ -131,7 +138,7 @@ public class DbService implements Observer<WorkInfo> {
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            Data progress = workInfo.progress();
+            Data progress = workInfo.getProgress();
             dbSignalListener.onScanProgress(progress.getInt("catalogId", 0), progress.getInt("total", 0));
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(context).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
@@ -190,12 +197,16 @@ public class DbService implements Observer<WorkInfo> {
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
         String catalog = prefs.getString("amp_catalog", "0");
+        boolean test = prefs.getBoolean("test", false);
 
         if (amp && catalog.equals("0")) {
             scan(false, catalog);
         } else {
             try {
                 String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                if (test) {
+                    dbName = "test-" + dbName;
+                }
                 MediaDAO dao = new MediaDAO(context, dbName);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();

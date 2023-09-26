@@ -57,13 +57,14 @@ public class DbWorker extends Worker {
                     throw new Exception("No catalog found");
                 }
                 int offset = 0;
+                int total = 0;
                 ArrayList<Media> elements = new ArrayList<Media>();
                 do {
                     elements.clear();
                     elements = (ArrayList<Media>) ampSession.advanced_search(offset, catalogId);
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
-                    int total = elements.size();
+                    total = elements.size();
                     setProgressAsync(new Data.Builder()
                         .putInt("catalogId", catalogId)
                         .putInt("total", total)

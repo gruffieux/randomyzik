@@ -497,6 +497,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         String server = prefs.getString("amp_server", "");
         String catalog = prefs.getString("amp_catalog", "0");
 
+        // Write test preference
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean("test", false);
+        editor.commit();
+
         try {
             if (perms == 1) {
                 mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
@@ -532,6 +537,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                 }
                             }
                         });
+                    }
+
+                    @Override
+                    public void onScanProgress(int catalogId, int total) {
+
                     }
 
                     @Override
