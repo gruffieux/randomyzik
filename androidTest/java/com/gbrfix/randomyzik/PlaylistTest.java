@@ -24,6 +24,35 @@ public class PlaylistTest {
     @Rule
     public ActivityTestRule<PlaylistActivity> activityActivityTestRule = new ActivityTestRule<PlaylistActivity>(PlaylistActivity.class);
 
+    public void CreateList() {
+        DbService dbService = new DbService(this);
+        
+        dbService.setDbSignalListener(new DbSignal() {
+            @Override
+            public void onScanStart() {
+
+            }
+
+            @Override
+            public void onScanProgress(int catalogId, int total) {
+            }
+
+            @Override
+            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                dao.open();
+                cursor = dao.getAll();
+                assertEquals(mediaTotalExcepted, cursor.getCount());
+                dao.close();
+            }
+
+            @Override
+            public void onError(String msg) {
+            }
+        });
+
+        dbService.check();
+    }
+    
     @Before
     public void setUp() throws Exception {
         activity = activityActivityTestRule.getActivity();
