@@ -46,6 +46,35 @@ public class PlaylistActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public void CreateList() {
+        DbService dbService = new DbService(this);
+        
+        dbService.setDbSignalListener(new DbSignal() {
+            @Override
+            public void onScanStart() {
+
+            }
+
+            @Override
+            public void onScanProgress(int catalogId, int total) {
+            }
+
+            @Override
+            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                dao.open();
+                cursor = dao.getAll();
+                assertEquals(mediaTotalExcepted, cursor.getCount());
+                dao.close();
+            }
+
+            @Override
+            public void onError(String msg) {
+            }
+        });
+
+        dbService.check();
+    }
+
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
