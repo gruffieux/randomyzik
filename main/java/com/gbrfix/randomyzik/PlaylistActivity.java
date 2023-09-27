@@ -65,12 +65,15 @@ public class PlaylistActivity extends AppCompatActivity {
                 MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                assertEquals(mediaTotalExcepted, cursor.getCount());
+                assertEquals();
                 dao.close();
+                int res == mediaTotalExcepted == cursor.getCount() ? 0 : 1;
+                finishActivity(res);
             }
 
             @Override
             public void onError(String msg) {
+                finishActivity(2);
             }
         });
 
