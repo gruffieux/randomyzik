@@ -58,17 +58,14 @@ public class PlaylistDbTest {
 
         mediaTotalExcepted = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
 
-        ActivityScenario<PlaylistActivity> scenario = rule.getScenario();
+        Intent testIntent = new Intent(context, PlaylistActivity.class);
+        ActivityScenario<PlaylistActivity> scenario = ActivityScenario::launchActivityForResult(testIntent);
         scenario.moveToState(Lifecycle.State.CREATED);
         scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
             @Override
             public void perform(PlaylistActivity activity) {
-                try {
-                    activity.createList(mediaTotalExcepted);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                activity.createList(mediaTotalExcepted);
             }
         });
 
