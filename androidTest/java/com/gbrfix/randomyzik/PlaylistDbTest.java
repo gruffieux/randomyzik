@@ -68,7 +68,7 @@ public class PlaylistDbTest {
                 activity.createList(mediaTotalExcepted);
             }
         });
-        assertThat(scenario.getResult().getResultCode()).isEqualTo(0);
+        assertEquals(scenario.getResult().getResultCode(), 0);
 
         Log.v("createList", "end");
     }
