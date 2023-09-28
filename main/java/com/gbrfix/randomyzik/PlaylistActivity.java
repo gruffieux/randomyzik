@@ -65,10 +65,8 @@ public class PlaylistActivity extends AppCompatActivity {
                 MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                assertEquals();
                 dao.close();
-                int res == mediaTotalExcepted == cursor.getCount() ? 0 : 1;
-                finishActivity(res);
+                finishActivity(mediaTotalExcepted != cursor.getCount());
             }
 
             @Override
