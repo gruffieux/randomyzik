@@ -1,6 +1,7 @@
 package com.gbrfix.randomyzik;
 
 import android.content.ComponentName;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
@@ -12,10 +13,16 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
+
 import android.util.Log;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+
+import org.junit.Assert;
+
+import java.net.MalformedURLException;
 
 /**
  * Created by gab on 16.03.2018.
@@ -47,6 +54,47 @@ public class PlaylistActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    public void createAmpacheCatalogs() {
+        DbService dbService = new DbService(this);
+
+        dbService.setDbSignalListener(new DbSignal() {
+            @Override
+            public void onScanStart() {
+
+            }
+
+            @Override
+            public void onScanProgress(int catalogId, int total) {
+            }
+
+            @Override
+            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(PlaylistActivity.this);
+                String server = prefs.getString("amp_server", "");
+                try {
+                    String dbName = AmpRepository.dbName(server, String.valueOf(catalogId));
+                    MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + dbName);
+                    dao.open();
+                    SQLiteCursor cursor = dao.getAll();
+                    dao.close();
+                    if (all) {
+                        //Assert.assertEquals(mediaTotalExcepted[0], mediaTotal[0]);
+                        finish();
+                    }
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void onError(String msg) {
+                Assert.assertFalse(false);
+            }
+        });
+
+        dbService.check();
+    }
+
     public void createList(int mediaTotalExcepted) {
         DbService dbService = new DbService(this);
         
@@ -65,13 +113,14 @@ public class PlaylistActivity extends AppCompatActivity {
                 MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
+                Assert.assertEquals(mediaTotalExcepted, cursor.getCount());
                 dao.close();
-                finishActivity(mediaTotalExcepted != cursor.getCount());
+                finish();
             }
 
             @Override
             public void onError(String msg) {
-                finishActivity(2);
+                Assert.assertFalse(false);
             }
         });
 

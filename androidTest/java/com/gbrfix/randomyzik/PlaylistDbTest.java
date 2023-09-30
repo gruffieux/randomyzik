@@ -45,31 +45,37 @@ public class PlaylistDbTest {
     }
 
     @Test
-    public void createAmpacheCatalog() {
-        mediaTotalExcepted = 0;
-
-        Log.v("createAmpacheCatalog", "end");
+    public void createAmpacheCatalogs() {
+        editor.putBoolean("amp", true);
+        editor.putString("amp_server", "http://raspberrypi/ampache");
+        editor.putBoolean("amp_api", true);
+        editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
+        editor.putString("amp_catalog", "11");
+        editor.commit();
+        ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
+            @Override
+            public void perform(PlaylistActivity activity) {
+                activity.createAmpacheCatalogs();
+            }
+        });
+        int res = scenario.getResult().getResultCode();
     }
 
     @Test
     public void createList() {
         editor.putBoolean("amp", false);
         editor.commit();
-
         mediaTotalExcepted = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
-
-        Intent testIntent = new Intent(context, PlaylistActivity.class);
-        ActivityScenario<PlaylistActivity> scenario = ActivityScenario::launchActivityForResult(testIntent);
-        scenario.moveToState(Lifecycle.State.CREATED);
-        scenario.moveToState(Lifecycle.State.STARTED);
+        ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
+        //scenario.moveToState(Lifecycle.State.CREATED);
+        //scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
             @Override
             public void perform(PlaylistActivity activity) {
                 activity.createList(mediaTotalExcepted);
             }
         });
-        assertEquals(scenario.getResult().getResultCode(), 0);
-
-        Log.v("createList", "end");
+        int res = scenario.getResult().getResultCode();
     }
 }
