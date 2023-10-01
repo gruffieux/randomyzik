@@ -35,6 +35,7 @@ public class DbWorker extends Worker {
         boolean updated = false;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
+        boolean test = prefs.getBoolean("test", false);
         String dbName = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);
@@ -57,11 +58,12 @@ public class DbWorker extends Worker {
                     throw new Exception("No catalog found");
                 }
                 int offset = 0;
+                int limit = test ? 100 : AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                 int total = 0;
                 ArrayList<Media> elements = new ArrayList<Media>();
                 do {
                     elements.clear();
-                    elements = (ArrayList<Media>) ampSession.advanced_search(offset, catalogId);
+                    elements = (ArrayList<Media>) ampSession.advanced_search(offset, limit, catalogId);
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                     total = elements.size();

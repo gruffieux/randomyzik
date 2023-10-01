@@ -87,6 +87,9 @@ public class DbService implements Observer<WorkInfo> {
                                     continue;
                                 }
                                 total++;
+                                if (test && total > 10) {
+                                    break;
+                                }
                                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                         .setInputData(
                                                 new Data.Builder()

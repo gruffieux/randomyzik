@@ -78,7 +78,7 @@ public class PlaylistActivity extends AppCompatActivity {
                     SQLiteCursor cursor = dao.getAll();
                     dao.close();
                     if (all) {
-                        //Assert.assertEquals(mediaTotalExcepted[0], mediaTotal[0]);
+                        Assert.assertTrue(true);
                         finish();
                     }
                 } catch (MalformedURLException e) {

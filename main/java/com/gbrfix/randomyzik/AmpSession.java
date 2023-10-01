@@ -99,8 +99,8 @@ public class AmpSession extends AmpRepository {
         }
     }
 
-    public List advanced_search(int offset, int catalogId) throws IOException, XmlPullParserException {
-        return advanced_search(server, auth, offset, catalogId);
+    public List advanced_search(int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
+        return advanced_search(server, auth, offset, limit, catalogId);
     }
 
     public Map catalogs() throws IOException, XmlPullParserException {

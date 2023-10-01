@@ -58,8 +58,8 @@ abstract class AmpRepository {
         return user;
     }
 
-    public static List advanced_search(String server, String auth, int offset, int catalogId) throws IOException, XmlPullParserException {
-        URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+MAX_ELEMENTS_PER_REQUEST+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
+    public static List advanced_search(String server, String auth, int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
+        URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+limit+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
         List list = parser.parseSongs(conn.getInputStream());

@@ -3,14 +3,12 @@ package com.gbrfix.randomyzik;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -50,7 +48,7 @@ public class PlaylistDbTest {
         editor.putString("amp_server", "http://raspberrypi/ampache");
         editor.putBoolean("amp_api", true);
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
-        editor.putString("amp_catalog", "11");
+        editor.putString("amp_catalog", "0");
         editor.commit();
         ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
         scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
