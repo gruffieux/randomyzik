@@ -32,6 +32,8 @@ import java.util.concurrent.Executors;
 
 public class DbService implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 3;
+    public final static int TEST_MAX_CATALOGS = 10;
+    public final static int TEST_MAX_TRACKS = 100;
     final static String NOTIFICATION_CHANNEL = "Database channel";
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
@@ -87,7 +89,7 @@ public class DbService implements Observer<WorkInfo> {
                                     continue;
                                 }
                                 total++;
-                                if (test && total > 10) {
+                                if (test && total > TEST_MAX_CATALOGS) {
                                     break;
                                 }
                                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
