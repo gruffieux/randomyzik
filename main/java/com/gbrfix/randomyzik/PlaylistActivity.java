@@ -64,11 +64,7 @@ public class PlaylistActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onScanProgress(int catalogId, int total) {
-            }
-
-            @Override
-            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+            public void onScanProgress(int catalogId, int totalExcepted) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(PlaylistActivity.this);
                 String server = prefs.getString("amp_server", "");
                 try {
@@ -76,13 +72,22 @@ public class PlaylistActivity extends AppCompatActivity {
                     MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + dbName);
                     dao.open();
                     SQLiteCursor cursor = dao.getAll();
+                    int total = cursor.getCount();
                     dao.close();
-                    if (all) {
-                        Assert.assertTrue(true);
+                    if (totalExcepted != total) {
+                        Assert.assertFalse(true);
                         finish();
                     }
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                if (all) {
+                    Assert.assertTrue(true);
+                    finish();
                 }
             }
 

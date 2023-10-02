@@ -143,8 +143,14 @@ public class DbService implements Observer<WorkInfo> {
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            Data progress = workInfo.getProgress();
-            dbSignalListener.onScanProgress(progress.getInt("catalogId", 0), progress.getInt("total", 0));
+            if (workInfo.getState() == WorkInfo.State.RUNNING) {
+                Data progress = workInfo.getProgress();
+                int catId = progress.getInt("catalogId", 0);
+                int total = progress.getInt("total", 0);
+                if (catId != 0) {
+                    dbSignalListener.onScanProgress(catId, total);
+                }
+            }
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(context).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
                 switch (workInfo.getState()) {

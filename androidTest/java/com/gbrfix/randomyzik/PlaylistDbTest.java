@@ -65,6 +65,9 @@ public class PlaylistDbTest {
         editor.putBoolean("amp", false);
         editor.commit();
         mediaTotalExcepted = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
+        if (mediaTotalExcepted > DbService.TEST_MAX_TRACKS) {
+            mediaTotalExcepted = DbService.TEST_MAX_TRACKS;
+        }
         ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
         //scenario.moveToState(Lifecycle.State.CREATED);
         //scenario.moveToState(Lifecycle.State.STARTED);
