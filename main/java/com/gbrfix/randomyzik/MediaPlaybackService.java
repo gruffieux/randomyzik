@@ -47,6 +47,7 @@ import java.util.concurrent.Executors;
 
 public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
     public final static int NOTIFICATION_ID = 1;
+    public final static int TEST_DURATION = 100;
     final static String NOTIFICATION_CHANNEL = "MediaPlayback channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
@@ -311,7 +312,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Seek position
         if (test) {
-            mp.seekTo(mp.getDuration() - 10);
+            mp.seekTo(mp.getDuration() - TEST_DURATION);
             return;
         } else if (provider.getPosition() > 0) {
             mp.seekTo(provider.getPosition());
@@ -578,7 +579,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     final Media media = provider.selectTrack();
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
                     boolean test = prefs.getBoolean("test", false);
-                    final int duration = test ? 10000 : media.getDuration() * 1000;
+                    final int duration = test ? TEST_DURATION : media.getDuration() * 1000;
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
