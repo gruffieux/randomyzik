@@ -98,6 +98,7 @@ public class DbWorker extends Worker {
                     MediaStore.Audio.Media.ARTIST,
                     MediaStore.Audio.Media.ALBUM_KEY
             }, selection, null, null);
+            int counter = 0;
             while (c.moveToNext()) {
                 Media media = new Media();
                 media.setMediaId(c.getInt(0));
@@ -108,6 +109,10 @@ public class DbWorker extends Worker {
                 media.setArtist(c.getString(4));
                 media.setAlbumKey(c.getString(5));
                 list.add(media);
+                counter++;
+                if (test && counter >= 100) {
+                    break;
+                }
             }
         }
 
