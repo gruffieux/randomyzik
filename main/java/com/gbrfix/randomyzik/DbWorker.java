@@ -58,7 +58,7 @@ public class DbWorker extends Worker {
                     throw new Exception("No catalog found");
                 }
                 int offset = 0;
-                int limit = test ? 100 : AmpRepository.MAX_ELEMENTS_PER_REQUEST;
+                int limit = test ? DbService.TEST_MAX_TRACKS : AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                 int total = 0;
                 ArrayList<Media> elements = new ArrayList<Media>();
                 do {
@@ -110,7 +110,7 @@ public class DbWorker extends Worker {
                 media.setAlbumKey(c.getString(5));
                 list.add(media);
                 counter++;
-                if (test && counter >= 100) {
+                if (test && counter >= DbService.TEST_MAX_TRACKS) {
                     break;
                 }
             }
