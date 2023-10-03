@@ -19,10 +19,10 @@ import java.util.Random;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistTest {
-    PlaylistActivity activity;
+    TestActivity activity;
 
     @Rule
-    public ActivityTestRule<PlaylistActivity> activityActivityTestRule = new ActivityTestRule<PlaylistActivity>(PlaylistActivity.class);
+    public ActivityTestRule<TestActivity> activityActivityTestRule = new ActivityTestRule<TestActivity>(TestActivity.class);
     
     @Before
     public void setUp() throws Exception {
@@ -33,7 +33,7 @@ public class PlaylistTest {
 
     @Test
     public void playAllTracks() throws Exception {
-        activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_TRACKS;
+        activity.currentTest = TestActivity.TEST_PLAY_ALL_TRACKS;
 
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
@@ -54,7 +54,7 @@ public class PlaylistTest {
 
     @Test
     public void playAllAlbums() throws Exception {
-        activity.currentTest = PlaylistActivity.TEST_PLAY_ALL_ALBUMS;
+        activity.currentTest = TestActivity.TEST_PLAY_ALL_ALBUMS;
 
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
@@ -75,7 +75,7 @@ public class PlaylistTest {
 
     @Test
     public void playLastTrack() throws Exception {
-        activity.currentTest = PlaylistActivity.TEST_PLAY_LAST_TRACK;
+        activity.currentTest = TestActivity.TEST_PLAY_LAST_TRACK;
 
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
@@ -111,7 +111,7 @@ public class PlaylistTest {
 
     @Test
     public void playEndedList() throws Exception {
-        activity.currentTest = PlaylistActivity.TEST_PLAY_ENDED_LIST;
+        activity.currentTest = TestActivity.TEST_PLAY_ENDED_LIST;
 
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
 

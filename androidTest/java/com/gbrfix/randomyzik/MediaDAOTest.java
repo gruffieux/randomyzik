@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaDAOTest {
-    public static String TEST_DBNAME = "playlist-test.db";
+    public static String TEST_DBNAME = "test-playlist.db";
     private int mediaTotalExcepted;
     private MediaDAO dao;
 
@@ -29,6 +29,9 @@ public class MediaDAOTest {
     public void setUp() throws Exception {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
+        if (mediaTotalExcepted > DbService.TEST_MAX_TRACKS) {
+            mediaTotalExcepted = DbService.TEST_MAX_TRACKS;
+        }
         dao = new MediaDAO(c, TEST_DBNAME);
         dao.open();
     }

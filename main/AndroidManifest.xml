@@ -53,7 +53,7 @@
         </receiver>
 
         <activity
-            android:name=".PlaylistActivity"
+            android:name=".TestActivity"
             android:exported="false" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -24,7 +24,7 @@ public class PlaylistDbTest {
     SharedPreferences.Editor editor;
     
     @Rule
-    public ActivityScenarioRule<PlaylistActivity> rule = new ActivityScenarioRule<>(PlaylistActivity.class);
+    public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
 
     @Before
     public void setUp() throws Exception {
@@ -48,10 +48,10 @@ public class PlaylistDbTest {
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.putString("amp_catalog", "0");
         editor.commit();
-        ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
-            public void perform(PlaylistActivity activity) {
+            public void perform(TestActivity activity) {
                 activity.createAmpacheCatalogs();
             }
         });
@@ -62,12 +62,12 @@ public class PlaylistDbTest {
     public void createList() {
         editor.putBoolean("amp", false);
         editor.commit();
-        ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
         //scenario.moveToState(Lifecycle.State.CREATED);
         //scenario.moveToState(Lifecycle.State.STARTED);
-        scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
-            public void perform(PlaylistActivity activity) {
+            public void perform(TestActivity activity) {
                 activity.createList();
             }
         });

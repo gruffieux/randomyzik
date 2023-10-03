@@ -28,7 +28,7 @@ import java.net.MalformedURLException;
  * Created by gab on 16.03.2018.
  */
 
-public class PlaylistActivity extends AppCompatActivity {
+public class TestActivity extends AppCompatActivity {
     final static int TEST_PLAY_ALL_TRACKS = 1;
     final static int TEST_PLAY_ALL_ALBUMS = 2;
     final static int TEST_PLAY_LAST_TRACK = 3;
@@ -65,11 +65,11 @@ public class PlaylistActivity extends AppCompatActivity {
 
             @Override
             public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(PlaylistActivity.this);
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TestActivity.this);
                 String server = prefs.getString("amp_server", "");
                 try {
                     String dbName = AmpRepository.dbName(server, String.valueOf(catalogId));
-                    MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + dbName);
+                    MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + dbName);
                     dao.open();
                     SQLiteCursor cursor = dao.getAll();
                     int count = cursor.getCount();
@@ -107,7 +107,7 @@ public class PlaylistActivity extends AppCompatActivity {
 
             @Override
             public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
-                MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + DAOBase.DEFAULT_NAME);
+                MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
                 Assert.assertEquals(total, cursor.getCount());
@@ -189,8 +189,8 @@ public class PlaylistActivity extends AppCompatActivity {
                 MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
 
                 // Create a MediaControllerCompat
-                MediaControllerCompat mediaController = new MediaControllerCompat(PlaylistActivity.this, token);
-                MediaControllerCompat.setMediaController(PlaylistActivity.this, mediaController);
+                MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
+                MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
 
                 mediaController.registerCallback(controllerCallback);
 
