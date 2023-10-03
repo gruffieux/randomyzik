@@ -64,7 +64,7 @@ public class PlaylistActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onScanProgress(int catalogId, int totalExcepted) {
+            public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(PlaylistActivity.this);
                 String server = prefs.getString("amp_server", "");
                 try {
@@ -72,19 +72,15 @@ public class PlaylistActivity extends AppCompatActivity {
                     MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + dbName);
                     dao.open();
                     SQLiteCursor cursor = dao.getAll();
-                    int total = cursor.getCount();
+                    int count = cursor.getCount();
                     dao.close();
-                    if (totalExcepted != total) {
+                    if (count != total) {
                         Assert.assertFalse(true);
                         finish();
                     }
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
-            }
-
-            @Override
-            public void onScanCompleted(int catalogId, boolean update, boolean all) {
                 if (all) {
                     Assert.assertTrue(true);
                     finish();
@@ -100,7 +96,7 @@ public class PlaylistActivity extends AppCompatActivity {
         dbService.check();
     }
 
-    public void createList(int mediaTotalExcepted) {
+    public void createList() {
         DbService dbService = new DbService(this);
         
         dbService.setDbSignalListener(new DbSignal() {
@@ -110,15 +106,11 @@ public class PlaylistActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onScanProgress(int catalogId, int total) {
-            }
-
-            @Override
-            public void onScanCompleted(int catalogId, boolean update, boolean all) {
+            public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
                 MediaDAO dao = new MediaDAO(PlaylistActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                Assert.assertEquals(mediaTotalExcepted, cursor.getCount());
+                Assert.assertEquals(total, cursor.getCount());
                 dao.close();
                 finish();
             }

@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.provider.MediaStore;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,7 +20,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 @RunWith(AndroidJUnit4.class)
 public class PlaylistDbTest {
-    int mediaTotalExcepted;
     Context context;
     SharedPreferences.Editor editor;
     
@@ -64,17 +62,13 @@ public class PlaylistDbTest {
     public void createList() {
         editor.putBoolean("amp", false);
         editor.commit();
-        mediaTotalExcepted = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
-        if (mediaTotalExcepted > DbService.TEST_MAX_TRACKS) {
-            mediaTotalExcepted = DbService.TEST_MAX_TRACKS;
-        }
         ActivityScenario<PlaylistActivity> scenario = ActivityScenario.launchActivityForResult(PlaylistActivity.class);
         //scenario.moveToState(Lifecycle.State.CREATED);
         //scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<PlaylistActivity>() {
             @Override
             public void perform(PlaylistActivity activity) {
-                activity.createList(mediaTotalExcepted);
+                activity.createList();
             }
         });
         int res = scenario.getResult().getResultCode();

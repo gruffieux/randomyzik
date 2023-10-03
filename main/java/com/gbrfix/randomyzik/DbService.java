@@ -39,7 +39,7 @@ public class DbService implements Observer<WorkInfo> {
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
     private Context context;
-    private int total, counter;
+    private int catTotal, catCounter;
 
     public DbService(Context context) {
         this.context = context;
@@ -76,7 +76,7 @@ public class DbService implements Observer<WorkInfo> {
                 if (catalogs != null) {
                     handler.post(() -> {
                         try {
-                            total = 0;
+                            catTotal = 0;
                             WorkContinuation workContinuation = null;
                             for (Map.Entry<String, String> entry : catalogs.entrySet()) {
                                 String key = entry.getKey();
@@ -88,8 +88,8 @@ public class DbService implements Observer<WorkInfo> {
                                 if (!catalog.equals("0") && !catalog.equals(value)) {
                                     continue;
                                 }
-                                total++;
-                                if (test && total > TEST_MAX_CATALOGS) {
+                                catTotal++;
+                                if (test && catTotal > TEST_MAX_CATALOGS) {
                                     break;
                                 }
                                 OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
@@ -118,7 +118,7 @@ public class DbService implements Observer<WorkInfo> {
                 }
             });
         } else {
-            total = 1;
+            catTotal = 1;
             String dbName = DAOBase.DEFAULT_NAME;
             if (test) {
                 dbName = "test-" + dbName;
@@ -136,30 +136,23 @@ public class DbService implements Observer<WorkInfo> {
             WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
         }
 
-        counter = 0;
+        catCounter = 0;
         dbSignalListener.onScanStart();
     }
 
     @Override
     public void onChanged(WorkInfo workInfo) {
         if (workInfo != null) {
-            if (workInfo.getState() == WorkInfo.State.RUNNING) {
-                Data progress = workInfo.getProgress();
-                int catId = progress.getInt("catalogId", 0);
-                int total = progress.getInt("total", 0);
-                if (catId != 0) {
-                    dbSignalListener.onScanProgress(catId, total);
-                }
-            }
             if (workInfo.getState().isFinished()) {
                 WorkManager.getInstance(context).getWorkInfoByIdLiveData(workInfo.getId()).removeObserver(this);
                 switch (workInfo.getState()) {
                     case SUCCEEDED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is succeeded");
                         int catId = workInfo.getOutputData().getInt("catId", 0);
+                        int total = workInfo.getOutputData().getInt("total", 0);
                         boolean updated = workInfo.getOutputData().getBoolean("updated", false);
-                        counter++;
-                        dbSignalListener.onScanCompleted(catId, updated, counter >= total);
+                        catCounter++;
+                        dbSignalListener.onScanCompleted(catId, total, updated, catCounter >= catTotal);
                         break;
                     case FAILED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is failed");
@@ -167,7 +160,7 @@ public class DbService implements Observer<WorkInfo> {
                         break;
                     case CANCELLED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is cancelled");
-                        dbSignalListener.onScanCompleted(0, false, true);
+                        dbSignalListener.onScanCompleted(0, 0,false, true);
                     default:
                 }
             }

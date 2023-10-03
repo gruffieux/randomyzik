@@ -7,6 +7,5 @@ package com.gbrfix.randomyzik;
 interface DbSignal {
     void onError(String msg);
     void onScanStart();
-    void onScanProgress(int catalogId, int total);
-    void onScanCompleted(int catalogId, boolean update, boolean all);
+    void onScanCompleted(int catalogId, int total, boolean update, boolean all);
 }

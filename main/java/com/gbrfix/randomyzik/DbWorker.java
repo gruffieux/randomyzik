@@ -67,10 +67,6 @@ public class DbWorker extends Worker {
                     list.addAll(elements);
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                     total = elements.size();
-                    setProgressAsync(new Data.Builder()
-                        .putInt("catalogId", catalogId)
-                        .putInt("total", total)
-                        .build());
                 } while (total >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
             } catch (Exception e) {
                 Data output = new Data.Builder()
@@ -163,6 +159,7 @@ public class DbWorker extends Worker {
 
         Data output = new Data.Builder()
                 .putInt("catId", catalogId)
+                .putInt("total", list.size())
                 .putBoolean("updated", updated)
                 .build();
         return Result.success(output);

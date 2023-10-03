@@ -540,12 +540,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
 
                     @Override
-                    public void onScanProgress(int catalogId, int total) {
-
-                    }
-
-                    @Override
-                    public void onScanCompleted(int catalogId, boolean update, boolean all) {
+                    public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
