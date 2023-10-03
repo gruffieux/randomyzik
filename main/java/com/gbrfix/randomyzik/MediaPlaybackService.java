@@ -102,6 +102,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
+        if (test) {
+            provider.setDbName("test-"+DAOBase.DEFAULT_NAME);
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
             AudioAttributes attributes = new AudioAttributes.Builder()

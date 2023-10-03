@@ -46,6 +46,20 @@ public class TestActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+        mediaBrowser.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        mediaBrowser.disconnect();
+    }
+
+    @Override
     protected void onDestroy() {
         if (MediaControllerCompat.getMediaController(this) != null) {
             MediaControllerCompat.getMediaController(this).unregisterCallback(controllerCallback);
@@ -122,6 +136,35 @@ public class TestActivity extends AppCompatActivity {
         });
 
         dbService.check();
+    }
+
+    public void playAllTracks(int total) {
+        MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+
+        MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
+        MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
+        mediaController.registerCallback(new MediaControllerCompat.Callback() {
+            int counter = 0;
+            @Override
+            public void onSessionEvent(String event, Bundle extras) {
+                switch (event) {
+                    case "onTrackRead":
+                        counter++;
+                        if (extras.getBoolean("last")) {
+                            assertEquals(total, counter);
+                            finish();
+                        }
+                        break;
+                }
+                super.onSessionEvent(event, extras);
+            }
+        });
+
+        Bundle args = new Bundle();
+        args.putInt("mode", MediaProvider.MODE_TRACK);
+        mediaBrowser.sendCustomAction("changeMode", args, null);
+
+        mediaController.getTransportControls().play();
     }
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {

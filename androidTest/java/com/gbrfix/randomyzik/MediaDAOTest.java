@@ -21,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaDAOTest {
-    public static String TEST_DBNAME = "test-playlist.db";
+    public static String TEST_DBNAME = "test-" + DAOBase.DEFAULT_NAME;
     private int mediaTotalExcepted;
     private MediaDAO dao;
 
