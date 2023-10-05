@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 
-import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
@@ -47,7 +46,6 @@ public class PlaylistTest {
         dao.close();
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        //scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
