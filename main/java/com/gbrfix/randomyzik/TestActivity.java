@@ -28,6 +28,10 @@ import java.net.MalformedURLException;
  * Created by gab on 16.03.2018.
  */
 
+interface MediaSignal {
+    public void sessionEvent(String event, Bundle extras);
+};
+
 public class TestActivity extends AppCompatActivity {
     final static int TEST_PLAY_ALL_TRACKS = 1;
     final static int TEST_PLAY_ALL_ALBUMS = 2;
@@ -36,6 +40,7 @@ public class TestActivity extends AppCompatActivity {
 
     int currentTest, trackCount, trackTotal;
     MediaBrowserCompat mediaBrowser = null;
+    MediaSignal mediaSignalListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -163,7 +168,7 @@ public class TestActivity extends AppCompatActivity {
 
         mediaController.getTransportControls().play();
     }
-/*
+    
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
@@ -220,7 +225,7 @@ public class TestActivity extends AppCompatActivity {
             super.onSessionEvent(event, extras);
         }
     };
-*/
+    
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
@@ -231,6 +236,7 @@ public class TestActivity extends AppCompatActivity {
                 // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
                 MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
+                mediaController.registerCallback(controllerCallback);
             } catch (Exception e) {
                 assertTrue(false);
             }
