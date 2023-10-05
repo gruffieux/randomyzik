@@ -144,11 +144,10 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total) {
-        MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(this);
-        mediaController.registerCallback(new MediaControllerCompat.Callback() {
+        mediaSignalListener = new mediaSignalListener() {
             int counter = 0;
             @Override
-            public void onSessionEvent(String event, Bundle extras) {
+            public void sessionEvent(String event, Bundle extras) {
                 switch (event) {
                     case "onTrackRead":
                         counter++;
@@ -158,7 +157,6 @@ public class TestActivity extends AppCompatActivity {
                         }
                         break;
                 }
-                super.onSessionEvent(event, extras);
             }
         });
 
@@ -182,6 +180,7 @@ public class TestActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
+            
             switch (event) {
                 case "onTrackSelect":
                     switch (currentTest) {
