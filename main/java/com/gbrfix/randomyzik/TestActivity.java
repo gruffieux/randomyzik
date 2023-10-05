@@ -153,12 +153,15 @@ public class TestActivity extends AppCompatActivity {
                         counter++;
                         if (extras.getBoolean("last")) {
                             assertEquals(total, counter);
+                            mediaBrowser.disconnect();
                             finish();
                         }
                         break;
                 }
             }
         });
+
+        mediaBrowser.connect();
 
         Bundle args = new Bundle();
         args.putInt("mode", MediaProvider.MODE_TRACK);
@@ -180,7 +183,8 @@ public class TestActivity extends AppCompatActivity {
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            
+            mediaSignalListener.sessionEvent(event, extras);
+            /*
             switch (event) {
                 case "onTrackSelect":
                     switch (currentTest) {
@@ -220,7 +224,7 @@ public class TestActivity extends AppCompatActivity {
                             assertTrue(false);
                     }
                     currentTest = 0;
-            }
+            }*/
             super.onSessionEvent(event, extras);
         }
     };
