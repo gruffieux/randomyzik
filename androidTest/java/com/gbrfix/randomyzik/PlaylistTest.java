@@ -47,7 +47,7 @@ public class PlaylistTest {
         dao.close();
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.moveToState(Lifecycle.State.STARTED);
+        //scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {

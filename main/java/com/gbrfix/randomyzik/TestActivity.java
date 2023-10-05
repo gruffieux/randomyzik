@@ -28,48 +28,24 @@ import java.net.MalformedURLException;
  * Created by gab on 16.03.2018.
  */
 
-interface MediaSignal {
-    public void sessionEvent(String event, Bundle extras);
+interface TestSignal {
+    public void browserConnected();
 };
 
 public class TestActivity extends AppCompatActivity {
-    final static int TEST_PLAY_ALL_TRACKS = 1;
-    final static int TEST_PLAY_ALL_ALBUMS = 2;
-    final static int TEST_PLAY_LAST_TRACK = 3;
-    final static int TEST_PLAY_ENDED_LIST = 4;
-
-    int currentTest, trackCount, trackTotal;
+    int trackCount;
     MediaBrowserCompat mediaBrowser = null;
-    MediaSignal mediaSignalListener;
+    TestSignal testSignalListener = null;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        currentTest = trackCount = trackTotal = 0;
         mediaBrowser = new MediaBrowserCompat(this, new ComponentName(this, MediaPlaybackService.class), browserConnection, null);
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-
-        mediaBrowser.connect();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        mediaBrowser.disconnect();
-    }
-
-    @Override
     protected void onDestroy() {
-        if (MediaControllerCompat.getMediaController(this) != null) {
-            MediaControllerCompat.getMediaController(this).unregisterCallback(controllerCallback);
-        }
-
         super.onDestroy();
     }
 
@@ -144,102 +120,45 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total) {
-        mediaSignalListener = new mediaSignalListener() {
-            int counter = 0;
-            @Override
-            public void sessionEvent(String event, Bundle extras) {
-                switch (event) {
-                    case "onTrackRead":
-                        counter++;
-                        if (extras.getBoolean("last")) {
-                            assertEquals(total, counter);
-                            mediaBrowser.disconnect();
-                            finish();
-                        }
-                        break;
-                }
-            }
-        });
-
+        trackCount = 0;
         mediaBrowser.connect();
-
-        Bundle args = new Bundle();
-        args.putInt("mode", MediaProvider.MODE_TRACK);
-        mediaBrowser.sendCustomAction("changeMode", args, null);
-
-        mediaController.getTransportControls().play();
-    }
-    
-    private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
-        @Override
-        public void onPlaybackStateChanged(PlaybackStateCompat state) {
-            super.onPlaybackStateChanged(state);
-        }
-
-        @Override
-        public void onMetadataChanged(MediaMetadataCompat metadata) {
-            super.onMetadataChanged(metadata);
-        }
-
-        @Override
-        public void onSessionEvent(String event, final Bundle extras) {
-            mediaSignalListener.sessionEvent(event, extras);
-            /*
-            switch (event) {
-                case "onTrackSelect":
-                    switch (currentTest) {
-                        case TEST_PLAY_LAST_TRACK:
-                            assertEquals(extras.getInt("total"), extras.getInt("totalRead"));
-                            break;
-                    }
-                    break;
-                case "onTrackProgress":
-                    break;
-                case "onTrackRead":
-                    trackCount++;
-                    if (extras.getBoolean("last")) {
-                        switch (currentTest) {
-                            case TEST_PLAY_ALL_TRACKS:
-                            case TEST_PLAY_ALL_ALBUMS:
-                            case TEST_PLAY_LAST_TRACK:
-                                assertEquals(trackTotal, trackCount);
-                                assertEquals(100, trackCount/trackTotal*100);
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                Bundle args = new Bundle();
+                args.putInt("mode", MediaProvider.MODE_TRACK);
+                mediaBrowser.sendCustomAction("changeMode", args, null);
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackRead":
+                                trackCount++;
+                                if (extras.getBoolean("last")) {
+                                    assertEquals(total, trackCount);
+                                    mediaBrowser.disconnect();
+                                    MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                    finish();
+                                }
                                 break;
                         }
-                        currentTest = 0;
+                        super.onSessionEvent(event, extras);
                     }
-                    break;
-                case "onError":
-                    switch (currentTest) {
-                        case TEST_PLAY_ENDED_LIST:
-                            assertTrue(true);
-                            break;
-                        default:
-                            Cursor cursor = getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
-                                    MediaStore.Audio.Media.DATA
-                            }, "_id=?", new String[] {String.valueOf(extras.getInt("media_id"))}, null);
-                            if (cursor.moveToFirst()) {
-                                Log.i("trackPath", cursor.getString(0));
-                            }
-                            assertTrue(false);
-                    }
-                    currentTest = 0;
-            }*/
-            super.onSessionEvent(event, extras);
-        }
-    };
-    
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
             try {
-                // Get the token for the MediaSession
                 MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-
-                // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
                 MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
-                mediaController.registerCallback(controllerCallback);
+                testSignalListener.browserConnected();
             } catch (Exception e) {
                 assertTrue(false);
             }
