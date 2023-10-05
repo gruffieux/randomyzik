@@ -139,10 +139,7 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total) {
-        MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-
-        MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
-        MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
+        MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(this);
         mediaController.registerCallback(new MediaControllerCompat.Callback() {
             int counter = 0;
             @Override
@@ -166,7 +163,7 @@ public class TestActivity extends AppCompatActivity {
 
         mediaController.getTransportControls().play();
     }
-
+/*
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
@@ -223,7 +220,7 @@ public class TestActivity extends AppCompatActivity {
             super.onSessionEvent(event, extras);
         }
     };
-
+*/
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
@@ -234,29 +231,6 @@ public class TestActivity extends AppCompatActivity {
                 // Create a MediaControllerCompat
                 MediaControllerCompat mediaController = new MediaControllerCompat(TestActivity.this, token);
                 MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
-
-                mediaController.registerCallback(controllerCallback);
-
-                Bundle args = new Bundle();
-                switch (currentTest) {
-                    case TEST_PLAY_ALL_TRACKS:
-                        args.putInt("mode", MediaProvider.MODE_TRACK);
-                        mediaBrowser.sendCustomAction("changeMode", args, null);
-                        break;
-                    case TEST_PLAY_ALL_ALBUMS:
-                        args.putInt("mode", MediaProvider.MODE_ALBUM);
-                        mediaBrowser.sendCustomAction("changeMode", args, null);
-                        break;
-                }
-                switch (currentTest) {
-                    case TEST_PLAY_ALL_TRACKS:
-                    case TEST_PLAY_ALL_ALBUMS:
-                    case TEST_PLAY_LAST_TRACK:
-                    case TEST_PLAY_ENDED_LIST:
-                        mediaBrowser.sendCustomAction("test", null, null);
-                        mediaController.getTransportControls().play();
-                        break;
-                }
             } catch (Exception e) {
                 assertTrue(false);
             }
