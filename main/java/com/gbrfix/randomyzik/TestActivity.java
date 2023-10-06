@@ -113,14 +113,14 @@ public class TestActivity extends AppCompatActivity {
         dbService.check();
     }
 
-    public void playAllTracks(int total) {
+    public void playAllTracks(int total, int mode) {
         trackCount = 0;
         mediaBrowser.connect();
         testSignalListener = new TestSignal() {
             @Override
             public void browserConnected() {
                 Bundle args = new Bundle();
-                args.putInt("mode", MediaProvider.MODE_TRACK);
+                args.putInt("mode", mode);
                 mediaBrowser.sendCustomAction("changeMode", args, null);
                 MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
                 mediaController.registerCallback(new MediaControllerCompat.Callback() {
