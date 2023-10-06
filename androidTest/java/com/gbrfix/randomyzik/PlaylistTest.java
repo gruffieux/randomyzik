@@ -49,33 +49,31 @@ public class PlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.playAllTracks(total);
+                activity.playAllTracks(total, MediaProvider.MODE_TRACK);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+    }
+
+    @Test
+    public void playAllAlbums() throws Exception {
+        MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME);
+        dao.open();
+        dao.updateFlagAll("unread");
+        SQLiteCursor cursor = dao.getUnread();
+        int total = cursor.getCount();
+        dao.close();
+
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.playAllTracks(total, MediaProvider.MODE_ALBUM);
             }
         });
         int res = scenario.getResult().getResultCode();
     }
 /*
-    @Test
-    public void playAllAlbums() throws Exception {
-        activity.currentTest = TestActivity.TEST_PLAY_ALL_ALBUMS;
-
-        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
-        dao.open();
-        dao.updateFlagAll("unread");
-        SQLiteCursor cursor = dao.getUnread();
-        activity.trackTotal = cursor.getCount();
-        dao.close();
-
-        activity.mediaBrowser.connect();
-
-        while (activity.currentTest != 0) {
-        }
-
-        activity.mediaBrowser.disconnect();
-    }
-
     @Test
     public void playLastTrack() throws Exception {
         activity.currentTest = TestActivity.TEST_PLAY_LAST_TRACK;
