@@ -109,24 +109,16 @@ public class PlaylistTest {
 
         activity.mediaBrowser.disconnect();
     }
-
+*/
     @Test
     public void playEndedList() throws Exception {
-        activity.currentTest = TestActivity.TEST_PLAY_ENDED_LIST;
-
-        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
-        dao.open();
-        dao.updateFlagAll("read");
-        activity.trackTotal = 0;
-        dao.close();
-
-        activity.mediaBrowser.connect();
-
-        while (activity.currentTest != 0) {
-        }
-
-        activity.mediaBrowser.disconnect();
-    }*/
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.playEndedList();
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+    }
 }

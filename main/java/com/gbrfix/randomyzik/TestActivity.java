@@ -12,11 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
 import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
 
 import org.junit.Assert;
-
-import java.net.MalformedURLException;
 
 /**
  * Created by gab on 16.03.2018.
@@ -64,11 +61,10 @@ public class TestActivity extends AppCompatActivity {
                     int count = cursor.getCount();
                     dao.close();
                     if (count != total) {
-                        Assert.assertFalse(true);
-                        finish();
+                        Assert.fail(String.format("Expected %2$d but was %1$d in catalog %3$d", count, total, catalogId));
                     }
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    Assert.fail(e.getMessage());
                 }
                 if (all) {
                     Assert.assertTrue(true);
@@ -78,7 +74,7 @@ public class TestActivity extends AppCompatActivity {
 
             @Override
             public void onError(String msg) {
-                Assert.assertFalse(false);
+                Assert.fail(msg);
             }
         });
 
@@ -145,6 +141,33 @@ public class TestActivity extends AppCompatActivity {
         };
     }
 
+    public void playEndedList() {
+        MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
+        dao.open();
+        dao.updateFlagAll("read");
+        dao.close();
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onError":
+                                assertEquals(extras.getString("message"), TestActivity.this.getString(R.string.err_all_read));
+                                finish();
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
     private final MediaBrowserCompat.ConnectionCallback browserConnection = new MediaBrowserCompat.ConnectionCallback() {
         @Override
         public void onConnected() {
@@ -154,20 +177,18 @@ public class TestActivity extends AppCompatActivity {
                 MediaControllerCompat.setMediaController(TestActivity.this, mediaController);
                 testSignalListener.browserConnected();
             } catch (Exception e) {
-                assertTrue(false);
+                Assert.fail(e.getMessage());
             }
         }
 
         @Override
         public void onConnectionSuspended() {
-            // The Service has crashed. Disable transport controls until it automatically reconnects
-            assertTrue(false);
+            Assert.fail("The Service has crashed. Disable transport controls until it automatically reconnects");
         }
 
         @Override
         public void onConnectionFailed() {
-            // The Service has refused our connection
-            assertTrue(false);
+            Assert.fail("The Service has refused our connection");
         }
     };
 }
