@@ -60,7 +60,7 @@ public class PlaylistTest {
         MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME);
         dao.open();
         dao.updateFlagAll("unread");
-        SQLiteCursor cursor = dao.getUnread();
+        SQLiteCursor cursor = dao.getFromFlagAlbumGrouped("unread");
         int total = cursor.getCount();
         dao.close();
 

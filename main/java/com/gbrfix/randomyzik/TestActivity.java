@@ -24,7 +24,7 @@ interface TestSignal {
 };
 
 public class TestActivity extends AppCompatActivity {
-    int trackCount, trackTotal;
+    int trackCount, trackTotal, albumCount;
     String currentAlbum;
     MediaBrowserCompat mediaBrowser = null;
     TestSignal testSignalListener = null;
@@ -111,7 +111,7 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total, int mode) {
-        trackCount = 0;
+        trackCount = albumCount = 0;
         currentAlbum = "";
         mediaBrowser.connect();
         testSignalListener = new TestSignal() {
@@ -126,20 +126,31 @@ public class TestActivity extends AppCompatActivity {
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
                             case "onTrackSelect":
-                                String albumKey = extras.getString("albumKey");
-                                if (!albumKey.equals(currentAlbum) || currentAlbum.isEmpty()) {
-                                    currentAlbum = albumKey;
-                                    MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
-                                    dao.open();
-                                    SQLiteCursor cursor = dao.getFromAlbum(currentAlbum);
-                                    trackTotal = cursor.getCount();
-                                    dao.close();
+                                if (mode == MediaProvider.MODE_ALBUM) {
+                                    String albumKey = extras.getString("albumKey");
+                                    if (!albumKey.equals(currentAlbum) || currentAlbum.isEmpty()) {
+                                        if (trackTotal > 0 && trackTotal != trackCount) {
+                                            Assert.fail(String.format("Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
+                                        }
+                                        currentAlbum = albumKey;
+                                        MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
+                                        dao.open();
+                                        SQLiteCursor cursor = dao.getFromAlbum(currentAlbum, "");
+                                        trackTotal = cursor.getCount();
+                                        dao.close();
+                                        albumCount++;
+                                        trackCount = 0;
+                                    }
                                 }
                                 break;
                             case "onTrackRead":
                                 trackCount++;
                                 if (extras.getBoolean("last")) {
-                                    assertEquals(total, trackCount);
+                                    if (mode == MediaProvider.MODE_ALBUM) {
+                                        assertEquals(total, albumCount);
+                                    } else {
+                                        assertEquals(total, trackCount);
+                                    }
                                     mediaBrowser.disconnect();
                                     MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
                                     finish();
