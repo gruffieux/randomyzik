@@ -24,7 +24,8 @@ interface TestSignal {
 };
 
 public class TestActivity extends AppCompatActivity {
-    int trackCount;
+    int trackCount, trackTotal;
+    String currentAlbum;
     MediaBrowserCompat mediaBrowser = null;
     TestSignal testSignalListener = null;
 
@@ -111,6 +112,7 @@ public class TestActivity extends AppCompatActivity {
 
     public void playAllTracks(int total, int mode) {
         trackCount = 0;
+        currentAlbum = "";
         mediaBrowser.connect();
         testSignalListener = new TestSignal() {
             @Override
@@ -123,6 +125,17 @@ public class TestActivity extends AppCompatActivity {
                     @Override
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
+                            case "onTrackSelect":
+                                String albumKey = extras.getString("albumKey");
+                                if (!albumKey.equals(currentAlbum) || currentAlbum.isEmpty()) {
+                                    currentAlbum = albumKey;
+                                    MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
+                                    dao.open();
+                                    SQLiteCursor cursor = dao.getFromAlbum(currentAlbum);
+                                    trackTotal = cursor.getCount();
+                                    dao.close();
+                                }
+                                break;
                             case "onTrackRead":
                                 trackCount++;
                                 if (extras.getBoolean("last")) {
