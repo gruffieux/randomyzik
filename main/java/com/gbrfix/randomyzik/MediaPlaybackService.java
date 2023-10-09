@@ -484,6 +484,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("album", media.getAlbum());
                     bundle.putString("artist", media.getArtist());
                     bundle.putInt("duration", duration);
+                    bundle.putString("albumKey", media.getAlbumKey());
                     session.sendSessionEvent("onTrackSelect", bundle);
 
                     // Save current track
