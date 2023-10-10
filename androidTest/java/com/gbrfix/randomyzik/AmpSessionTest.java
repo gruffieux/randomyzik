@@ -20,12 +20,14 @@ import static org.junit.Assert.assertTrue;
 public class AmpSessionTest {
     private Context context;
     private AmpSession session;
+    private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
 
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        editor = prefs.edit();
         editor.putBoolean("test", true);
         editor.putBoolean("amp", true);
         editor.putString("server", "http://raspberrypi/ampache");
@@ -79,9 +81,9 @@ public class AmpSessionTest {
 
     @Test
     public void pingInvalidToken() {
-        SharedPreferences prefs; //TODO
+        String server = prefs.getString("server");
         try {
-            session.ping();
+            session.ping(server, "abc");
             fail();
         }
         catch (Exception e) {
