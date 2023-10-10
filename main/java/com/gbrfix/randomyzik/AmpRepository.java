@@ -33,7 +33,7 @@ abstract class AmpRepository {
         return user;
     }
 
-    public Bundle handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
+    public static Bundle handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(pwd.getBytes());
         byte[] md1 = md.digest();
