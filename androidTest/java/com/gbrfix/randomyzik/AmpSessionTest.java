@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 public class AmpSessionTest {
     private Context context;
     private AmpSession session;
+    private SharedPreferences.Editor editor;
 
     @Before
     public void setUp() throws Exception {
@@ -29,13 +30,14 @@ public class AmpSessionTest {
         editor.putBoolean("test", true);
         editor.putBoolean("amp", true);
         editor.putString("server", "http://raspberrypi/ampache");
+        editor.putBoolean("amp_api", true);
+        editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.commit();
         session = AmpSession.getInstance(context);
     }
 
     @Test
     public void connectInvalidServer() {
-        editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putString("server", "http://raspberrypi/abc");
         editor.commit();
         try {
