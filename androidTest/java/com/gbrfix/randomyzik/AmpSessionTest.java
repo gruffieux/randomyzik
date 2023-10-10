@@ -76,6 +76,18 @@ public class AmpSessionTest {
             assertTrue(true);
         }
     }
+
+    @Test
+    public void pingInvalidToken() {
+        SharedPreferences prefs; //TODO
+        try {
+            session.ping();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(true);
+        }
+    }
     
     @After
     public void destroy() {
