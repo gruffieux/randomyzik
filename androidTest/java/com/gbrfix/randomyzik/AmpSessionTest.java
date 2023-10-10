@@ -1,8 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteCursor;
-import android.provider.MediaStore;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -20,100 +18,34 @@ import static org.junit.Assert.assertTrue;
  */
 
 @RunWith(AndroidJUnit4.class)
-public class MediaDAOTest {
-    public static String TEST_DBNAME = "test-" + DAOBase.DEFAULT_NAME;
-    private int mediaTotalExcepted;
-    private MediaDAO dao;
+public class AmpSessionTest {
+    private Context context;
+    private AmpSession session;
 
     @Before
     public void setUp() throws Exception {
-        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mediaTotalExcepted = c.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[] {MediaStore.Audio.Media._ID},"is_music=1", null, null).getCount();
-        if (mediaTotalExcepted > DbService.TEST_MAX_TRACKS) {
-            mediaTotalExcepted = DbService.TEST_MAX_TRACKS;
-        }
-        dao = new MediaDAO(c, TEST_DBNAME);
-        dao.open();
+        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putBoolean("test", true);
+        editor.putBoolean("amp", true);
+        editor.putString("server", "http://raspberrypi/ampache");
+        editor.commit();
+        session = AmpSession.getInstance(context);
     }
 
     @Test
-    public void selectAlbumEmpty() {
+    public void connectInvalidServer() {
+        editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putString("server", "http://raspberrypi/abc");
+        editor.commit();
         try {
-            SQLiteCursor cursor = dao.getFromAlbum("", "unread");
+            session.connect();
+        }
+        catch (Exception e) {
             assertTrue(true);
         }
-        catch (Exception e) {
-            assertTrue(false);
-        }
     }
-
-    @Test
-    public void selectAlbumNull() {
-        try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, "");
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAlbumAllEmpty() {
-        try {
-            SQLiteCursor cursor = dao.getFromAlbum("", "");
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAlbumAllNull() {
-        try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, "unread");
-            assertTrue(true);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAllMediaId() {
-        try {
-            SQLiteCursor cursor = dao.getAll();
-            int count = 0;
-            while (cursor.moveToNext()) {
-                if (cursor.getInt(cursor.getColumnIndex("media_id")) != 0) {
-                    count++;
-                }
-            }
-            assertEquals(mediaTotalExcepted, count);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    public void selectAllAlbumKey() {
-        try {
-            SQLiteCursor cursor = dao.getAll();
-            int count = 0;
-            while (cursor.moveToNext()) {
-                if (!cursor.getString(cursor.getColumnIndex("album_key")).isEmpty()) {
-                    count++;
-                }
-            }
-            assertEquals(mediaTotalExcepted, count);
-        }
-        catch (Exception e) {
-            assertTrue(false);
-        }
-    }
-
+    
     @After
     public void destroy() {
         dao.close();
