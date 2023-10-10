@@ -47,6 +47,35 @@ public class AmpSessionTest {
             assertTrue(true);
         }
     }
+
+    @Test
+    public void connectInvalidApiKey() {
+        editor.putBoolean("amp_api", true);
+        editor.putString("amp_api_key", "abc");
+        editor.commit();
+        try {
+            session.connect();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(true);
+        }
+    }
+
+    @Test
+    public void connectInvalidLogin() {
+        editor.putBoolean("amp_api", false);
+        editor.putString("amp_user", "aaa");
+        editor.putString("amp_pwd", "bbb");
+        editor.commit();
+        try {
+            session.connect();
+            fail();
+        }
+        catch (Exception e) {
+            assertTrue(true);
+        }
+    }
     
     @After
     public void destroy() {
