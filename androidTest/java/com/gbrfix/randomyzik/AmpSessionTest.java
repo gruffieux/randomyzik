@@ -10,11 +10,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Created by gab on 21.09.2017.
+ * Created by gab on 10.10.2023.
  */
 
 @RunWith(AndroidJUnit4.class)
@@ -42,6 +41,7 @@ public class AmpSessionTest {
         editor.commit();
         try {
             session.connect();
+            fail();
         }
         catch (Exception e) {
             assertTrue(true);
@@ -50,6 +50,5 @@ public class AmpSessionTest {
     
     @After
     public void destroy() {
-        dao.close();
     }
 }
