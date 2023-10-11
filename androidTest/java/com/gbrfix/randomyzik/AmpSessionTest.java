@@ -31,17 +31,16 @@ public class AmpSessionTest {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("test", true);
-        editor.putBoolean("amp", true);
         editor.putString("server", "http://raspberrypi/ampache");
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.commit();
     }
 
-    private void handshakeServer(String server) {
+    @Test
+    public void handshakeServerEmpty() {
         String apiKey = prefs.getString("amp_api_key", "");
         try {
-            AmpRepository.handshake(server, apiKey);
+            AmpRepository.handshake("", apiKey);
             Assert.fail();
         }
         catch (Exception e) {
@@ -50,25 +49,35 @@ public class AmpSessionTest {
     }
 
     @Test
-    public void handhsakeServerEmpty() {
-        handshakeServer("");
-    }
-
-    @Test
     public void handhsakeServerNull() {
-        handshakeServer(null);
+        String apiKey = prefs.getString("amp_api_key", "");
+        try {
+            AmpRepository.handshake(null, apiKey);
+            Assert.fail();
+        }
+        catch (Exception e) {
+            assertTrue(true);
+        }
     }
 
     @Test
     public void handhsakeServerWrong() {
-        handshakeServer("http://raspberrypi/abc");
+        String apiKey = prefs.getString("amp_api_key", "");
+        try {
+            AmpRepository.handshake("http://raspberrypi/abc", apiKey);
+            Assert.fail();
+        }
+        catch (Exception e) {
+            assertTrue(true);
+        }
     }
 
-    private void handshakeApiKey(String apiKey) {
+    @Test
+    public void handshakeApiKeyEmpty() {
         String server = prefs.getString("amp_server", "");
         try {
-            Bundle data = AmpRepository.handshake(server, apiKey);
-            Assert.assertEquals(null, data.getString("auth"));
+            Bundle data = AmpRepository.handshake(server, "");
+            Assert.assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -76,25 +85,23 @@ public class AmpSessionTest {
     }
 
     @Test
-    public void handshakeApiKeyEmpty() {
-        handshakeApiKey("");
-    }
-
-    @Test
     public void handshakeApiKeyNull() {
-        handshakeApiKey(null);
+        String server = prefs.getString("amp_server", "");
+        try {
+            Bundle data = AmpRepository.handshake(server, null);
+            Assert.assertNull(data.getString("auth"));
+        }
+        catch (Exception e) {
+            fail();
+        }
     }
 
     @Test
     public void handshakeApiKeyWrong() {
-        handshakeApiKey("abc");
-    }
-
-    private void handshakeLogin(String user, String pwd) {
-        String server = prefs.getString("amp_server", "");
+        String server = prefs.getString("amp_server", "abc");
         try {
-            Bundle data = AmpRepository.handshake(server, user, pwd);
-            Assert.assertEquals(null, data.getString("auth"));
+            Bundle data = AmpRepository.handshake(server, "");
+            Assert.assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -103,20 +110,46 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeLoginBadUser() {
-        handshakeLogin("aaa", "1234");
+        String server = prefs.getString("amp_server", "");
+        try {
+            Bundle data = AmpRepository.handshake(server, "aaa", "1234");
+            Assert.assertNull(data.getString("auth"));
+        }
+        catch (Exception e) {
+            fail();
+        }
     }
 
     @Test
     public void handshakeLoginBadPwd() {
-        handshakeLogin("admin", "1234");
+        String server = prefs.getString("amp_server", "");
+        try {
+            Bundle data = AmpRepository.handshake(server, "admin", "1234");
+            Assert.assertNull(data.getString("auth"));
+        }
+        catch (Exception e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void pingExpiredToken() {
+        String server = prefs.getString("server", "");
+        try {
+            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a75");
+            Assert.assertNull(data.getString("auth"));
+        }
+        catch (Exception e) {
+            fail();
+        }
     }
 
     @Test
     public void pingInvalidToken() {
         String server = prefs.getString("server", "");
         try {
-            Bundle data = AmpRepository.ping(server, "abc");
-            Assert.assertEquals(null, data.getString("auth"));
+            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
+            Assert.assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
