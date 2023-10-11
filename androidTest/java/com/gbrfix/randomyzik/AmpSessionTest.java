@@ -14,8 +14,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.List;
 
 /**
  * Created by gab on 10.10.2023.
@@ -41,7 +44,7 @@ public class AmpSessionTest {
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             AmpRepository.handshake("", apiKey);
-            Assert.fail();
+            fail();
         }
         catch (Exception e) {
             assertTrue(true);
@@ -65,7 +68,7 @@ public class AmpSessionTest {
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             AmpRepository.handshake("http://raspberrypi/abc", apiKey);
-            Assert.fail();
+            fail();
         }
         catch (Exception e) {
             assertTrue(true);
@@ -77,7 +80,7 @@ public class AmpSessionTest {
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "");
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -89,7 +92,7 @@ public class AmpSessionTest {
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, null);
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -101,7 +104,7 @@ public class AmpSessionTest {
         String server = prefs.getString("amp_server", "abc");
         try {
             Bundle data = AmpRepository.handshake(server, "");
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -113,7 +116,7 @@ public class AmpSessionTest {
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "aaa", "1234");
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -125,7 +128,7 @@ public class AmpSessionTest {
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "admin", "1234");
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -137,7 +140,7 @@ public class AmpSessionTest {
         String server = prefs.getString("server", "");
         try {
             Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
-            Assert.assertNull(data.getString("auth"));
+            assertNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
@@ -145,11 +148,13 @@ public class AmpSessionTest {
     }
 
     @Test
-    public void pingExpiredToken() {
+    public void searchNoCatalog() {
         String server = prefs.getString("server", "");
+        String apiKey = prefs.getString("amp_api_key", "");
         try {
-            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a75");
-            Assert.assertNotNull(data.getString("auth"));
+            Bundle data = AmpRepository.handshake(server, apiKey);
+            List list = AmpRepository.advanced_search(server, data.getString("auth"), 0, DbService.TEST_MAX_TRACKS, 0);
+            assertTrue(list.isEmpty());
         }
         catch (Exception e) {
             fail();

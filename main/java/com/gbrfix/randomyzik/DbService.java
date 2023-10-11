@@ -33,7 +33,7 @@ import java.util.concurrent.Executors;
 public class DbService implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 3;
     public final static int TEST_MAX_CATALOGS = 10;
-    public final static int TEST_MAX_TRACKS = 100;
+    public final static int TEST_MAX_TRACKS = 80;
     final static String NOTIFICATION_CHANNEL = "Database channel";
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
