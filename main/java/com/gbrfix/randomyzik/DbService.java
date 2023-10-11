@@ -190,10 +190,11 @@ public class DbService implements Observer<WorkInfo> {
     public void unregister() {
         contentResolver.unregisterContentObserver(mediaObserver);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // BUG: Interrompt la tâche sur le S8
+        /*if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
             manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
-        }
+        }*/
     }
 
     public void check() {
