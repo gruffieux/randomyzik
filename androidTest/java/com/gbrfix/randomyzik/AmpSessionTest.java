@@ -133,10 +133,10 @@ public class AmpSessionTest {
     }
 
     @Test
-    public void pingExpiredToken() {
+    public void pingInvalidToken() {
         String server = prefs.getString("server", "");
         try {
-            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a75");
+            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
             Assert.assertNull(data.getString("auth"));
         }
         catch (Exception e) {
@@ -145,11 +145,11 @@ public class AmpSessionTest {
     }
 
     @Test
-    public void pingInvalidToken() {
+    public void pingExpiredToken() {
         String server = prefs.getString("server", "");
         try {
-            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
-            Assert.assertNull(data.getString("auth"));
+            Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a75");
+            Assert.assertNotNull(data.getString("auth"));
         }
         catch (Exception e) {
             fail();
