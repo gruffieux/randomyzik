@@ -60,5 +60,6 @@
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
     <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
+    <string name="err_amp_cat_undefined">Aucun catalogue definit, Veuillez vérifier les paramètres...</string>
 
 </resources>

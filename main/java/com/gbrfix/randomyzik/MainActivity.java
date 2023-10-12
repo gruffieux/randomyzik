@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     dao.close();
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
-                        infoNotification(0, getString(R.string.info_play_end));
+                        infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
                     }
                     break;
                 case "onError":
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String errorMsg = extras.getString("message");
                     infoMsg(errorMsg, Color.RED);
                     if (code >= 1) {
-                        infoNotification(1, errorMsg);
+                        infoNotification(1, errorMsg, MainActivity.class);
                     }
                     if (code >= 2) {
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
@@ -425,10 +425,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
+        String catalog = prefs.getString("amp_catalog", "0");
 
         if (amp) {
             String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "0");
+
             boolean streaming = prefs.getBoolean("amp_streaming", false);
             try {
                 dbName = AmpRepository.dbName(server, catalog);
@@ -443,13 +444,17 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         // Refresh playlist
-        MediaDAO dao = new MediaDAO(this, dbName);
-        dao.open();
-        SQLiteCursor cursor = dao.getAllOrdered();
-        ListView listView = findViewById(R.id.playlist);
-        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        adapter.changeCursor(cursor);
-        dao.close();
+        if (amp && catalog.equals("0")) {
+            infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
+        } else {
+            MediaDAO dao = new MediaDAO(this, dbName);
+            dao.open();
+            SQLiteCursor cursor = dao.getAllOrdered();
+            ListView listView = findViewById(R.id.playlist);
+            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+            adapter.changeCursor(cursor);
+            dao.close();
+        }
 
         dbService.check();
 
@@ -508,7 +513,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                 dbService = new DbService(this);
                 dbService.register();
-                dbService.check();
 
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
                 MediaDAO dao = new MediaDAO(this, dbName);
@@ -550,7 +554,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                         infoMsg.setText("");
                                     }
                                 }
-                                String catalog = prefs.getString("amp_catalog", "0");
                                 if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
                                     return;
                                 }
@@ -584,6 +587,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         });
                     }
                 });
+
+                dbService.check();
             } else {
                 throw new Exception(getString(R.string.err_no_perms));
             }
@@ -641,13 +646,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         infoMsg.setText(msg);
     }
 
-    public void infoNotification(int level, String contentText) {
+    public void infoNotification(int level, String contentText, Class activityClass) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
 
         // Create an explicit intent for an Activity in your app
-        Intent intent = new Intent(this, MainActivity.class);
+        Intent intent = new Intent(this, activityClass);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 

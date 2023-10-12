@@ -60,5 +60,6 @@
     <string name="err_amp_state_unexcepted">Localplay current state (%1$s) is not as excepted</string>
     <string name="err_amp_excepted_state">Localplay current state (%1$s) is not as excepted (%2$s)</string>
     <string name="err_amp_track_unexcepted">Localplay current track is not as excepted</string>
+    <string name="err_amp_cat_undefined">Catalog undefined, please check settings...</string>
 
 </resources>
