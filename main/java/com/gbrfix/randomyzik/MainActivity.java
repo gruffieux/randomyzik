@@ -554,6 +554,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                         infoMsg.setText("");
                                     }
                                 }
+                                String catalog = prefs.getString("amp_catalog", "0"); // Important! Ne pas enlever
                                 if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
                                     return;
                                 }
