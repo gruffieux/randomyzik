@@ -73,43 +73,7 @@ public class PlaylistTest {
         });
         int res = scenario.getResult().getResultCode();
     }
-/*
-    @Test
-    public void playLastTrack() throws Exception {
-        activity.currentTest = TestActivity.TEST_PLAY_LAST_TRACK;
 
-        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-        MediaDAO dao = new MediaDAO(c, MediaDAOTest.TEST_DBNAME);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        Random random = new Random();
-        int total = cursor.getCount();
-
-        if (total > 1) {
-            int pos = random.nextInt(total);
-            cursor.moveToPosition(pos);
-        }
-        else if (total > 0) {
-            cursor.moveToFirst();
-        }
-        else {
-            throw new Exception("List is empty");
-        }
-
-        dao.updateFlag(cursor.getInt(0), "unread");
-        activity.trackTotal = 1;
-        dao.close();
-
-        activity.mediaBrowser.connect();
-
-        while (activity.currentTest != 0) {
-        }
-
-        activity.mediaBrowser.disconnect();
-    }
-*/
     @Test
     public void playEndedList() throws Exception {
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
