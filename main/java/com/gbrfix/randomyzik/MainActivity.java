@@ -429,7 +429,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         if (amp) {
             String server = prefs.getString("amp_server", "");
-
             boolean streaming = prefs.getBoolean("amp_streaming", false);
             try {
                 dbName = AmpRepository.dbName(server, catalog);
@@ -554,7 +553,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                         infoMsg.setText("");
                                     }
                                 }
-                                String catalog = prefs.getString("amp_catalog", "0"); // Important! Ne pas enlever
+                                String catalog = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
                                 if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
                                     return;
                                 }
