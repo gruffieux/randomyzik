@@ -385,16 +385,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         switch (what) {
             case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
             case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                sendError = true;
+                //sendError = true;
                 break;
         }
 
         switch (extra) {
-            case MediaPlayer.MEDIA_ERROR_IO:
+            //case MediaPlayer.MEDIA_ERROR_IO:
             case MediaPlayer.MEDIA_ERROR_MALFORMED:
             case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
             case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-            case -2147483648:
+            //case -2147483648:
                 sendError = true;
                 break;
         }
@@ -404,6 +404,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             args.putInt("code", 1);
             args.putString("message", msg);
             session.sendSessionEvent("onError", args);
+        } else {
+            // TODO: relancer
         }
 
         return false;
