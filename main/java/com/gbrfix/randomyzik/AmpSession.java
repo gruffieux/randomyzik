@@ -44,11 +44,11 @@ public class AmpSession extends AmpRepository {
         return now.compareTo(expired) >= 0;
     }
 
-    public boolean hasValidAuth() {
+    public boolean hasValidAuth() throws ParseException {
         if (auth == null) {
             return false;
         }
-        return !auth.isEmpty();
+        return !auth.isEmpty() && !hasExpired();
     }
 
     public void checkAction(String reqState, Media media) throws Exception {
@@ -76,9 +76,9 @@ public class AmpSession extends AmpRepository {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean api = prefs.getBoolean("amp_api", false);
         server = prefs.getString("amp_server", "");
-        Bundle data = null;
+        Bundle data;
 
-        if (hasValidAuth() && !hasExpired()) {
+        if (hasValidAuth()) {
             data = ping(server, auth);
         } else {
             if (api) {
@@ -97,6 +97,15 @@ public class AmpSession extends AmpRepository {
         if (!hasValidAuth()) {
             throw new Exception(context.getString(R.string.err_amp_invalid_auth));
         }
+    }
+
+    public void unconnect() throws Exception {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        server = prefs.getString("amp_server", "");
+
+        goodbye(server, auth);
+
+        auth = null;
     }
 
     public List advanced_search(int offset, int limit, int catalogId) throws IOException, XmlPullParserException {

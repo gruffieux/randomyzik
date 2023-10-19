@@ -58,6 +58,12 @@ abstract class AmpRepository {
         return user;
     }
 
+    public static void goodbye(String server, String auth) throws IOException {
+        URL url = new URL(server+"/server/xml.server.php?action=goodbye&auth="+auth);
+        URLConnection conn = url.openConnection();
+        conn.getContent();
+    }
+
     public static List advanced_search(String server, String auth, int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+limit+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         URLConnection conn = url.openConnection();

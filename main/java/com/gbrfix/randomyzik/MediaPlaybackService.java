@@ -37,6 +37,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -182,7 +183,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 String server = prefs.getString("amp_server", "");
                 String catalog = prefs.getString("amp_catalog", "0");
                 session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                try {
+                    provider.setDbName(AmpRepository.dbName(server, catalog));
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+                /*Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
                         try {
@@ -194,7 +200,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             session.sendSessionEvent("onError", args);
                         }
                     }
-                });
+                });*/
             } else {
                 streaming = false;
                 session.setCallback(mediaSessionCallback);
@@ -458,7 +464,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     // Prepare media player
                     if (streaming) {
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                        if (ampSession.hasExpired()) {
+                        if (ampSession.hasValidAuth()) {
+                            prepareMediaStreaming(media.getMediaId());
+                        } else {
                             executor.execute(() -> {
                                 try {
                                     ampSession.connect();
@@ -480,8 +488,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                     }
                                 });
                             });
-                        } else {
-                            prepareMediaStreaming(media.getMediaId());
                         }
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
@@ -587,6 +593,22 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 myNoisyAudioRegistred = false;
             }
 
+            if (session.isActive()) {
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                        try {
+                            ampSession.unconnect();
+                        } catch (Exception e) {
+                            Bundle args = new Bundle();
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
+                        }
+                    }
+                });
+            }
+
             // Upddate state
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
@@ -627,7 +649,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     // Start localplay
                     executor.execute(() -> {
                         try {
-                            if (ampSession.hasExpired()) {
+                            if (!ampSession.hasValidAuth()) {
                                 ampSession.connect();
                             }
                             if (!session.isActive()) {
@@ -672,7 +694,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     long position = session.getController().getPlaybackState().getPosition();
                     executor.execute(() -> {
                         try {
-                            if (ampSession.hasExpired()) {
+                            if (!ampSession.hasValidAuth()) {
                                 ampSession.connect();
                             }
                             ampSession.checkAction("pause", mediaFromMetadata());
@@ -712,7 +734,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
             executor.execute(() -> {
                 try {
-                    if (ampSession.hasExpired()) {
+                    if (!ampSession.hasValidAuth()) {
                         ampSession.connect();
                     }
                     ampSession.checkAction("play", mediaFromMetadata());
@@ -749,11 +771,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     public void run() {
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         try {
-                            if (ampSession.hasExpired()) {
+                            if (!ampSession.hasValidAuth()) {
                                 ampSession.connect();
                             }
                             ampSession.checkAction(null, mediaFromMetadata());
                             ampSession.localplay_stop();
+                            ampSession.unconnect();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
