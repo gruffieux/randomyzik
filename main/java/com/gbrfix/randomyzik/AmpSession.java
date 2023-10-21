@@ -108,6 +108,7 @@ public class AmpSession extends AmpRepository {
     public void unconnect() throws Exception {
         goodbye(server, auth);
         auth = null;
+        instance = null;
     }
 
     public List advanced_search(int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
