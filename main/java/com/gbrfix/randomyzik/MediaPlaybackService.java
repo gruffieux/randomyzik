@@ -190,7 +190,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             if (amp) {
-                AmpSession ampSession = AmpSession.getInstance(this);
+                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 streaming = prefs.getBoolean("amp_streaming", false);
                 session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
                 try {
@@ -198,22 +198,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
-                /*Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            provider.setDbName(AmpRepository.dbName(server, catalog));
-                            ampSession.connect();
-                        } catch (Exception e) {
-                            Bundle args = new Bundle();
-                            args.putString("message", e.getMessage());
-                            session.sendSessionEvent("onError", args);
-                        }
-                    }
-                });*/
             } else {
                 streaming = false;
                 session.setCallback(mediaSessionCallback);
+                provider.setDbName(DAOBase.DEFAULT_NAME);
             }
         }
 
