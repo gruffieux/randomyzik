@@ -108,7 +108,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             streaming = prefs.getBoolean("amp_streaming", false);
             session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
             try {
-                provider.setDbName(AmpSession.getInstance(this).dbName());
+                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }
