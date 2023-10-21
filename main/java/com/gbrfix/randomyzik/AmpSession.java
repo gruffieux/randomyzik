@@ -37,6 +37,10 @@ public class AmpSession extends AmpRepository {
         return instance;
     }
 
+    public static AmpSession freeInstance() {
+        instance = null;
+    }
+
     public boolean hasExpired() throws ParseException {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         Date date = new Date();
