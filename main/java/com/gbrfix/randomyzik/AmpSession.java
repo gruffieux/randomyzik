@@ -9,6 +9,8 @@ import androidx.preference.PreferenceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,6 +26,8 @@ public class AmpSession extends AmpRepository {
     private static AmpSession instance = null;
 
     private AmpSession(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        server = prefs.getString("amp_server", "");
         this.context = context;
     }
 
@@ -134,5 +138,16 @@ public class AmpSession extends AmpRepository {
 
     public String streaming_url(int oid, int offset) {
         return streaming_url(server, auth, oid, offset);
+    }
+
+    public String dbName() throws MalformedURLException {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean test = prefs.getBoolean("test", false);
+        String catalog = prefs.getString("amp_catalog", "0");
+        String dbName = dbName(server, catalog);
+        if (test) {
+            return "test-" + dbName;
+        }
+        return dbName;
     }
 }

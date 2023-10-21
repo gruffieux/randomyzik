@@ -34,7 +34,7 @@ public class AmpSessionTest {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("server", "http://raspberrypi/ampache");
+        editor.putString("amp_server", "http://raspberrypi/ampache");
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.commit();
     }

@@ -91,11 +91,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set metadata builder
         metaDataBuilder = new MediaMetadataCompat.Builder();
 
-        // Set session callback methods
-        mediaSessionCallback = new MediaSessionCallback();
-        ampSessionCallback = new AmpSessionCallback();
-        session.setCallback(mediaSessionCallback);
-
         // Set session token so that client activities can communicate with it
         setSessionToken(session.getSessionToken());
 
@@ -103,10 +98,27 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
 
+        // Set session callback and provider db
+        mediaSessionCallback = new MediaSessionCallback();
+        ampSessionCallback = new AmpSessionCallback();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean test = prefs.getBoolean("test", false);
-        if (test) {
-            provider.setDbName("test-"+DAOBase.DEFAULT_NAME);
+        boolean amp = prefs.getBoolean("amp", false);
+        if (amp) {
+            streaming = prefs.getBoolean("amp_streaming", false);
+            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
+            try {
+                provider.setDbName(AmpSession.getInstance(this).dbName());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            streaming = false;
+            session.setCallback(mediaSessionCallback);
+            if (test) {
+                provider.setDbName("test-" + DAOBase.DEFAULT_NAME);
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -178,13 +190,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
             if (amp) {
-                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                AmpSession ampSession = AmpSession.getInstance(this);
                 streaming = prefs.getBoolean("amp_streaming", false);
-                String server = prefs.getString("amp_server", "");
-                String catalog = prefs.getString("amp_catalog", "0");
                 session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
                 try {
-                    provider.setDbName(AmpRepository.dbName(server, catalog));
+                    provider.setDbName(ampSession.dbName());
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
