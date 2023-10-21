@@ -21,19 +21,18 @@ public class AmpSession extends AmpRepository {
     private String server;
     private String auth;
     private String expire;
-    private String user;
     private Context context;
     private static AmpSession instance = null;
 
-    private AmpSession(Context context) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        server = prefs.getString("amp_server", "");
+    private AmpSession(Context context, String server) {
         this.context = context;
+        this.server = server;
     }
 
     public static AmpSession getInstance(Context context) {
         if (instance == null) {
-            instance = new AmpSession(context);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            instance = new AmpSession(context, prefs.getString("amp_server", ""));
         }
         return instance;
     }
@@ -79,7 +78,6 @@ public class AmpSession extends AmpRepository {
     public void connect() throws Exception {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean api = prefs.getBoolean("amp_api", false);
-        server = prefs.getString("amp_server", "");
         Bundle data;
 
         if (hasValidAuth()) {
@@ -89,7 +87,7 @@ public class AmpSession extends AmpRepository {
                 String apiKey = prefs.getString("amp_api_key", "");
                 data = handshake(server, apiKey);
             } else {
-                user = prefs.getString("amp_user", "");
+                String user = prefs.getString("amp_user", "");
                 String pwd = prefs.getString("amp_pwd", "");
                 data = handshake(server, user, pwd);
             }
@@ -104,11 +102,7 @@ public class AmpSession extends AmpRepository {
     }
 
     public void unconnect() throws Exception {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        server = prefs.getString("amp_server", "");
-
         goodbye(server, auth);
-
         auth = null;
     }
 
