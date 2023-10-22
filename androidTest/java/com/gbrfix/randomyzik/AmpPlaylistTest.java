@@ -35,6 +35,7 @@ public class AmpPlaylistTest {
         editor = prefs.edit();
         editor.putBoolean("test", true);
         editor.putBoolean("amp", true);
+        editor.putBoolean("amp_api", true);
         editor.putString("amp_server", "http://raspberrypi/ampache");
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.commit();
