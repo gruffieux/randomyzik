@@ -70,10 +70,11 @@ public class DbService implements Observer<WorkInfo> {
                     ampSession.connect();
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
-                    cats = null;
+                    dbSignalListener.onError(e.getMessage());
+                    return; // TODO: Quitte la routine ou la methode?
                 }
                 final Map<String, String> catalogs = cats;
-                if (catalogs != null) {
+                //if (catalogs != null) {
                     handler.post(() -> {
                         try {
                             catTotal = 0;
@@ -115,7 +116,7 @@ public class DbService implements Observer<WorkInfo> {
                             return;
                         }
                     });
-                }
+                //}
             });
         } else {
             catTotal = 1;
