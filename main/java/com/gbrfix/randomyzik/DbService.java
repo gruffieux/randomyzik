@@ -71,52 +71,50 @@ public class DbService implements Observer<WorkInfo> {
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
                     dbSignalListener.onError(e.getMessage());
-                    return; // TODO: Quitte la routine ou la methode?
+                    return;
                 }
                 final Map<String, String> catalogs = cats;
-                //if (catalogs != null) {
-                    handler.post(() -> {
-                        try {
-                            catTotal = 0;
-                            WorkContinuation workContinuation = null;
-                            for (Map.Entry<String, String> entry : catalogs.entrySet()) {
-                                String key = entry.getKey();
-                                String value = entry.getValue();
-                                String dbName = AmpRepository.dbName(server, value);
-                                if (test) {
-                                    dbName = "test-" + dbName;
-                                }
-                                if (!catalog.equals("0") && !catalog.equals(value)) {
-                                    continue;
-                                }
-                                catTotal++;
-                                if (test && catTotal > TEST_MAX_CATALOGS) {
-                                    break;
-                                }
-                                OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
-                                        .setInputData(
-                                                new Data.Builder()
-                                                        .putString("dbName", dbName)
-                                                        .putInt("catalogId", Integer.valueOf(value))
-                                                        .putString("catalogName", key)
-                                                        .build()
-                                        )
-                                        .addTag("db")
-                                        .build();
-                                if (workContinuation == null) {
-                                    workContinuation = WorkManager.getInstance(context).beginWith(workRequest);
-                                } else {
-                                    workContinuation = workContinuation.then(workRequest);
-                                }
-                                WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
+                handler.post(() -> {
+                    try {
+                        catTotal = 0;
+                        WorkContinuation workContinuation = null;
+                        for (Map.Entry<String, String> entry : catalogs.entrySet()) {
+                            String key = entry.getKey();
+                            String value = entry.getValue();
+                            String dbName = AmpRepository.dbName(server, value);
+                            if (test) {
+                                dbName = "test-" + dbName;
                             }
-                            workContinuation.enqueue();
-                        } catch (Exception e) {
-                            dbSignalListener.onError(e.getMessage());
-                            return;
+                            if (!catalog.equals("0") && !catalog.equals(value)) {
+                                continue;
+                            }
+                            catTotal++;
+                            if (test && catTotal > TEST_MAX_CATALOGS) {
+                                break;
+                            }
+                            OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                                    .setInputData(
+                                            new Data.Builder()
+                                                    .putString("dbName", dbName)
+                                                    .putInt("catalogId", Integer.valueOf(value))
+                                                    .putString("catalogName", key)
+                                                    .build()
+                                    )
+                                    .addTag("db")
+                                    .build();
+                            if (workContinuation == null) {
+                                workContinuation = WorkManager.getInstance(context).beginWith(workRequest);
+                            } else {
+                                workContinuation = workContinuation.then(workRequest);
+                            }
+                            WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
                         }
-                    });
-                //}
+                        workContinuation.enqueue();
+                    } catch (Exception e) {
+                        dbSignalListener.onError(e.getMessage());
+                        return;
+                    }
+                });
             });
         } else {
             catTotal = 1;
