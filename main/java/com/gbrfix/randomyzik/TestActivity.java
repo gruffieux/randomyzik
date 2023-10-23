@@ -120,7 +120,6 @@ public class TestActivity extends AppCompatActivity {
                 Bundle args = new Bundle();
                 args.putInt("mode", mode);
                 mediaBrowser.sendCustomAction("changeMode", args, null);
-                //mediaBrowser.sendCustomAction("streaming", null, null); // BUG: Empeche la lecture
                 MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
                 mediaController.registerCallback(new MediaControllerCompat.Callback() {
                     @Override
