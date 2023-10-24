@@ -158,6 +158,12 @@ public class TestActivity extends AppCompatActivity {
                                     finish();
                                 }
                                 break;
+                            case "onError":
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                fail(extras.getString("message"));
+                                finish();
+                                break;
                         }
                         super.onSessionEvent(event, extras);
                     }
@@ -182,15 +188,15 @@ public class TestActivity extends AppCompatActivity {
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
                             case "onError":
-                                assertEquals(extras.getString("message"), TestActivity.this.getString(R.string.err_all_read));
                                 mediaBrowser.disconnect();
                                 MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                assertEquals(extras.getString("message"), TestActivity.this.getString(R.string.err_all_read));
                                 finish();
                                 break;
                             default:
-                                Assert.fail("Unexcepted session event");
                                 mediaBrowser.disconnect();
                                 MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                Assert.fail("Unexcepted session event");
                                 finish();
                                 break;
                         }

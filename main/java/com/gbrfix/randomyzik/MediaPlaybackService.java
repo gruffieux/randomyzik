@@ -379,6 +379,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String msg = String.format("What: %1$d. Extra: %2$d. Check MediaPlayer Android documentation for details.", what, extra);
         Log.v("MediaPlayer error", msg);
 
+        Bundle args = new Bundle();
+        args.putInt("code", 1);
+        args.putString("message", msg);
+        session.sendSessionEvent("onError", args);
+
         return false;
     }
 
