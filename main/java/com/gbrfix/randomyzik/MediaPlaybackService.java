@@ -378,35 +378,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public boolean onError(MediaPlayer mp, int what, int extra) {
         String msg = String.format("What: %1$d. Extra: %2$d. Check MediaPlayer Android documentation for details.", what, extra);
         Log.v("MediaPlayer error", msg);
-        boolean sendError = false;
-
-        switch (what) {
-            case MediaPlayer.MEDIA_ERROR_SERVER_DIED:
-            case MediaPlayer.MEDIA_ERROR_UNKNOWN:
-                //sendError = true;
-                break;
-        }
-
-        switch (extra) {
-            //case MediaPlayer.MEDIA_ERROR_IO:
-            case MediaPlayer.MEDIA_ERROR_MALFORMED:
-            case MediaPlayer.MEDIA_ERROR_UNSUPPORTED:
-            case MediaPlayer.MEDIA_ERROR_TIMED_OUT:
-            //case -2147483648:
-                sendError = true;
-                break;
-        }
-
-        if (sendError) {
-            Bundle args = new Bundle();
-            args.putInt("code", 1);
-            args.putString("message", msg);
-            session.sendSessionEvent("onError", args);
-        } else {
-            Media media = mediaFromMetadata();
-            provider.setSelectId(media.getId());
-            session.getController().getTransportControls().play();
-        }
 
         return false;
     }
@@ -585,8 +556,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onStop() {
-            player.stop();
-            progress.stop();
+            if (player.isPlaying()) {
+                player.stop();
+            }
+            if (progress.isStarted()) {
+                progress.stop();
+            }
 
             abandonAudioFocus();
 

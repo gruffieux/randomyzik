@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.fail;
 
 import org.junit.Assert;
 
@@ -182,6 +183,14 @@ public class TestActivity extends AppCompatActivity {
                         switch (event) {
                             case "onError":
                                 assertEquals(extras.getString("message"), TestActivity.this.getString(R.string.err_all_read));
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                finish();
+                                break;
+                            default:
+                                Assert.fail("Unexcepted session event");
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
                                 finish();
                                 break;
                         }

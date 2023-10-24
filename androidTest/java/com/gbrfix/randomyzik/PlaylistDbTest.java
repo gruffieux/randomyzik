@@ -47,9 +47,9 @@ public class PlaylistDbTest {
     @Test
     public void createAmpacheCatalogs() {
         editor.putBoolean("amp", true);
-        editor.putString("amp_server", "http://raspberrypi/ampache");
+        editor.putString("amp_server", AmpSessionTest.TEST_SERVER);
         editor.putBoolean("amp_api", true);
-        editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
+        editor.putString("amp_api_key", AmpSessionTest.TEST_API_KEY);
         editor.putString("amp_catalog", "0");
         editor.commit();
         deleteDatabases("test-amp-");

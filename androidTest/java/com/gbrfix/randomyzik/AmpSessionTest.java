@@ -28,14 +28,17 @@ import java.util.List;
 public class AmpSessionTest {
     private Context context;
     private SharedPreferences prefs;
+    //public final static String TEST_SERVER = "http://raspberrypi/ampache";
+    public final static String TEST_SERVER = "https://gbrfix.internet-box.ch/ampache";
+    public final static String TEST_API_KEY = "7e5b37f14c08b28bdff73abe8f990c0b";
 
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("amp_server", "http://raspberrypi/ampache");
-        editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
+        editor.putString("amp_server", TEST_SERVER);
+        editor.putString("amp_api_key", TEST_API_KEY);
         editor.commit();
     }
 

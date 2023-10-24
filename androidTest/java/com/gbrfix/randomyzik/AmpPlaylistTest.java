@@ -25,6 +25,7 @@ public class AmpPlaylistTest {
     private Context context;
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
+    public final static int MAX_TRACKS = 3;
 
     @Rule
     public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
@@ -37,8 +38,8 @@ public class AmpPlaylistTest {
         editor.putBoolean("test", true);
         editor.putBoolean("amp", true);
         editor.putBoolean("amp_api", true);
-        editor.putString("amp_server", "http://raspberrypi/ampache");
-        editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
+        editor.putString("amp_server", AmpSessionTest.TEST_SERVER);
+        editor.putString("amp_api_key", AmpSessionTest.TEST_API_KEY);
         editor.commit();
     }
 
@@ -48,16 +49,15 @@ public class AmpPlaylistTest {
         editor.putString("amp_catalog", "6");
         editor.commit();
 
-        final int total = 10;
         String dbName = AmpSession.getInstance(context).dbName();
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
         dao.updateFlagAll("read");
         SQLiteCursor cursor = dao.getAll();
         int count = cursor.getCount();
-        if (count >= total) {
+        if (count >= MAX_TRACKS) {
             int pos = 0;
-            while (pos < total) {
+            while (pos < MAX_TRACKS) {
                 cursor.moveToPosition(pos);
                 int id = cursor.getInt(cursor.getColumnIndex("id"));
                 dao.updateFlag(id, "unread");
@@ -66,7 +66,7 @@ public class AmpPlaylistTest {
         }
         dao.close();
 
-        if (count < total) {
+        if (count < MAX_TRACKS) {
             Assert.fail();
         }
 
@@ -74,7 +74,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.playAllTracks(total, MediaProvider.MODE_TRACK);
+                activity.playAllTracks(MAX_TRACKS, MediaProvider.MODE_TRACK);
             }
         });
         int res = scenario.getResult().getResultCode();
