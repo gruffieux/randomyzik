@@ -153,7 +153,9 @@ public class AmpSessionTest {
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             Bundle data = AmpRepository.handshake(server, apiKey);
-            List list = AmpRepository.advanced_search(server, data.getString("auth"), 0, DbService.TEST_MAX_TRACKS, 0);
+            String auth = data.getString("auth");
+            List list = AmpRepository.advanced_search(server, auth, 0, DbService.TEST_MAX_TRACKS, 0);
+            AmpRepository.goodbye(server, auth);
             assertTrue(list.isEmpty());
         }
         catch (Exception e) {
