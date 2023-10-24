@@ -96,8 +96,9 @@ public class TestActivity extends AppCompatActivity {
                 MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
                 dao.open();
                 SQLiteCursor cursor = dao.getAll();
-                Assert.assertEquals(total, cursor.getCount());
+                int count = cursor.getCount();
                 dao.close();
+                Assert.assertEquals(total, count);
                 finish();
             }
 
@@ -146,13 +147,13 @@ public class TestActivity extends AppCompatActivity {
                             case "onTrackRead":
                                 trackCount++;
                                 if (extras.getBoolean("last")) {
+                                    mediaBrowser.disconnect();
+                                    MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
                                     if (mode == MediaProvider.MODE_ALBUM) {
                                         assertEquals(total, albumCount);
                                     } else {
                                         assertEquals(total, trackCount);
                                     }
-                                    mediaBrowser.disconnect();
-                                    MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
                                     finish();
                                 }
                                 break;

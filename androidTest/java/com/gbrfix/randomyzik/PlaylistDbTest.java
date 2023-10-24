@@ -26,18 +26,22 @@ public class PlaylistDbTest {
     @Rule
     public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
 
+    private void deleteDatabases(String prefix) {
+        String[] dbNames = context.databaseList();
+        for (String dbName : dbNames) {
+            if (dbName.startsWith(prefix)) {
+                context.deleteDatabase(dbName);
+            }
+        }
+
+    }
+
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
         editor.putBoolean("test", true);
         editor.commit();
-        String[] dbNames = context.databaseList();
-        for (String dbName : dbNames) {
-            if (dbName.startsWith("test-")) {
-                context.deleteDatabase(dbName);
-            }
-        }
     }
 
     @Test
@@ -48,6 +52,7 @@ public class PlaylistDbTest {
         editor.putString("amp_api_key", "7e5b37f14c08b28bdff73abe8f990c0b");
         editor.putString("amp_catalog", "0");
         editor.commit();
+        deleteDatabases("test-amp-");
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
@@ -62,9 +67,8 @@ public class PlaylistDbTest {
     public void createList() {
         editor.putBoolean("amp", false);
         editor.commit();
+        deleteDatabases("test-"+DAOBase.DEFAULT_NAME);
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        //scenario.moveToState(Lifecycle.State.CREATED);
-        //scenario.moveToState(Lifecycle.State.STARTED);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
