@@ -383,13 +383,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         args.putInt("code", 1);
         args.putString("message", msg);
         session.sendSessionEvent("onError", args);
+        
+        session.getController().getTransportControls().skipToNext();
 
-        if (session.isActive()) {
-            session.getController().getTransportControls().skipToNext();
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
