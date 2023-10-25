@@ -28,8 +28,8 @@ import java.util.List;
 public class AmpSessionTest {
     private Context context;
     private SharedPreferences prefs;
-    //public final static String TEST_SERVER = "http://raspberrypi/ampache";
-    public final static String TEST_SERVER = "https://gbrfix.internet-box.ch/ampache";
+    public final static String TEST_SERVER = "http://raspberrypi/ampache";
+    //public final static String TEST_SERVER = "https://gbrfix.internet-box.ch/ampache";
     public final static String TEST_API_KEY = "7e5b37f14c08b28bdff73abe8f990c0b";
 
     @Before

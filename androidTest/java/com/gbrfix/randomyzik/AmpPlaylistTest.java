@@ -25,7 +25,7 @@ public class AmpPlaylistTest {
     private Context context;
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
-    public final static int MAX_TRACKS = 3;
+    public final static int MAX_TRACKS = 10;
 
     @Rule
     public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);

@@ -384,6 +384,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         args.putString("message", msg);
         session.sendSessionEvent("onError", args);
 
+        if (session.isActive()) {
+            session.getController().getTransportControls().play();
+            return true;
+        }
+
         return false;
     }
 
