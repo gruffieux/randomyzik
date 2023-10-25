@@ -347,7 +347,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mp.start();
 
         // Upddate state
-        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, player.getCurrentPosition(), 1.0f);
+        stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, mp.getCurrentPosition(), 1.0f);
         session.setPlaybackState(stateBuilder.build());
 
         showNotification();
