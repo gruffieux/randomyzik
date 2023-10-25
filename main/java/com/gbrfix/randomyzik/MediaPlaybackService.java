@@ -146,9 +146,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Arrêt forcé, on sauve la piste en cours
         if (intent.getAction() == "stop") {
-            editor.putInt("currentId", provider.getCurrentId());
-            editor.putInt("position", (int)session.getController().getPlaybackState().getPosition());
-            editor.commit();
+            int id = provider.getCurrentId();
+            if (id > 0) {
+                editor.putInt("currentId", id);
+                editor.putInt("position", (int)session.getController().getPlaybackState().getPosition());
+                editor.commit();
+            }
             session.getController().getTransportControls().stop();
         }
 
