@@ -870,7 +870,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private boolean threadSuspended;
         private int currentPosition;
         private int total;
-        private Bundle extra;
         private MediaPlayer mp;
         private MediaPlayer.OnCompletionListener callback;
 
@@ -879,8 +878,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             this.mp = mp;
             total = mp.getDuration();
             threadSuspended = false;
-            extra = new Bundle();
-            extra.putInt("position", currentPosition);
             blinker = new Thread(this);
             blinker.start();
             this.callback = null;
@@ -890,8 +887,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             currentPosition = 0;
             total = duration;
             threadSuspended = false;
-            extra = new Bundle();
-            extra.putInt("position", currentPosition);
             blinker = new Thread(this);
             blinker.start();
             mp = null;
@@ -922,6 +917,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void run() {
+            Bundle extras = new Bundle();
+
             while (currentPosition < total) {
                 try {
                     Thread.sleep(1000);
@@ -929,9 +926,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     PlaybackStateCompat state = session.getController().getPlaybackState();
                     stateBuilder.setState(state.getState(), currentPosition, state.getPlaybackSpeed());
                     session.setPlaybackState(stateBuilder.build());
-                    extra.putInt("position", currentPosition);
-                    session.sendSessionEvent("onTrackProgress", extra);
-                    session.setExtras(extra);
+                    extras.putInt("position", currentPosition);
+                    session.sendSessionEvent("onTrackProgress", extras);
+                    session.setExtras(extras);
                     if (threadSuspended) {
                         synchronized (blinker) {
                             blinker.wait();

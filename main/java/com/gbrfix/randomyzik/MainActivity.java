@@ -247,7 +247,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 duration = (int) metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
-                position = MediaControllerCompat.getMediaController(MainActivity.this).getExtras().getInt("position");
+                Bundle extras = MediaControllerCompat.getMediaController(MainActivity.this).getExtras();
+                position = extras != null ? extras.getInt("position") : 0;
                 infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
                 progressBar.setMax(duration);
                 progressBar.setProgress(position);
