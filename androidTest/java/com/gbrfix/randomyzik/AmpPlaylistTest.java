@@ -25,7 +25,6 @@ public class AmpPlaylistTest {
     private Context context;
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
-    public final static int MAX_TRACKS = 10;
 
     @Rule
     public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
@@ -54,9 +53,10 @@ public class AmpPlaylistTest {
         dao.updateFlagAll("read");
         SQLiteCursor cursor = dao.getAll();
         int count = cursor.getCount();
-        if (count >= MAX_TRACKS) {
+        final int total = DbService.TEST_MAX_TRACKS / 10;
+        if (count >= total) {
             int pos = 0;
-            while (pos < MAX_TRACKS) {
+            while (pos < total) {
                 cursor.moveToPosition(pos);
                 int id = cursor.getInt(cursor.getColumnIndex("id"));
                 dao.updateFlag(id, "unread");
@@ -65,7 +65,7 @@ public class AmpPlaylistTest {
         }
         dao.close();
 
-        if (count < MAX_TRACKS) {
+        if (count < total) {
             Assert.fail();
         }
 
@@ -73,7 +73,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.playAllTracks(MAX_TRACKS, MediaProvider.MODE_TRACK);
+                activity.playAllTracks(total, MediaProvider.MODE_TRACK);
             }
         });
         int res = scenario.getResult().getResultCode();
