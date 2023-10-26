@@ -381,7 +381,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        String msg = String.format("What: %1$d. Extra: %2$d. Check MediaPlayer Android documentation for details.", what, extra);
+        String msg = String.format("Track skipped due to media player error (%1$d, %2$d). Check Android documentation for details.", what, extra);
         Log.v("MediaPlayer error", msg);
 
         Bundle args = new Bundle();
