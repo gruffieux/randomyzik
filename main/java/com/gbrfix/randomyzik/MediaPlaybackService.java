@@ -259,6 +259,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String url = ampSession.streaming_url(mediaId, 0);
         player.setDataSource(url);
         player.prepareAsync();
+        stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
+        session.setPlaybackState(stateBuilder.build());
     }
 
     private int requestAudioFocus() {
@@ -471,6 +473,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                     }
                                 });
                             });
+                            stateBuilder.setState(PlaybackStateCompat.STATE_CONNECTING, 0, 0);
+                            session.setPlaybackState(stateBuilder.build());
                         }
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
@@ -866,6 +870,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private boolean threadSuspended;
         private int currentPosition;
         private int total;
+        private Bundle extra;
         private MediaPlayer mp;
         private MediaPlayer.OnCompletionListener callback;
 
@@ -874,6 +879,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             this.mp = mp;
             total = mp.getDuration();
             threadSuspended = false;
+            extra = new Bundle();
+            extra.putInt("position", currentPosition);
             blinker = new Thread(this);
             blinker.start();
             this.callback = null;
@@ -883,6 +890,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             currentPosition = 0;
             total = duration;
             threadSuspended = false;
+            extra = new Bundle();
+            extra.putInt("position", currentPosition);
             blinker = new Thread(this);
             blinker.start();
             mp = null;
@@ -913,8 +922,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void run() {
-            Bundle bundle = new Bundle();
-
             while (currentPosition < total) {
                 try {
                     Thread.sleep(1000);
@@ -922,15 +929,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     PlaybackStateCompat state = session.getController().getPlaybackState();
                     stateBuilder.setState(state.getState(), currentPosition, state.getPlaybackSpeed());
                     session.setPlaybackState(stateBuilder.build());
-                    bundle.putInt("position", currentPosition);
-                    session.sendSessionEvent("onTrackProgress", bundle);
-                    session.setExtras(bundle);
+                    extra.putInt("position", currentPosition);
+                    session.sendSessionEvent("onTrackProgress", extra);
+                    session.setExtras(extra);
                     if (threadSuspended) {
                         synchronized (blinker) {
-                            blinker.wait(); // A tester
-                            /*while (threadSuspended) {
-                                blinker.wait();
-                            }*/
+                            blinker.wait();
                         }
                     }
                 } catch (Exception e) {

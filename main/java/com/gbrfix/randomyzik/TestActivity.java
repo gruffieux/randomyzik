@@ -55,6 +55,11 @@ public class TestActivity extends AppCompatActivity {
             public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(TestActivity.this);
                 String server = prefs.getString("amp_server", "");
+                if (prefs.getString("amp_catalog", "0").equals("0")) {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString("amp_catalog", String.valueOf(catalogId));
+                    editor.commit();
+                }
                 try {
                     String dbName = AmpRepository.dbName(server, String.valueOf(catalogId));
                     MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + dbName);

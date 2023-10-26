@@ -46,7 +46,6 @@ public class AmpPlaylistTest {
     @Test
     public void playStreaming() throws Exception {
         editor.putBoolean("amp_streaming", true);
-        editor.putString("amp_catalog", "6");
         editor.commit();
 
         String dbName = AmpSession.getInstance(context).dbName();

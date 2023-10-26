@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 
 public class DbService implements Observer<WorkInfo> {
     public final static int NOTIFICATION_ID = 3;
-    public final static int TEST_MAX_CATALOGS = 10;
+    public final static int TEST_MAX_CATALOGS = 3;
     public final static int TEST_MAX_TRACKS = 80;
     final static String NOTIFICATION_CHANNEL = "Database channel";
     private DbSignal dbSignalListener;
@@ -151,7 +151,7 @@ public class DbService implements Observer<WorkInfo> {
                         int total = workInfo.getOutputData().getInt("total", 0);
                         boolean updated = workInfo.getOutputData().getBoolean("updated", false);
                         catCounter++;
-                        dbSignalListener.onScanCompleted(catId, total, updated, catCounter >= catTotal);
+                        dbSignalListener.onScanCompleted(catId, total, updated, catCounter >= TEST_MAX_CATALOGS);
                         break;
                     case FAILED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is failed");

@@ -74,15 +74,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             ImageButton fwdBtn = findViewById(R.id.fwd);
 
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-            playBtn.setEnabled(true);
-            playBtn.setColorFilter(color);
+            boolean enabled = state.getState() != PlaybackStateCompat.STATE_CONNECTING && state.getState() != PlaybackStateCompat.STATE_BUFFERING;
+            playBtn.setEnabled(enabled);
+            playBtn.setColorFilter(enabled ? color : Color.GRAY);
             playBtn.setImageResource(state.getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play);
 
-            rewBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
-            rewBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
-
-            fwdBtn.setEnabled(state.getState() == PlaybackStateCompat.STATE_PLAYING);
-            fwdBtn.setColorFilter(state.getState() == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
+            enabled = state.getState() == PlaybackStateCompat.STATE_PLAYING;
+            rewBtn.setEnabled(enabled);
+            rewBtn.setColorFilter(enabled ? color : Color.GRAY);
+            fwdBtn.setEnabled(enabled);
+            fwdBtn.setColorFilter(enabled ? color : Color.GRAY);
 
             if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
                 TextView infoMsg = findViewById(R.id.infoMsg);
