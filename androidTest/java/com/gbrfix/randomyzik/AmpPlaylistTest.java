@@ -96,6 +96,15 @@ public class AmpPlaylistTest {
         dao.updateFlag(id, "unread");
         dao.close();
 
+        try {
+            ampSession.connect();
+            ampSession.localplay_stop();
+            ampSession.localplay_add(id);
+            ampSession.localplay_play();
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
