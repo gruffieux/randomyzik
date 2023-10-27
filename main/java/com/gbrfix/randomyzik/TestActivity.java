@@ -178,6 +178,37 @@ public class TestActivity extends AppCompatActivity {
         };
     }
 
+    public void localplayCleanPlay(int id) {
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackSelect":
+                                mediaController.getTransportControls().stop();
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                assertEquals(id, extras.getInt("id"));
+                                finish();
+                                break;
+                            case "onError":
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                fail(extras.getString("message"));
+                                finish();
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+            }
+        };
+    }
+
     public void playEndedList() {
         MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
         dao.open();
