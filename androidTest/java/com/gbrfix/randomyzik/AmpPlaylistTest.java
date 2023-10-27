@@ -78,4 +78,31 @@ public class AmpPlaylistTest {
         });
         int res = scenario.getResult().getResultCode();
     }
+
+    @Test
+    public void localPlayCleanPlay() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        String dbName = AmpSession.getInstance(context).dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        int pos = 0; // TODO: random
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localPlayCleanPlay();
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+    }
 }
