@@ -90,7 +90,8 @@ public class AmpPlaylistTest {
         dao.updateFlagAll("read");
         SQLiteCursor cursor = dao.getAll();
         int count = cursor.getCount();
-        int pos = 0; // TODO: random
+        Random random = new Random();
+        int pos = random.nextInt(count);
         cursor.moveToPosition(pos);
         int id = cursor.getInt(cursor.getColumnIndex("id"));
         int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
@@ -110,7 +111,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localPlayCleanPlay();
+                activity.localPlayCleanPlay(id);
             }
         });
         int res = scenario.getResult().getResultCode();
