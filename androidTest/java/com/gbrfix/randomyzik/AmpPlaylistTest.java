@@ -93,13 +93,14 @@ public class AmpPlaylistTest {
         int pos = 0; // TODO: random
         cursor.moveToPosition(pos);
         int id = cursor.getInt(cursor.getColumnIndex("id"));
+        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
         dao.updateFlag(id, "unread");
         dao.close();
 
         try {
             ampSession.connect();
             ampSession.localplay_stop();
-            ampSession.localplay_add(id);
+            ampSession.localplay_add(oid);
             ampSession.localplay_play();
         } catch (Exception e) {
             fail(e.getMessage());
