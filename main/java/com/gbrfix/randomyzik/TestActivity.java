@@ -218,7 +218,7 @@ public class TestActivity extends AppCompatActivity {
                                 } else if (action.equals("cannotPlay")) {
                                     assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "play", "stop"));
                                 } else if (action.equals("cannotPause")) {
-                                    assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "stop", "pause"));
+                                    assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "stop", "play"));
                                 } else if (action.equals("cannotStop")) {
                                     assertEquals(extras.getString("message"), getString(R.string.err_amp_track_unexcepted));
                                 }
