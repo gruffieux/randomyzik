@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
@@ -10,11 +12,14 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Random;
 
 /**
  * Created by gab on 01.10.2017.
@@ -66,7 +71,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         if (count < total) {
-            Assert.fail();
+            fail();
         }
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
@@ -80,11 +85,52 @@ public class AmpPlaylistTest {
     }
 
     @Test
-    public void localPlayCleanPlay() throws Exception {
+    public void localplayCanPlay() throws Exception {
         editor.putBoolean("amp_streaming", false);
         editor.commit();
 
-        String dbName = AmpSession.getInstance(context).dbName();
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        Random random = new Random();
+        int pos = random.nextInt(count);
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_stop();
+
+        // Lauch activity
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localplay("canPlay", id);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
+    }
+
+    @Test
+    public void localplayCannotPlay() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
         dao.updateFlagAll("read");
@@ -98,22 +144,186 @@ public class AmpPlaylistTest {
         dao.updateFlag(id, "unread");
         dao.close();
 
-        try {
-            ampSession.connect();
-            ampSession.localplay_stop();
-            ampSession.localplay_add(oid);
-            ampSession.localplay_play();
-        } catch (Exception e) {
-            fail(e.getMessage());
-        }
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_add(oid);
+        ampSession.localplay_play();
 
+        // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localPlayCleanPlay(id);
+                activity.localplay("cannotPlay", id);
             }
         });
         int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
+    }
+
+    @Test
+    public void localplayCanPause() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        Random random = new Random();
+        int pos = random.nextInt(count);
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_stop();
+
+        // Lauch activity
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localplay("canPause", id);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
+    }
+
+    @Test
+    public void localplayCannotPause() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        Random random = new Random();
+        int pos = random.nextInt(count);
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_add(oid);
+        ampSession.localplay_play();
+        ampSession.localplay_stop();
+
+        // Lauch activity
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localplay("cannotPause", id);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
+    }
+
+    @Test
+    public void localplayCanStop() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        Random random = new Random();
+        int pos = random.nextInt(count);
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_stop();
+
+        // Lauch activity
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localplay("canStop", id);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
+    }
+
+    @Test
+    public void localplayCannotStop() throws Exception {
+        editor.putBoolean("amp_streaming", false);
+        editor.commit();
+
+        // Read db
+        AmpSession ampSession = AmpSession.getInstance(context);
+        String dbName = ampSession.dbName();
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        dao.updateFlagAll("read");
+        SQLiteCursor cursor = dao.getAll();
+        int count = cursor.getCount();
+        Random random = new Random();
+        int pos = random.nextInt(count);
+        cursor.moveToPosition(pos);
+        int id = cursor.getInt(cursor.getColumnIndex("id"));
+        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+        dao.updateFlag(id, "unread");
+        dao.close();
+
+        // Connect server
+        ampSession.connect();
+        ampSession.localplay_add(oid);
+        ampSession.localplay_play();
+        ampSession.localplay_stop();
+
+        // Lauch activity
+        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+            @Override
+            public void perform(TestActivity activity) {
+                activity.localplay("cannotStop", id);
+            }
+        });
+        int res = scenario.getResult().getResultCode();
+
+        // Unconnect server
+        ampSession.localplay_stop();
+        ampSession.unconnect();
     }
 }
