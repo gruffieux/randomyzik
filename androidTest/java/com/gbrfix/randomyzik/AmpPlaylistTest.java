@@ -12,9 +12,8 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -113,7 +112,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("canPlay", id);
+                activity.localplayCanPlay(id);
             }
         });
         int res = scenario.getResult().getResultCode();
@@ -133,15 +132,13 @@ public class AmpPlaylistTest {
         String dbName = ampSession.dbName();
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
-        dao.updateFlagAll("read");
+        dao.updateFlagAll("unread");
         SQLiteCursor cursor = dao.getAll();
         int count = cursor.getCount();
         Random random = new Random();
         int pos = random.nextInt(count);
         cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
         int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
-        dao.updateFlag(id, "unread");
         dao.close();
 
         // Connect server
@@ -154,7 +151,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("cannotPlay", id);
+                activity.localplayCannotPlay();
             }
         });
         int res = scenario.getResult().getResultCode();
@@ -181,7 +178,6 @@ public class AmpPlaylistTest {
         int pos = random.nextInt(count);
         cursor.moveToPosition(pos);
         int id = cursor.getInt(cursor.getColumnIndex("id"));
-        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
         dao.updateFlag(id, "unread");
         dao.close();
 
@@ -194,7 +190,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("canPause", id);
+                activity.localplayCanPause(id);
             }
         });
         int res = scenario.getResult().getResultCode();
@@ -221,14 +217,11 @@ public class AmpPlaylistTest {
         int pos = random.nextInt(count);
         cursor.moveToPosition(pos);
         int id = cursor.getInt(cursor.getColumnIndex("id"));
-        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
         dao.updateFlag(id, "unread");
         dao.close();
 
         // Connect server
         ampSession.connect();
-        ampSession.localplay_add(oid);
-        ampSession.localplay_play();
         ampSession.localplay_stop();
 
         // Lauch activity
@@ -236,7 +229,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("cannotPause", id);
+                activity.localplayCannotPause(id);
             }
         });
         int res = scenario.getResult().getResultCode();
@@ -275,7 +268,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("canStop", id);
+                activity.localplayCanStop(id);
             }
         });
         int res = scenario.getResult().getResultCode();
@@ -302,14 +295,11 @@ public class AmpPlaylistTest {
         int pos = random.nextInt(count);
         cursor.moveToPosition(pos);
         int id = cursor.getInt(cursor.getColumnIndex("id"));
-        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
         dao.updateFlag(id, "unread");
         dao.close();
 
         // Connect server
         ampSession.connect();
-        ampSession.localplay_add(oid);
-        ampSession.localplay_play();
         ampSession.localplay_stop();
 
         // Lauch activity
@@ -317,7 +307,7 @@ public class AmpPlaylistTest {
         scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
             @Override
             public void perform(TestActivity activity) {
-                activity.localplay("cannotStop", id);
+                activity.localplayCannotStop(id);
             }
         });
         int res = scenario.getResult().getResultCode();

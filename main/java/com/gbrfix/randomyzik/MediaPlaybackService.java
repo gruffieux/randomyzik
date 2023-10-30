@@ -48,7 +48,7 @@ import java.util.concurrent.Executors;
 
 public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
     public final static int NOTIFICATION_ID = 1;
-    public final static int TEST_DURATION = 100;
+    public static int TEST_DURATION = 100;
     final static String NOTIFICATION_CHANNEL = "MediaPlayback channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;

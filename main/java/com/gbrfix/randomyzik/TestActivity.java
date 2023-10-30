@@ -5,9 +5,13 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
@@ -15,6 +19,10 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 
 import org.junit.Assert;
+
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 16.03.2018.
@@ -137,7 +145,7 @@ public class TestActivity extends AppCompatActivity {
                                     String albumKey = extras.getString("albumKey");
                                     if (!albumKey.equals(currentAlbum) || currentAlbum.isEmpty()) {
                                         if (trackTotal > 0 && trackTotal != trackCount) {
-                                            Assert.fail(String.format("Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
+                                            fail(String.format("Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
                                         }
                                         currentAlbum = albumKey;
                                         MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
@@ -164,10 +172,7 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onError":
-                                mediaBrowser.disconnect();
-                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
                                 fail(extras.getString("message"));
-                                finish();
                                 break;
                         }
                         super.onSessionEvent(event, extras);
@@ -178,7 +183,7 @@ public class TestActivity extends AppCompatActivity {
         };
     }
 
-    public void localplay(String action, int id) {
+    public void localplayCanPlay(int id) {
         mediaBrowser.connect();
         testSignalListener = new TestSignal() {
             @Override
@@ -191,37 +196,214 @@ public class TestActivity extends AppCompatActivity {
                             case "onTrackSelect":
                                 mediaBrowser.disconnect();
                                 MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                if (action.equals("canPlay")) {
-                                    assertEquals(id, extras.getInt("id"));
-                                } else if (action.equals("canPause") || (action.equals("cannotPause"))) {
-                                    if (id == extras.getInt("id")) {
-                                        mediaController.getTransportControls().pause();
-                                    } else {
-                                        fail("Unexcepted media id");
-                                    }
-                                } else if (action.equals("canStop") || (action.equals("cannotStop"))) {
-                                    if (id == extras.getInt("id")) {
-                                        mediaController.getTransportControls().stop();
-                                    } else {
-                                        fail("Unexcepted media id");
-                                    }
-                                } else {
-                                    fail("Unexcepted session event");
-                                }
+                                assertEquals(id, extras.getInt("id"));
                                 finish();
+                                break;
+                            case "onError":
+                                fail(extras.getString("message"));
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
+    public void localplayCannotPlay() {
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onError":
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "play", "stop"));
+                                finish();
+                                break;
+                            default:
+                                fail("Unexcepted session event");
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
+    public void localplayCanPause(int id) {
+        MediaPlaybackService.TEST_DURATION = 45000;
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackSelect":
+                                if (id != extras.getInt("id")) {
+                                    fail("Unexcepted media id");
+                                }
+                                break;
+                            case "onTrackProgress":
+                                mediaController.getTransportControls().pause();
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                finish();
+                                break;
+                            case "onError":
+                                fail(extras.getString("message"));
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
+    public void localplayCannotPause(int id) {
+        MediaPlaybackService.TEST_DURATION = 45000;
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackSelect":
+                                if (id != extras.getInt("id")) {
+                                    fail("Unexcepted media id");
+                                }
+                                break;
+                            case "onTrackProgress":
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                Handler handler = new Handler(Looper.getMainLooper());
+                                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                                executor.execute(() -> {
+                                    try {
+                                        ampSession.localplay_pause();
+                                    } catch (Exception e) {
+                                        fail(e.getMessage());
+                                    }
+                                    handler.post(() -> {
+                                        mediaController.getTransportControls().pause();
+                                    });
+                                });
                                 break;
                             case "onError":
                                 mediaBrowser.disconnect();
                                 MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                if (action.equals("canPlay") || action.equals("canPause") || action.equals("canStop")) {
-                                    fail(extras.getString("message"));
-                                } else if (action.equals("cannotPlay")) {
-                                    assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "play", "stop"));
-                                } else if (action.equals("cannotPause")) {
-                                    assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "stop", "play"));
-                                } else if (action.equals("cannotStop")) {
-                                    assertEquals(extras.getString("message"), getString(R.string.err_amp_track_unexcepted));
+                                assertEquals(extras.getString("message"), getString(R.string.err_amp_excepted_state, "pause", "play"));
+                                finish();
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
+    public void localplayCanStop(int id) {
+        MediaPlaybackService.TEST_DURATION = 45000;
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackSelect":
+                                if (id != extras.getInt("id")) {
+                                    fail("Unexcepted media id");
                                 }
+                                break;
+                            case "onTrackProgress":
+                                mediaController.getTransportControls().stop();
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                finish();
+                                break;
+                            case "onError":
+                                fail(extras.getString("message"));
+                                break;
+                        }
+                        super.onSessionEvent(event, extras);
+                    }
+                });
+                mediaController.getTransportControls().play();
+            }
+        };
+    }
+
+    public void localplayCannotStop(int id) {
+        MediaPlaybackService.TEST_DURATION = 45000;
+        mediaBrowser.connect();
+        testSignalListener = new TestSignal() {
+            @Override
+            public void browserConnected() {
+                MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
+                mediaController.registerCallback(new MediaControllerCompat.Callback() {
+                    @Override
+                    public void onSessionEvent(String event, Bundle extras) {
+                        switch (event) {
+                            case "onTrackSelect":
+                                if (id != extras.getInt("id")) {
+                                    fail("Unexcepted media id");
+                                }
+                                break;
+                            case "onTrackProgress":
+                                ExecutorService executor = Executors.newSingleThreadExecutor();
+                                Handler handler = new Handler(Looper.getMainLooper());
+                                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                                executor.execute(() -> {
+                                    try {
+                                        //ampSession.localplay_stop();
+                                        String dbName = ampSession.dbName();
+                                        MediaDAO dao = new MediaDAO(getApplicationContext(), dbName);
+                                        dao.open();
+                                        SQLiteCursor cursor = dao.getAll();
+                                        int count = cursor.getCount();
+                                        Random random = new Random();
+                                        int pos = random.nextInt(count);
+                                        cursor.moveToPosition(pos);
+                                        int randomId = cursor.getInt(cursor.getColumnIndex("id"));
+                                        if (randomId != id) {
+                                            int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+                                            ampSession.localplay_add(oid);
+                                            ampSession.localplay_play();
+                                        } else {
+                                            fail("Random track is same as previous session");
+                                        }
+                                    } catch (Exception e) {
+                                        fail(e.getMessage());
+                                    }
+                                    handler.post(() -> {
+                                        mediaController.getTransportControls().stop();
+                                    });
+                                });
+                                break;
+                            case "onError":
+                                mediaBrowser.disconnect();
+                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                                assertEquals(extras.getString("message"), getString(R.string.err_amp_track_unexcepted));
                                 finish();
                                 break;
                         }
@@ -254,10 +436,7 @@ public class TestActivity extends AppCompatActivity {
                                 finish();
                                 break;
                             default:
-                                mediaBrowser.disconnect();
-                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                Assert.fail("Unexcepted session event");
-                                finish();
+                                fail("Unexcepted session event");
                                 break;
                         }
                         super.onSessionEvent(event, extras);
