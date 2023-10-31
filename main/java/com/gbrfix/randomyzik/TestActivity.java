@@ -127,6 +127,7 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total, int mode) {
+        MediaPlaybackService.TEST_DURATION = 100;
         trackCount = albumCount = 0;
         currentAlbum = "";
         mediaBrowser.connect();

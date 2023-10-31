@@ -3,6 +3,7 @@ package com.gbrfix.randomyzik;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 
@@ -12,6 +13,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -315,5 +317,12 @@ public class AmpPlaylistTest {
         // Unconnect server
         ampSession.localplay_stop();
         ampSession.unconnect();
+    }
+
+    @After
+    public void destroy() {
+        Intent intent = new Intent(context, MediaPlaybackService.class);
+        intent.setAction("close");
+        context.startService(intent);
     }
 }
