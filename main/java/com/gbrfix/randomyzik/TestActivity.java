@@ -11,6 +11,7 @@ import android.os.Looper;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
@@ -191,13 +192,23 @@ public class TestActivity extends AppCompatActivity {
                 MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
                 mediaController.registerCallback(new MediaControllerCompat.Callback() {
                     @Override
+                    public void onPlaybackStateChanged(PlaybackStateCompat state) {
+                        if (state.getState() == PlaybackStateCompat.STATE_PLAYING) {
+                            mediaBrowser.disconnect();
+                            MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                            Assert.assertTrue(true);
+                            finish();
+                        }
+                        super.onPlaybackStateChanged(state);
+                    }
+
+                    @Override
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
                             case "onTrackSelect":
-                                mediaBrowser.disconnect();
-                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                assertEquals(id, extras.getInt("id"));
-                                finish();
+                                if (id != extras.getInt("id")) {
+                                    fail("Unexcepted media id");
+                                }
                                 break;
                             case "onError":
                                 fail(extras.getString("message"));
@@ -248,6 +259,17 @@ public class TestActivity extends AppCompatActivity {
                 MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
                 mediaController.registerCallback(new MediaControllerCompat.Callback() {
                     @Override
+                    public void onPlaybackStateChanged(PlaybackStateCompat state) {
+                        if (state.getState() == PlaybackStateCompat.STATE_PAUSED) {
+                            mediaBrowser.disconnect();
+                            MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                            Assert.assertTrue(true);
+                            finish();
+                        }
+                        super.onPlaybackStateChanged(state);
+                    }
+
+                    @Override
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
                             case "onTrackSelect":
@@ -256,10 +278,9 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onTrackProgress":
-                                mediaController.getTransportControls().pause();
-                                mediaBrowser.disconnect();
-                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                finish();
+                                if (extras.getInt("position") == 1000) {
+                                    mediaController.getTransportControls().pause();
+                                }
                                 break;
                             case "onError":
                                 fail(extras.getString("message"));
@@ -290,19 +311,21 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onTrackProgress":
-                                ExecutorService executor = Executors.newSingleThreadExecutor();
-                                Handler handler = new Handler(Looper.getMainLooper());
-                                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                                executor.execute(() -> {
-                                    try {
-                                        ampSession.localplay_pause();
-                                    } catch (Exception e) {
-                                        fail(e.getMessage());
-                                    }
-                                    handler.post(() -> {
-                                        mediaController.getTransportControls().pause();
+                                if (extras.getInt("position") == 1000) {
+                                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                                    Handler handler = new Handler(Looper.getMainLooper());
+                                    AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                                    executor.execute(() -> {
+                                        try {
+                                            ampSession.localplay_pause();
+                                        } catch (Exception e) {
+                                            fail(e.getMessage());
+                                        }
+                                        handler.post(() -> {
+                                            mediaController.getTransportControls().pause();
+                                        });
                                     });
-                                });
+                                }
                                 break;
                             case "onError":
                                 mediaBrowser.disconnect();
@@ -328,6 +351,17 @@ public class TestActivity extends AppCompatActivity {
                 MediaControllerCompat mediaController = MediaControllerCompat.getMediaController(TestActivity.this);
                 mediaController.registerCallback(new MediaControllerCompat.Callback() {
                     @Override
+                    public void onPlaybackStateChanged(PlaybackStateCompat state) {
+                        if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
+                            mediaBrowser.disconnect();
+                            MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
+                            Assert.assertTrue(true);
+                            finish();
+                        }
+                        super.onPlaybackStateChanged(state);
+                    }
+
+                    @Override
                     public void onSessionEvent(String event, Bundle extras) {
                         switch (event) {
                             case "onTrackSelect":
@@ -336,10 +370,9 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onTrackProgress":
-                                mediaController.getTransportControls().stop();
-                                mediaBrowser.disconnect();
-                                MediaControllerCompat.getMediaController(TestActivity.this).unregisterCallback(this);
-                                finish();
+                                if (extras.getInt("position") == 1000) {
+                                    mediaController.getTransportControls().stop();
+                                }
                                 break;
                             case "onError":
                                 fail(extras.getString("message"));
@@ -370,35 +403,37 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onTrackProgress":
-                                ExecutorService executor = Executors.newSingleThreadExecutor();
-                                Handler handler = new Handler(Looper.getMainLooper());
-                                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                                executor.execute(() -> {
-                                    try {
-                                        //ampSession.localplay_stop();
-                                        String dbName = ampSession.dbName();
-                                        MediaDAO dao = new MediaDAO(getApplicationContext(), dbName);
-                                        dao.open();
-                                        SQLiteCursor cursor = dao.getAll();
-                                        int count = cursor.getCount();
-                                        Random random = new Random();
-                                        int pos = random.nextInt(count);
-                                        cursor.moveToPosition(pos);
-                                        int randomId = cursor.getInt(cursor.getColumnIndex("id"));
-                                        if (randomId != id) {
-                                            int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
-                                            ampSession.localplay_add(oid);
-                                            ampSession.localplay_play();
-                                        } else {
-                                            fail("Random track is same as previous session");
+                                if (extras.getInt("position") == 1000) {
+                                    ExecutorService executor = Executors.newSingleThreadExecutor();
+                                    Handler handler = new Handler(Looper.getMainLooper());
+                                    AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                                    executor.execute(() -> {
+                                        try {
+                                            //ampSession.localplay_stop();
+                                            String dbName = ampSession.dbName();
+                                            MediaDAO dao = new MediaDAO(getApplicationContext(), dbName);
+                                            dao.open();
+                                            SQLiteCursor cursor = dao.getAll();
+                                            int count = cursor.getCount();
+                                            Random random = new Random();
+                                            int pos = random.nextInt(count);
+                                            cursor.moveToPosition(pos);
+                                            int randomId = cursor.getInt(cursor.getColumnIndex("id"));
+                                            if (randomId != id) {
+                                                int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+                                                ampSession.localplay_add(oid);
+                                                ampSession.localplay_play();
+                                            } else {
+                                                fail("Random track is same as previous session");
+                                            }
+                                        } catch (Exception e) {
+                                            fail(e.getMessage());
                                         }
-                                    } catch (Exception e) {
-                                        fail(e.getMessage());
-                                    }
-                                    handler.post(() -> {
-                                        mediaController.getTransportControls().stop();
+                                        handler.post(() -> {
+                                            mediaController.getTransportControls().stop();
+                                        });
                                     });
-                                });
+                                }
                                 break;
                             case "onError":
                                 mediaBrowser.disconnect();
