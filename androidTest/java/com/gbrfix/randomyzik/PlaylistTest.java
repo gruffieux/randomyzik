@@ -1,6 +1,7 @@
 package com.gbrfix.randomyzik;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 
@@ -10,6 +11,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,5 +86,12 @@ public class PlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
+    }
+
+    @After
+    public void destroy() {
+        Intent intent = new Intent(context, MediaPlaybackService.class);
+        intent.setAction("close");
+        context.startService(intent);
     }
 }
