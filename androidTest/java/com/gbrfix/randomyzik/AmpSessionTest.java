@@ -139,7 +139,7 @@ public class AmpSessionTest {
 
     @Test
     public void pingInvalidToken() {
-        String server = prefs.getString("server", "");
+        String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
             assertNull(data.getString("auth"));
@@ -151,7 +151,7 @@ public class AmpSessionTest {
 
     @Test
     public void searchNoCatalog() {
-        String server = prefs.getString("server", "");
+        String server = prefs.getString("amp_server", "");
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             Bundle data = AmpRepository.handshake(server, apiKey);

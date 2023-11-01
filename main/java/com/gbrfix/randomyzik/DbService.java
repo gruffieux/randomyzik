@@ -90,6 +90,7 @@ public class DbService implements Observer<WorkInfo> {
                             }
                             catTotal++;
                             if (test && catTotal > TEST_MAX_CATALOGS) {
+                                catTotal = TEST_MAX_CATALOGS;
                                 break;
                             }
                             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
@@ -151,7 +152,7 @@ public class DbService implements Observer<WorkInfo> {
                         int total = workInfo.getOutputData().getInt("total", 0);
                         boolean updated = workInfo.getOutputData().getBoolean("updated", false);
                         catCounter++;
-                        dbSignalListener.onScanCompleted(catId, total, updated, catCounter >= TEST_MAX_CATALOGS);
+                        dbSignalListener.onScanCompleted(catId, total, updated, catCounter >= catTotal);
                         break;
                     case FAILED:
                         Log.v("workInfo", "Work " + workInfo.getId() + " is failed");
