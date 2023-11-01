@@ -56,6 +56,7 @@
     <string name="err_no_file">Aucun fichier audio trouvé dans le dossier music</string>
     <string name="err_no_perms">Permissions en lecture/écriture nécessaires</string>
     <string name="err_all_read">Il n\'y a plus rien à lire</string>
+    <string name="err_media_player">Piste ignorée en raison d\'une erreur du media player (%1$d, %2$d). Pour plus de détails, veuillez consulter la documentation Android.</string>
     <string name="err_amp_invalid_auth">Erreur d\'authentification</string>
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
