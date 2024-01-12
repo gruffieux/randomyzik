@@ -48,9 +48,11 @@ public class DbWorker extends Worker {
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
-            contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
-            subText = "Ampache playlist";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
+                subText = "Ampache playlist";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            }
             AmpSession ampSession = AmpSession.getInstance(context);
             try {
                 ampSession.connect();
@@ -81,9 +83,11 @@ public class DbWorker extends Worker {
             } else {
                 collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
             }
-            contentText = String.format(context.getString(R.string.info_searching), collection.getPath());
-            subText = "Playlist";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                contentText = String.format(context.getString(R.string.info_searching), collection.getPath());
+                subText = "Playlist";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            }
             ContentResolver contentResolver = context.getContentResolver();
             String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
             Cursor c = contentResolver.query(collection, new String[]{
@@ -113,17 +117,21 @@ public class DbWorker extends Worker {
         }
 
         if (cursor.getCount() == 0) {
-            contentTitle = context.getString(R.string.info_inserting);
-            contentText = list.size() + " elements";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                contentTitle = context.getString(R.string.info_inserting);
+                contentText = list.size() + " elements";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            }
             for (int i = 0; i < list.size(); i++) {
                 dao.insert(list.get(i));
                 updated = true;
             }
         } else {
-            contentTitle = context.getString(R.string.info_updating);
-            contentText = list.size() + " elements";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                contentTitle = context.getString(R.string.info_updating);
+                contentText = list.size() + " elements";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+            }
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("id"));
                 int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
@@ -145,9 +153,11 @@ public class DbWorker extends Worker {
                 }
             }
             if (list.size() > 0) {
-                contentTitle = context.getString(R.string.info_inserting);
-                contentText = list.size() + " elements";
-                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    contentTitle = context.getString(R.string.info_inserting);
+                    contentText = list.size() + " elements";
+                    setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                }
                 for (int i = 0; i < list.size(); i++) {
                     dao.insert(list.get(i));
                     updated = true;
@@ -170,6 +180,7 @@ public class DbWorker extends Worker {
         super.onStopped();
     }
 
+    // TODO: Trouver un moyen de faire fonctionner sur Android 14 (SDK 34)
     private ForegroundInfo createForegroundInfo(String contentTitle, String contentText, String subText) {
         Intent intent = new Intent(context, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
