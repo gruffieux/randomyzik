@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
+import android.os.Bundle;
 
 import java.util.Random;
 
@@ -184,5 +185,14 @@ public class MediaProvider {
         }
 
         dao.close();
+    }
+
+    public boolean checkMediaId(int id) {
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        SQLiteCursor cursor = dao.getFromId(id);
+        boolean res = cursor.moveToFirst();
+        dao.close();
+        return res;
     }
 }

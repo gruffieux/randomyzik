@@ -148,14 +148,17 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     int code = extras.getInt("code");
                     String errorMsg = extras.getString("message");
                     infoMsg(errorMsg, Color.RED);
-                    if (code >= 1) {
-                        infoNotification(1, errorMsg, MainActivity.class);
-                    }
-                    if (code >= 2) {
-                        Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
-                        intent.setAction("stop");
-                        startService(intent);
-                        finish();
+                    switch (code) {
+                        case 2:
+                            break;
+                        case 1:
+                            infoNotification(1, errorMsg, MainActivity.class);
+                            break;
+                        default:
+                            Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
+                            intent.setAction("stop");
+                            startService(intent);
+                            finish();
                     }
                     break;
             }
@@ -184,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             buildTransportControls();
 
             // Récup piste en cours
-            if (currentId == 0) {
+            /*if (currentId == 0) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
                 int id = prefs.getInt("currentId", 0);
                 int position = prefs.getInt("position", 0);
@@ -203,7 +206,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
 
             // Mode streaming
-            mediaBrowser.sendCustomAction("streaming", null, null);
+            mediaBrowser.sendCustomAction("streaming", null, null);*/
         }
 
         @Override

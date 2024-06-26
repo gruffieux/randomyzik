@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
+import android.database.sqlite.SQLiteCursor;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -101,25 +103,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Set session callback and provider db
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean test = prefs.getBoolean("test", false);
-        boolean amp = prefs.getBoolean("amp", false);
-        if (amp) {
-            streaming = prefs.getBoolean("amp_streaming", false);
-            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-            try {
-                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else {
-            streaming = false;
-            session.setCallback(mediaSessionCallback);
-            if (test) {
-                provider.setDbName("test-" + DAOBase.DEFAULT_NAME);
-            }
-        }
+
+        // Set streaming values
+        updateStreamingValues();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -178,17 +164,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
             provider.setSelectId(extras.getInt("id"));
         }
-
+/*
         if (action.equals("restoreTrack")) {
             progress.stop();
             provider.setSelectId(extras.getInt("id"));
             provider.setPosition(extras.getInt("position"));
         }
-
+*/
         if (action.equals("stop")) {
             session.getController().getTransportControls().stop();
         }
-
+/*
         if (action.equals("streaming")) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             boolean amp = prefs.getBoolean("amp", false);
@@ -207,7 +193,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 provider.setDbName(DAOBase.DEFAULT_NAME);
             }
         }
-
+*/
         super.onCustomAction(action, extras, result);
     }
 
@@ -261,6 +247,42 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player.prepareAsync();
         stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
         session.setPlaybackState(stateBuilder.build());
+    }
+
+    private void restoreTrack() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Récup piste en cours
+        if (provider.getCurrentId() == 0) {
+            int id = prefs.getInt("currentId", 0);
+            int position = prefs.getInt("position", 0);
+            if (id > 0 && provider.checkMediaId(id)) {
+                progress.stop();
+                provider.setSelectId(id);
+                provider.setPosition(position);
+            }
+        }
+    }
+
+    private void updateStreamingValues() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
+        boolean amp = prefs.getBoolean("amp", false);
+
+        if (amp) {
+            streaming = prefs.getBoolean("amp_streaming", false);
+            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
+            try {
+                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            streaming = false;
+            session.setCallback(mediaSessionCallback);
+            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
+        }
     }
 
     private int requestAudioFocus() {
@@ -442,6 +464,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.setOnPreparedListener(MediaPlaybackService.this);
                     player.setOnErrorListener(MediaPlaybackService.this);
 
+                    updateStreamingValues();
+                    restoreTrack();
+
                     Media media = provider.selectTrack();
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
@@ -457,7 +482,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                     ampSession.connect();
                                 } catch (Exception e) {
                                     Bundle args = new Bundle();
-                                    args.putInt("code", 2);
                                     args.putString("message", e.getMessage());
                                     session.sendSessionEvent("onError", args);
                                     return;
@@ -520,6 +544,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
+                args.putInt("code", 2);
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
                 session.getController().getTransportControls().stop();
@@ -622,6 +647,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Handler handler = new Handler(Looper.getMainLooper());
 
                 if (!progress.isStarted()) {
+                    restoreTrack();
                     final Media media = provider.selectTrack();
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
                     boolean test = prefs.getBoolean("test", false);
@@ -652,7 +678,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
-                            args.putInt("code", 2);
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
@@ -694,7 +719,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
-                            args.putInt("code", 2);
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
@@ -708,6 +732,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 }
             } catch (PlayEndException e) {
                 Bundle args = new Bundle();
+                args.putInt("code", 2);
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
                 session.getController().getTransportControls().stop();
@@ -734,7 +759,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     letSleep();
                 } catch (Exception e) {
                     Bundle args = new Bundle();
-                    args.putInt("code", 2);
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
                     return;
@@ -853,7 +877,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .setShowActionsInCompactView(0, 1));
 
         // Display the notification and place the service in the foreground
-        startForeground(NOTIFICATION_ID, builder.build());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+        } else {
+            startForeground(NOTIFICATION_ID, builder.build());
+        }
     }
 
     private class BecomingNoisyReceiver extends BroadcastReceiver {
