@@ -185,28 +185,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
             // Finish building the UI
             buildTransportControls();
-
-            // Récup piste en cours
-            /*if (currentId == 0) {
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                int id = prefs.getInt("currentId", 0);
-                int position = prefs.getInt("position", 0);
-                if (id > 0) {
-                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getFromId(id);
-                    if (cursor.moveToFirst()) {
-                        Bundle args = new Bundle();
-                        args.putInt("id", id);
-                        args.putInt("position", position);
-                        mediaBrowser.sendCustomAction("restoreTrack", args, null);
-                    }
-                    dao.close();
-                }
-            }
-
-            // Mode streaming
-            mediaBrowser.sendCustomAction("streaming", null, null);*/
         }
 
         @Override
