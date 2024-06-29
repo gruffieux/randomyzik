@@ -158,36 +158,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
             provider.setSelectId(extras.getInt("id"));
         }
-/*
-        if (action.equals("restoreTrack")) {
-            progress.stop();
-            provider.setSelectId(extras.getInt("id"));
-            provider.setPosition(extras.getInt("position"));
-        }
-*/
+
         if (action.equals("stop")) {
             session.getController().getTransportControls().stop();
         }
-/*
-        if (action.equals("streaming")) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean amp = prefs.getBoolean("amp", false);
-            if (amp) {
-                AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                streaming = prefs.getBoolean("amp_streaming", false);
-                session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-                try {
-                    provider.setDbName(ampSession.dbName());
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                streaming = false;
-                session.setCallback(mediaSessionCallback);
-                provider.setDbName(DAOBase.DEFAULT_NAME);
-            }
-        }
-*/
+
         super.onCustomAction(action, extras, result);
     }
 
@@ -248,8 +223,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Récup piste en cours
         if (provider.getCurrentId() == 0) {
-            int id = prefs.getInt("currentId", 0);
-            int position = prefs.getInt("position", 0);
+            int id = prefs.getInt("currentId_" + provider.getDbName(), 0);
+            int position = prefs.getInt("position_" + provider.getDbName(), 0);
             if (id > 0 && provider.checkMediaId(id)) {
                 progress.stop();
                 provider.setSelectId(id);
@@ -259,13 +234,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private void saveTrack(int id, int position) {
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = prefs.edit();
 
         // TODO: Sauver par catalogue
-        editor.putInt("currentId", id);
-        editor.putInt("position", position);
+        editor.putInt("currentId_" + provider.getDbName(), id);
+        editor.putInt("position_" + provider.getDbName(), position);
         editor.commit();
-
     }
 
     private void updateStreamingValues() {

@@ -18,6 +18,7 @@ public class MediaProvider {
     private int mode;
     private boolean lastOfAlbum;
     private Context context;
+
     private String dbName;
 
     public MediaProvider(Context context, String dbName) {
@@ -55,6 +56,10 @@ public class MediaProvider {
 
     public void setMode(int mode) {
         this.mode = mode;
+    }
+
+    public String getDbName() {
+        return dbName;
     }
 
     public void setDbName(String dbName) {
