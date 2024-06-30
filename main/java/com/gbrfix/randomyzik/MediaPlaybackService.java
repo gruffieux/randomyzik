@@ -170,6 +170,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public void onDestroy() {
         super.onDestroy();
 
+        session.release();
         player.release();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -425,7 +426,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onPlay() {
             int res = changeFocus ? requestAudioFocus() : AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-
             if (res != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
                 return;
             }
