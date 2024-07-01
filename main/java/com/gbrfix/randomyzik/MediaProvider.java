@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
-import android.os.Bundle;
 
 import java.util.Random;
 
