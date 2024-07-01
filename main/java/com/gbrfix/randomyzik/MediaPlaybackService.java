@@ -237,7 +237,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = prefs.edit();
 
-        // TODO: Sauver par catalogue
+        // Sauve piste en cours
         editor.putInt("currentId_" + provider.getDbName(), id);
         editor.putInt("position_" + provider.getDbName(), position);
         editor.commit();
