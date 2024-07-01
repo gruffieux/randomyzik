@@ -118,10 +118,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @Test
@@ -157,10 +153,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @Test
@@ -196,10 +188,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @Test
@@ -235,10 +223,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @Test
@@ -274,10 +258,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @Test
@@ -313,10 +293,6 @@ public class AmpPlaylistTest {
             }
         });
         int res = scenario.getResult().getResultCode();
-
-        // Unconnect server
-        ampSession.localplay_stop();
-        ampSession.unconnect();
     }
 
     @After
