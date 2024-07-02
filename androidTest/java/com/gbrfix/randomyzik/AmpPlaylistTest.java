@@ -105,6 +105,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_stop();
 
@@ -139,6 +140,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_add(oid);
         ampSession.localplay_play();
@@ -175,6 +177,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_stop();
 
@@ -210,6 +213,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_stop();
 
@@ -245,6 +249,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_stop();
 
@@ -280,6 +285,7 @@ public class AmpPlaylistTest {
         dao.close();
 
         // Connect server
+        ampSession.unconnect();
         ampSession.connect();
         ampSession.localplay_stop();
 

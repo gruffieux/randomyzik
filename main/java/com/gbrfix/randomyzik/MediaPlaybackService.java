@@ -398,6 +398,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private boolean myNoisyAudioRegistred = false;
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                return super.onMediaButtonEvent(mediaButtonEvent);
+            }
+
             KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 
             if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
@@ -504,9 +508,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putInt("duration", duration);
                     bundle.putString("albumKey", media.getAlbumKey());
                     session.sendSessionEvent("onTrackSelect", bundle);
-
-                    // Save current track
-                    saveTrack(media.getId(), 0);
                 } else {
                     player.start();
                     progress.resume();
@@ -662,9 +663,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             bundle.putString("artist", media.getArtist());
                             bundle.putInt("duration", duration);
                             session.sendSessionEvent("onTrackSelect", bundle);
-
-                            // Save current track
-                            saveTrack(media.getId(), 0);
 
                             // Update state and notif
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f);
