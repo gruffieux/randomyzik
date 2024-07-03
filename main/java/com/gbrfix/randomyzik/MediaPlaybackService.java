@@ -398,28 +398,25 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private boolean myNoisyAudioRegistred = false;
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                return super.onMediaButtonEvent(mediaButtonEvent);
-            }
-
-            KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-
-            if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
-                switch (ke.getKeyCode()) {
-                    case KeyEvent.KEYCODE_MEDIA_PLAY:
-                        session.getController().getTransportControls().play();
-                        return true;
-                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
-                        session.getController().getTransportControls().pause();
-                        return true;
-                    case KeyEvent.KEYCODE_MEDIA_NEXT:
-                    case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
-                        session.getController().getTransportControls().skipToNext();
-                        return true;
-                    case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                    case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
-                        session.getController().getTransportControls().rewind();
-                        return true;
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
+                    switch (ke.getKeyCode()) {
+                        case KeyEvent.KEYCODE_MEDIA_PLAY:
+                            session.getController().getTransportControls().play();
+                            return true;
+                        case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                            session.getController().getTransportControls().pause();
+                            return true;
+                        case KeyEvent.KEYCODE_MEDIA_NEXT:
+                        case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
+                            session.getController().getTransportControls().skipToNext();
+                            return true;
+                        case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                        case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
+                            session.getController().getTransportControls().rewind();
+                            return true;
+                    }
                 }
             }
 
