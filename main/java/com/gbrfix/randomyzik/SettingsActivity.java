@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
@@ -68,6 +69,12 @@ public class SettingsActivity extends AppCompatActivity {
             });
         }
 
+        private void stopPlay() {
+            Intent intent = new Intent(getActivity(), MediaPlaybackService.class);
+            intent.setAction("stop");
+            getActivity().startService(intent);
+        }
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
@@ -80,6 +87,7 @@ public class SettingsActivity extends AppCompatActivity {
             final EditTextPreference userPref = findPreference("amp_user");
             final EditTextPreference pwdPref = findPreference("amp_pwd");
             final ListPreference catalogsPref = findPreference("amp_catalog");
+            final SwitchPreferenceCompat modeSwitcher = findPreference("amp_streaming");
             apiKeyPref.setVisible(apiKeySwicher.isChecked());
             userPref.setVisible(!apiKeySwicher.isChecked());
             pwdPref.setVisible(!apiKeySwicher.isChecked());
@@ -91,6 +99,7 @@ public class SettingsActivity extends AppCompatActivity {
                     apiKeyPref.setVisible(value);
                     userPref.setVisible(!value);
                     pwdPref.setVisible(!value);
+                    stopPlay();
                     return true;
                 }
             });
@@ -99,6 +108,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
                     catalogsPref.setValue("0");
+                    stopPlay();
                     return true;
                 }
             });
@@ -116,6 +126,30 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            userPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    stopPlay();
+                    return true;
+                }
+            });
+
+            apiKeyPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    stopPlay();
+                    return true;
+                }
+            });
+
+            pwdPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    stopPlay();
+                    return true;
+                }
+            });
+
             pwdPref.setOnBindEditTextListener(new EditTextPreference.OnBindEditTextListener() {
                 @Override
                 public void onBindEditText(@NonNull EditText editText) {
@@ -129,6 +163,23 @@ public class SettingsActivity extends AppCompatActivity {
                     if ((boolean)newValue) {
                         loadCatalogs(prefs, catalogsPref);
                     }
+                    stopPlay();
+                    return true;
+                }
+            });
+
+            catalogsPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    stopPlay();
+                    return true;
+                }
+            });
+
+            modeSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    stopPlay();
                     return true;
                 }
             });

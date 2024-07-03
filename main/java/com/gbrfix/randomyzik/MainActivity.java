@@ -689,14 +689,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.startsWith("amp")) {
-            if (key.equals("amp_streaming")) {
-                currentId = 0;
-            }
-            Intent intent = new Intent(this, MediaPlaybackService.class);
-            intent.setAction("stop");
-            startService(intent);
-        }
+        /*if (key.equals("amp_streaming")) {
+            currentId = 0;
+        }*/
     }
 
     public void ignoreBatteryOptimization(){
