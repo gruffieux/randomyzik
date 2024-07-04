@@ -301,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             return super.onKeyDown(keyCode, event);
         }
+
         switch (keyCode) {
             case KeyEvent.KEYCODE_MEDIA_PLAY:
             case KeyEvent.KEYCODE_MEDIA_PAUSE:
@@ -311,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
                 return true;
         }
+
         return super.onKeyDown(keyCode, event);
     }
 
