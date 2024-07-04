@@ -218,19 +218,24 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.setPlaybackState(stateBuilder.build());
     }
 
-    private void restoreTrack() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+    private boolean restoreTrack() {
+        if (provider.getCurrentId() > 0) {
+            return false;
+        }
 
         // Récup piste en cours
-        if (provider.getCurrentId() == 0) {
-            int id = prefs.getInt("currentId_" + provider.getDbName(), 0);
-            int position = prefs.getInt("position_" + provider.getDbName(), 0);
-            if (id > 0 && provider.checkMediaId(id)) {
-                progress.stop();
-                provider.setSelectId(id);
-                provider.setPosition(position);
-            }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int id = prefs.getInt("currentId_" + provider.getDbName(), 0);
+        int position = prefs.getInt("position_" + provider.getDbName(), 0);
+
+        if (id > 0 && provider.checkMediaId(id)) {
+            progress.stop();
+            provider.setSelectId(id);
+            provider.setPosition(position);
+            return true;
         }
+
+        return false;
     }
 
     private void saveTrack(int id, int position) {
