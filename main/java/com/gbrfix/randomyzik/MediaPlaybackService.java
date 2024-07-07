@@ -405,28 +405,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
             KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 
-            // Handle LEGACY media buttons OR custom event
+            // Handle custom event
             if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
                 switch (ke.getKeyCode()) {
-                    case KeyEvent.KEYCODE_MEDIA_PLAY:
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            return super.onMediaButtonEvent(mediaButtonEvent);
-                        }
-                        session.getController().getTransportControls().play();
-                        return true;
-                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            return super.onMediaButtonEvent(mediaButtonEvent);
-                        }
-                        session.getController().getTransportControls().pause();
-                        return true;
                     case KeyEvent.KEYCODE_MEDIA_NEXT:
-                        session.getController().getTransportControls().skipToNext();
-                        return true;
-                    case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            return super.onMediaButtonEvent(mediaButtonEvent);
-                        }
                         session.getController().getTransportControls().skipToNext();
                         return true;
                     case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
