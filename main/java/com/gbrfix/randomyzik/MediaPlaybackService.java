@@ -546,6 +546,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onRewind() {
+            saveTrack(0, 0);
             progress.stop();
             provider.setSelectId(provider.getCurrentId());
             session.getController().getTransportControls().play();
@@ -553,6 +554,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onSkipToNext() {
+            saveTrack(0, 0);
             progress.stop();
             provider.updateState("skip");
             session.getController().getTransportControls().play();
