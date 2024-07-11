@@ -438,7 +438,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.setOnPreparedListener(MediaPlaybackService.this);
                     player.setOnErrorListener(MediaPlaybackService.this);
 
-                    updateStreamingValues();
+                    //updateStreamingValues();
                     restoreTrack();
 
                     Media media = provider.selectTrack();
@@ -614,7 +614,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Handler handler = new Handler(Looper.getMainLooper());
 
                 if (!progress.isStarted()) {
+                    //updateStreamingValues();
                     restoreTrack();
+
                     final Media media = provider.selectTrack();
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
                     boolean test = prefs.getBoolean("test", false);
