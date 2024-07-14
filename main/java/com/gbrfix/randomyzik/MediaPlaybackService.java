@@ -227,11 +227,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int id = prefs.getInt("currentId_" + provider.getDbName(), 0);
         int position = prefs.getInt("position_" + provider.getDbName(), 0);
+        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
 
         if (id > 0 && provider.checkMediaId(id)) {
             progress.stop();
             provider.setSelectId(id);
             provider.setPosition(position);
+            provider.setMode(mode);
             return true;
         }
 
