@@ -98,13 +98,37 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         progress = new ProgressThread();
         player = new MediaPlayer();
         provider = new MediaProvider(this, DAOBase.DEFAULT_NAME);
-
-        // Set session callback and provider db
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
 
-        // Set streaming values
-        updateStreamingValues();
+        // Set session callback and provider db
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
+        boolean amp = prefs.getBoolean("amp", false);
+        if (amp) {
+            streaming = prefs.getBoolean("amp_streaming", false);
+            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
+            try {
+                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            streaming = false;
+            session.setCallback(mediaSessionCallback);
+            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
+        }
+
+        // Restore current track and play mode
+        int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
+        int position = prefs.getInt("position_" + provider.getDbName(), 0);
+        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
+        provider.setMode(mode);
+        if (provider.checkMediaId(currentId)) {
+            provider.setSelectId(currentId);
+            provider.setPosition(position);
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -218,28 +242,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.setPlaybackState(stateBuilder.build());
     }
 
-    private boolean restoreTrack() {
-        if (provider.getCurrentId() > 0) {
-            return false;
-        }
-
-        // Récup piste en cours
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        int id = prefs.getInt("currentId_" + provider.getDbName(), 0);
-        int position = prefs.getInt("position_" + provider.getDbName(), 0);
-        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
-
-        if (id > 0 && provider.checkMediaId(id)) {
-            progress.stop();
-            provider.setSelectId(id);
-            provider.setPosition(position);
-            provider.setMode(mode);
-            return true;
-        }
-
-        return false;
-    }
-
     private void saveTrack(int id, int position) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = prefs.edit();
@@ -248,27 +250,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         editor.putInt("currentId_" + provider.getDbName(), id);
         editor.putInt("position_" + provider.getDbName(), position);
         editor.commit();
-    }
-
-    private void updateStreamingValues() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean test = prefs.getBoolean("test", false);
-        boolean amp = prefs.getBoolean("amp", false);
-
-        if (amp) {
-            streaming = prefs.getBoolean("amp_streaming", false);
-            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-            try {
-                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else {
-            streaming = false;
-            session.setCallback(mediaSessionCallback);
-            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
-        }
     }
 
     private int requestAudioFocus() {
@@ -439,9 +420,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     player.reset();
                     player.setOnPreparedListener(MediaPlaybackService.this);
                     player.setOnErrorListener(MediaPlaybackService.this);
-
-                    //updateStreamingValues();
-                    restoreTrack();
 
                     Media media = provider.selectTrack();
                     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -616,9 +594,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Handler handler = new Handler(Looper.getMainLooper());
 
                 if (!progress.isStarted()) {
-                    //updateStreamingValues();
-                    restoreTrack();
-
                     final Media media = provider.selectTrack();
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
                     boolean test = prefs.getBoolean("test", false);

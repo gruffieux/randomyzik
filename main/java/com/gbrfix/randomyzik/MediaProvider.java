@@ -192,11 +192,16 @@ public class MediaProvider {
     }
 
     public boolean checkMediaId(int id) {
+        if (id <= 0) {
+            return false;
+        }
+
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getFromId(id);
         boolean res = cursor.moveToFirst();
         dao.close();
+
         return res;
     }
 }
