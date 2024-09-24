@@ -77,7 +77,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getFromFlagAlbumGrouped(String flag) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album` ORDER BY `album_key`, `track_nb`, `artist`;", new String[] {flag});
+        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album_key` ORDER BY `album_key`, `track_nb`, `artist`;", new String[] {flag});
     }
 
     public SQLiteCursor getFromAlbum(String album_key, String flag) {

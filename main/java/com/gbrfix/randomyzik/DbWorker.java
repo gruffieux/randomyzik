@@ -93,7 +93,7 @@ public class DbWorker extends Worker {
                     MediaStore.Audio.Media.TITLE,
                     MediaStore.Audio.Media.ALBUM,
                     MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.ALBUM_KEY
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? MediaStore.Audio.Media.ALBUM_ID : MediaStore.Audio.Media.ALBUM_KEY // ALBUM_KEY depracated in api 30
             }, selection, null, null);
             int counter = 0;
             while (c.moveToNext()) {
@@ -104,7 +104,7 @@ public class DbWorker extends Worker {
                 media.setTitle(c.getString(2));
                 media.setAlbum(c.getString(3));
                 media.setArtist(c.getString(4));
-                media.setAlbumKey(c.getString(5));
+                media.setAlbumKey(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? Integer.toString(c.getInt(5)) : c.getString(5)); // ALBUM_KEY depracated in api 30
                 list.add(media);
                 counter++;
                 if (test && counter >= DbService.TEST_MAX_TRACKS) {
