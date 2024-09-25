@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.content.Context;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -108,6 +109,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 Log.v("SQLiteException", e.getMessage());
             }
         }
+        if (oldVersion <= 9 && newVersion >= 10) {
+            fixMediaTags(db, false, false, false, false);
+        }
     }
 
     private void fixMediaTags(SQLiteDatabase db, boolean trackNb, boolean title, boolean album, boolean artist) {
@@ -118,7 +122,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ALBUM,
                 MediaStore.Audio.Media.ARTIST,
-                MediaStore.Audio.Media.ALBUM_KEY
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? MediaStore.Audio.Media.ALBUM_ID : MediaStore.Audio.Media.ALBUM_KEY // ALBUM_KEY depracated in api 30
             }, null, null, null);
 
         while (cursor.moveToNext()) {
