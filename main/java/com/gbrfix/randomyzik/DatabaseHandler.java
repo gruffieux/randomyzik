@@ -114,6 +114,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         }
     }
 
+    // TODO: Méthode static n'agissant que sur la base de données par défaut
     private void fixMediaTags(SQLiteDatabase db, boolean trackNb, boolean title, boolean album, boolean artist) {
         Cursor cursor = context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, new String[]{
                 MediaStore.Audio.Media._ID,
