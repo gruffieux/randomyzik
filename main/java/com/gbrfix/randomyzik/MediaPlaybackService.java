@@ -281,6 +281,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private void keepAwake() {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            return; // Avoid multiple wake lock
+        }
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Randomyzik::AmpWakelock");
         wakeLock.acquire();
