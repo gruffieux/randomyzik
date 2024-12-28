@@ -77,8 +77,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                     Bundle args = new Bundle();
                     args.putInt("id", id);
                     activity.currentId = id;
-                    activity.mediaBrowser.sendCustomAction("selectTrack", args, null);
-                    MediaControllerCompat.getMediaController(activity).getTransportControls().play();
+                    activity.mediaBrowser.sendCustomAction("singleTrack", args, null);
                 }
             })
             .setNeutralButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
