@@ -34,6 +34,9 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import android.os.Bundle;
@@ -620,6 +623,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
                 }
             }
+        });
+
+        final View mainView = findViewById(R.id.mainView);
+        ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());
+            // Apply the insets as padding to the view. Here, set all the dimensions
+            // as appropriate to your layout. You can also update the view's margin if
+            // more appropriate.
+            mainView.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+
+            // Return CONSUMED if you don't want the window insets to keep passing down
+            // to descendant views.
+            return WindowInsetsCompat.CONSUMED;
         });
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
