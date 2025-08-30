@@ -42,10 +42,10 @@ public class SettingsActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        final View settingsView = findViewById(R.id.settingsView);
-        ViewCompat.setOnApplyWindowInsetsListener(settingsView, (v, windowInsets) -> {
+        final View mainView = findViewById(R.id.mainView);
+        ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());
-            settingsView.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            mainView.setPadding(insets.left, insets.top, insets.right, insets.bottom);
             return WindowInsetsCompat.CONSUMED;
         });
     }
