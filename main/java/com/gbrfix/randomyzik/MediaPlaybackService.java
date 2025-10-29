@@ -407,6 +407,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Handle custom event
             if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
                 switch (ke.getKeyCode()) {
+                    case KeyEvent.KEYCODE_MEDIA_PLAY:
+                        session.getController().getTransportControls().play();
+                        return true;
+                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                        session.getController().getTransportControls().pause();
+                        return true;
                     case KeyEvent.KEYCODE_MEDIA_NEXT:
                         session.getController().getTransportControls().skipToNext();
                         return true;
