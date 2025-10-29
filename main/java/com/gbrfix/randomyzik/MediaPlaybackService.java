@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -246,6 +247,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.setPlaybackState(stateBuilder.build());
     }
 
+    private static Uri asAlbumArtContentURI(Uri webUri) {
+        return new Uri.Builder()
+                .scheme(ContentResolver.SCHEME_CONTENT)
+                .authority("com.gbrfix.randomyzik.provider")
+                .appendPath(webUri.getPath()) // Make sure you trust the URI!
+                .build();
+    }
+
     private void saveTrack(int id, int position) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = prefs.edit();
@@ -469,6 +478,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
                     Uri albumUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                    Uri webUri = asAlbumArtContentURI(albumUri);
                     Bitmap thumbnail = null;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         thumbnail = getContentResolver().loadThumbnail(albumUri, new Size(300, 300), null);
@@ -480,8 +490,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
-                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, albumUri.toString())
+                            //.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, albumUri.toString())
+                            //.putString(MediaMetadata.METADATA_KEY_MEDIA_URI, albumUri.toString())
+                            //.putString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI, albumUri.toString())
                             .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
+                            //.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, thumbnail)
+                            //.putBitmap(MediaMetadata.METADATA_KEY_ART, thumbnail)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
