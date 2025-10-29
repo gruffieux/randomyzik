@@ -475,12 +475,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
-                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                    String sUri = uri.toString();
-                    Bitmap thumbnail = null;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        //thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
-                    }
 
                     session.setActive(true);
 
@@ -491,13 +485,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
-                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
-                            //.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, thumbnail)
-                            //.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
-                            //.putBitmap(MediaMetadata.METADATA_KEY_ART, thumbnail)
-                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI, sUri)
-                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, sUri)
-                            .putString(MediaMetadata.METADATA_KEY_MEDIA_URI, sUri);
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
 
                     // Send session event
