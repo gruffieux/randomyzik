@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -35,6 +36,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+import android.util.Size;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -466,7 +468,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
-
+                    Uri albumUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                    Bitmap thumbnail = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        thumbnail = getContentResolver().loadThumbnail(albumUri, new Size(300, 300), null);
+                    }
                     session.setActive(true);
 
                     // Set session MediaMetadata
@@ -474,6 +480,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, albumUri.toString())
+                            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM, thumbnail)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
