@@ -4,12 +4,14 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -35,6 +37,7 @@ import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
+import android.util.Size;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -396,6 +399,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Handle custom event
             if (ke != null && ke.getAction() == KeyEvent.ACTION_UP) {
                 switch (ke.getKeyCode()) {
+                    case KeyEvent.KEYCODE_MEDIA_PLAY:
+                        session.getController().getTransportControls().play();
+                        return true;
+                    case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                        session.getController().getTransportControls().pause();
+                        return true;
                     case KeyEvent.KEYCODE_MEDIA_NEXT:
                         session.getController().getTransportControls().skipToNext();
                         return true;
@@ -466,6 +475,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                    String sUri = uri.toString();
+                    Bitmap thumbnail = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        //thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                    }
 
                     session.setActive(true);
 
@@ -476,7 +491,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
-                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
+                            .putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
+                            //.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, thumbnail)
+                            //.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
+                            //.putBitmap(MediaMetadata.METADATA_KEY_ART, thumbnail)
+                            .putString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI, sUri)
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, sUri)
+                            .putString(MediaMetadata.METADATA_KEY_MEDIA_URI, sUri);
                     session.setMetadata(metaDataBuilder.build());
 
                     // Send session event
@@ -761,6 +782,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
         String contentTitle = MediaProvider.getTrackLabel(title, "", "");
         String contentText = MediaProvider.getTrackLabel("", album, artist);
+        //Bitmap thumbnail = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
 
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(MediaPlaybackService.this, MainActivity.class);
@@ -794,6 +816,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add an app icon and set its accent color
             // Be careful about the color
             .setSmallIcon(R.drawable.ic_stat_audio)
+            //.setLargeIcon(thumbnail)
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
