@@ -487,7 +487,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     Uri webUri = asAlbumArtContentURI(albumUri);
                     Bitmap thumbnail = null;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        thumbnail = getContentResolver().loadThumbnail(albumUri, new Size(300, 300), null);
+                        try {
+                            thumbnail = getContentResolver().loadThumbnail(albumUri, new Size(300, 300), null);
+                        } catch (IOException e) {
+                            Bundle args = new Bundle();
+                            args.putInt("code", 2);
+                            args.putString("message", e.getMessage());
+                            session.sendSessionEvent("onError", args);
+                        }
                     }
                     session.setActive(true);
 
@@ -787,6 +794,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String title = mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE);
         String album = mediaMetadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
         String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+        Bitmap thumbnail = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
         String contentTitle = MediaProvider.getTrackLabel(title, "", "");
         String contentText = MediaProvider.getTrackLabel("", album, artist);
 
@@ -822,6 +830,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add an app icon and set its accent color
             // Be careful about the color
             .setSmallIcon(R.drawable.ic_stat_audio)
+            .setLargeIcon(thumbnail)
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
