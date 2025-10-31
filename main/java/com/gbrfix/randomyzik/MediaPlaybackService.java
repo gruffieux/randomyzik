@@ -104,34 +104,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
 
-        // Set session callback and provider db
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean test = prefs.getBoolean("test", false);
-        boolean amp = prefs.getBoolean("amp", false);
-        if (amp) {
-            streaming = prefs.getBoolean("amp_streaming", false);
-            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-            try {
-                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else {
-            streaming = false;
-            session.setCallback(mediaSessionCallback);
-            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
-        }
-
-        // Restore current track and play mode
-        int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
-        int position = prefs.getInt("position_" + provider.getDbName(), 0);
-        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
-        provider.setMode(mode);
-        if (provider.checkMediaId(currentId)) {
-            provider.setSelectId(currentId);
-            provider.setPosition(position);
-        }
+        init();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -160,6 +133,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
+            init();
             session.getController().getTransportControls().stop();
         }
 
@@ -235,6 +209,38 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK: // Lower the volume, keep playing
                 player.setVolume(0.5f, 0.5f);
                 break;
+        }
+    }
+
+    private void init() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
+        boolean amp = prefs.getBoolean("amp", false);
+
+        // Set session callback and provider db
+        if (amp) {
+            streaming = prefs.getBoolean("amp_streaming", false);
+            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
+            try {
+                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            streaming = false;
+            session.setCallback(mediaSessionCallback);
+            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
+        }
+
+        // Restore current track and play mode
+        int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
+        int position = prefs.getInt("position_" + provider.getDbName(), 0);
+        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
+        provider.setMode(mode);
+        if (provider.checkMediaId(currentId)) {
+            provider.setSelectId(currentId);
+            provider.setPosition(position);
         }
     }
 
@@ -439,11 +445,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
 
+                    session.setActive(true);
+
                     // Prepare media player
                     if (streaming) {
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         if (ampSession.hasValidAuth()) {
                             prepareMediaStreaming(media.getMediaId());
+                            String url = ampSession.get_art_url(media.getMediaId());
+                            metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
+                                    .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
                         } else {
                             executor.execute(() -> {
                                 try {
@@ -457,6 +468,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 handler.post(() -> {
                                     try {
                                         prepareMediaStreaming(media.getMediaId());
+                                        String url = ampSession.get_art_url(media.getMediaId());
+                                        metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
+                                                .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
+                                        session.setMetadata(metaDataBuilder.build());
                                     } catch (IOException e) {
                                         Bundle args = new Bundle();
                                         args.putString("message", e.getMessage());
@@ -470,13 +485,23 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            try {
+                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                                metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, null)
+                                        .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail);
+                            } catch (IOException e) {
+                                Bundle args = new Bundle();
+                                args.putInt("code", 2);
+                                args.putString("message", e.getMessage());
+                                session.sendSessionEvent("onError", args);
+                            }
+                        }
                         player.setDataSource(MediaPlaybackService.this, uri);
                         player.prepare();
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
-
-                    session.setActive(true);
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
@@ -590,8 +615,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
-            
-            stopForeground(true);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE);
+            } else {
+                stopForeground(true);
+            }
+
             stopSelf();
         }
     }
@@ -768,9 +798,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String title = mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE);
         String album = mediaMetadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
         String artist = mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST);
+        Bitmap thumbnail = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
         String contentTitle = MediaProvider.getTrackLabel(title, "", "");
         String contentText = MediaProvider.getTrackLabel("", album, artist);
-        //Bitmap thumbnail = mediaMetadata.getBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART);
 
         // Create an explicit intent for an Activity in your app
         Intent intent = new Intent(MediaPlaybackService.this, MainActivity.class);
@@ -804,7 +834,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add an app icon and set its accent color
             // Be careful about the color
             .setSmallIcon(R.drawable.ic_stat_audio)
-            //.setLargeIcon(thumbnail)
+            .setLargeIcon(thumbnail)
 
             // Add a pause button
             .addAction(new NotificationCompat.Action(
