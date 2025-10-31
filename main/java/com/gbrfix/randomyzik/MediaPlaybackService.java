@@ -104,34 +104,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
 
-        // Set session callback and provider db
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean test = prefs.getBoolean("test", false);
-        boolean amp = prefs.getBoolean("amp", false);
-        if (amp) {
-            streaming = prefs.getBoolean("amp_streaming", false);
-            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
-            try {
-                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else {
-            streaming = false;
-            session.setCallback(mediaSessionCallback);
-            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
-        }
-
-        // Restore current track and play mode
-        int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
-        int position = prefs.getInt("position_" + provider.getDbName(), 0);
-        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
-        provider.setMode(mode);
-        if (provider.checkMediaId(currentId)) {
-            provider.setSelectId(currentId);
-            provider.setPosition(position);
-        }
+        updateSession();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -160,6 +133,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
+            updateSession();
             session.getController().getTransportControls().stop();
         }
 
@@ -245,6 +219,38 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         player.prepareAsync();
         stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
         session.setPlaybackState(stateBuilder.build());
+    }
+
+    private void updateSession() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean test = prefs.getBoolean("test", false);
+        boolean amp = prefs.getBoolean("amp", false);
+
+        // Set session callback and provider db
+        if (amp) {
+            streaming = prefs.getBoolean("amp_streaming", false);
+            session.setCallback(streaming ? mediaSessionCallback : ampSessionCallback);
+            try {
+                provider.setDbName(AmpSession.getInstance(getApplicationContext()).dbName());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        else {
+            streaming = false;
+            session.setCallback(mediaSessionCallback);
+            provider.setDbName(test ? "test-" + DAOBase.DEFAULT_NAME : DAOBase.DEFAULT_NAME);
+        }
+
+        // Restore current track and play mode
+        int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
+        int position = prefs.getInt("position_" + provider.getDbName(), 0);
+        int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
+        provider.setMode(mode);
+        if (provider.checkMediaId(currentId)) {
+            provider.setSelectId(currentId);
+            provider.setPosition(position);
+        }
     }
 
     private static Uri asAlbumArtContentURI(Uri webUri) {
