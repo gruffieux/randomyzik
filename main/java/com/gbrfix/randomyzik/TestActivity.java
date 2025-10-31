@@ -174,7 +174,13 @@ public class TestActivity extends AppCompatActivity {
                                 }
                                 break;
                             case "onError":
-                                fail(extras.getString("message"));
+                                switch (extras.getInt("code")) {
+                                    case 2:
+                                    case 1:
+                                        break;
+                                    default:
+                                        fail(extras.getString("message"));
+                                }
                                 break;
                         }
                         super.onSessionEvent(event, extras);

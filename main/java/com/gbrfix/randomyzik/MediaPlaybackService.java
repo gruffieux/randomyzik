@@ -4,7 +4,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
@@ -104,7 +103,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
 
-        updateSession();
+        init();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Audiofocus compatibility
@@ -133,7 +132,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
-            updateSession();
+            init();
             session.getController().getTransportControls().stop();
         }
 
@@ -212,16 +211,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
     }
 
-    private void prepareMediaStreaming(int mediaId) throws IOException {
-        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-        String url = ampSession.streaming_url(mediaId, 0);
-        player.setDataSource(url);
-        player.prepareAsync();
-        stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
-        session.setPlaybackState(stateBuilder.build());
-    }
-
-    private void updateSession() {
+    private void init() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean test = prefs.getBoolean("test", false);
         boolean amp = prefs.getBoolean("amp", false);
@@ -253,12 +243,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
     }
 
-    private static Uri asAlbumArtContentURI(Uri webUri) {
-        return new Uri.Builder()
-                .scheme(ContentResolver.SCHEME_CONTENT)
-                .authority("com.gbrfix.randomyzik.provider")
-                .appendPath(webUri.getPath()) // Make sure you trust the URI!
-                .build();
+    private void prepareMediaStreaming(int mediaId) throws IOException {
+        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+        String url = ampSession.streaming_url(mediaId, 0);
+        player.setDataSource(url);
+        player.prepareAsync();
+        stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
+        session.setPlaybackState(stateBuilder.build());
     }
 
     private void saveTrack(int id, int position) {
@@ -453,11 +444,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
 
+                    session.setActive(true);
+
                     // Prepare media player
                     if (streaming) {
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         if (ampSession.hasValidAuth()) {
                             prepareMediaStreaming(media.getMediaId());
+                            String url = ampSession.get_art_url(media.getMediaId());
+                            metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
+                                    .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
                         } else {
                             executor.execute(() -> {
                                 try {
@@ -471,6 +467,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 handler.post(() -> {
                                     try {
                                         prepareMediaStreaming(media.getMediaId());
+                                        String url = ampSession.get_art_url(media.getMediaId());
+                                        metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
+                                                .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
+                                        session.setMetadata(metaDataBuilder.build());
                                     } catch (IOException e) {
                                         Bundle args = new Bundle();
                                         args.putString("message", e.getMessage());
@@ -484,37 +484,29 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         }
                     } else {
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            try {
+                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                                metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, null)
+                                        .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail);
+                            } catch (IOException e) {
+                                Bundle args = new Bundle();
+                                args.putInt("code", 2);
+                                args.putString("message", e.getMessage());
+                                session.sendSessionEvent("onError", args);
+                            }
+                        }
                         player.setDataSource(MediaPlaybackService.this, uri);
                         player.prepare();
                     }
 
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
-                    Uri albumUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
-                    Uri webUri = asAlbumArtContentURI(albumUri);
-                    Bitmap thumbnail = null;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        try {
-                            thumbnail = getContentResolver().loadThumbnail(albumUri, new Size(300, 300), null);
-                        } catch (IOException e) {
-                            Bundle args = new Bundle();
-                            args.putInt("code", 2);
-                            args.putString("message", e.getMessage());
-                            session.sendSessionEvent("onError", args);
-                        }
-                    }
-                    session.setActive(true);
 
                     // Set session MediaMetadata
                     metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
-                            //.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, albumUri.toString())
-                            //.putString(MediaMetadata.METADATA_KEY_MEDIA_URI, albumUri.toString())
-                            //.putString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI, albumUri.toString())
-                            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
-                            //.putBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON, thumbnail)
-                            //.putBitmap(MediaMetadata.METADATA_KEY_ART, thumbnail)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);

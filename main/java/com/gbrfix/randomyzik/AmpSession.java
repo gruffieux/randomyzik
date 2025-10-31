@@ -9,6 +9,7 @@ import androidx.preference.PreferenceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -131,6 +132,14 @@ public class AmpSession extends AmpRepository {
 
     public String streaming_url(int oid, int offset) {
         return streaming_url(prefs.getString("amp_server", ""), auth, oid, offset);
+    }
+
+    public InputStream get_art(int oid) throws IOException {
+        return get_art(prefs.getString("amp_server", ""), auth, oid);
+    }
+
+    public String get_art_url(int oid) {
+        return get_art_url(prefs.getString("amp_server", ""), auth, oid);
     }
 
     public String dbName() throws MalformedURLException {
