@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.database.sqlite.SQLiteCursor;
 import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
@@ -36,12 +37,14 @@ import androidx.preference.PreferenceManager;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.view.KeyEvent;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -70,12 +73,35 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     @Nullable
     @Override
     public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
-        return new BrowserRoot(getString(R.string.app_name), null);
+        return new BrowserRoot(getString(R.string.app_name)+"_ROOT_ID", null);
     }
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
-        result.sendResult(null);
+        //  Browsing not allowed
+        if (TextUtils.equals(getString(R.string.app_name)+"_EMPTY_ROOT_ID", parentId)) {
+            result.sendResult(null);
+            return;
+        }
+
+        // Assume for example that the music catalog is already loaded/cached.
+
+        List<MediaBrowserCompat.MediaItem> mediaItems = null;
+        try {
+            mediaItems = provider.selectItems();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // Check if this is the root menu:
+        if (TextUtils.equals(getString(R.string.app_name)+"_ROOT_ID", parentId)) {
+            // Build the MediaItem objects for the top level,
+            // and put them in the mediaItems list...
+        } else {
+            // Examine the passed parentMediaId to see which submenu we're at,
+            // and put the children of that menu in the mediaItems list...
+        }
+        result.sendResult(mediaItems);
     }
 
     @Override
