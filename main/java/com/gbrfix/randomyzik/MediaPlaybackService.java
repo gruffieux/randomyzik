@@ -1,5 +1,8 @@
 package com.gbrfix.randomyzik;
 
+import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
+import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -30,6 +33,8 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
 import androidx.media.MediaBrowserServiceCompat;
+
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import androidx.media.session.MediaButtonReceiver;
 import androidx.preference.PreferenceManager;
@@ -86,22 +91,33 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Assume for example that the music catalog is already loaded/cached.
 
-        List<MediaBrowserCompat.MediaItem> mediaItems = null;
-        try {
-            mediaItems = provider.selectItems();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         // Check if this is the root menu:
         if (TextUtils.equals(getString(R.string.app_name)+"_ROOT_ID", parentId)) {
             // Build the MediaItem objects for the top level,
             // and put them in the mediaItems list...
+            List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
+            MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
+                    .setMediaId(getString(R.string.app_name)+"_PLAYLIST")
+                    .setTitle("Play my music")
+                    .build();
+            MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_BROWSABLE);
+            mediaItems.add(item);
+            result.sendResult(mediaItems);
+            return;
         } else {
             // Examine the passed parentMediaId to see which submenu we're at,
             // and put the children of that menu in the mediaItems list...
+            if (TextUtils.equals(getString(R.string.app_name)+"_PLAYLIST", parentId)) {
+                try {
+                    List<MediaBrowserCompat.MediaItem> mediaItems = provider.selectItems();
+                    result.sendResult(mediaItems);
+                    return;
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
-        result.sendResult(mediaItems);
+        result.sendResult(null);
     }
 
     @Override

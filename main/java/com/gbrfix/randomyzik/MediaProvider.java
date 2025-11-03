@@ -2,8 +2,10 @@ package com.gbrfix.randomyzik;
 
 import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
+import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 
@@ -77,8 +79,10 @@ public class MediaProvider {
         dao.open();
         SQLiteCursor cursor = dao.getAll();
         if (cursor.moveToFirst()) {
+            int mediaId = cursor.getInt(cursor.getColumnIndex("media_id"));
             MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                    .setMediaId(String.valueOf(cursor.getInt(cursor.getColumnIndex("media_id"))))
+                    .setMediaId(String.valueOf(mediaId))
+                    .setMediaUri(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId))
                     .setTitle(cursor.getString(cursor.getColumnIndex("title")))
                     .build();
             MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
