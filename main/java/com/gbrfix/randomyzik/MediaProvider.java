@@ -1,16 +1,7 @@
 package com.gbrfix.randomyzik;
 
-import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
-
-import android.content.ContentUris;
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
-import android.provider.MediaStore;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaDescriptionCompat;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -71,25 +62,6 @@ public class MediaProvider {
 
     public void setDbName(String dbName) {
         this.dbName = dbName;
-    }
-
-    public List<MediaBrowserCompat.MediaItem> selectItems() throws Exception {
-        List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        SQLiteCursor cursor = dao.getAll();
-        if (cursor.moveToFirst()) {
-            int mediaId = cursor.getInt(cursor.getColumnIndex("media_id"));
-            MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                    .setMediaId(String.valueOf(mediaId))
-                    .setMediaUri(ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId))
-                    .setTitle(cursor.getString(cursor.getColumnIndex("title")))
-                    .build();
-            MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
-            mediaItems.add(item);
-        }
-        dao.close();
-        return mediaItems;
     }
 
     public Media selectTrack() throws Exception {

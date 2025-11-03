@@ -90,34 +90,34 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Assume for example that the music catalog is already loaded/cached.
+        List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
 
         // Check if this is the root menu:
         if (TextUtils.equals(getString(R.string.app_name)+"_ROOT_ID", parentId)) {
             // Build the MediaItem objects for the top level,
             // and put them in the mediaItems list...
-            List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
             MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
                     .setMediaId(getString(R.string.app_name)+"_PLAYLIST")
-                    .setTitle("Play my music")
+                    .setTitle(provider.getDbName())
                     .build();
             MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_BROWSABLE);
             mediaItems.add(item);
-            result.sendResult(mediaItems);
-            return;
         } else {
             // Examine the passed parentMediaId to see which submenu we're at,
             // and put the children of that menu in the mediaItems list...
             if (TextUtils.equals(getString(R.string.app_name)+"_PLAYLIST", parentId)) {
-                try {
-                    List<MediaBrowserCompat.MediaItem> mediaItems = provider.selectItems();
-                    result.sendResult(mediaItems);
-                    return;
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
+                MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
+                        .setMediaId(String.valueOf(currentId))
+                        .setTitle("Play")
+                        .build();
+                MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
+                mediaItems.add(item);
             }
         }
-        result.sendResult(null);
+
+        result.sendResult(mediaItems);
     }
 
     @Override
@@ -582,6 +582,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
             }
+        }
+
+        @Override
+        public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            session.getController().getTransportControls().play();
         }
 
         @Override
