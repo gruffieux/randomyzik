@@ -63,4 +63,8 @@
     <string name="err_amp_track_unexcepted">Localplay current track is not as excepted</string>
     <string name="err_amp_cat_undefined">Catalog undefined, please check settings...</string>
 
+    <!-- Android Auto -->
+    <string name="auto_start">Start or resume random playlist</string>
+    <string name="auto_warning">Be vigilant while driving, only interact with your phone when your vehicle is stopped.</string>
+
 </resources>

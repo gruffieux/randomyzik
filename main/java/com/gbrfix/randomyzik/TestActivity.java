@@ -127,6 +127,9 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playAllTracks(int total, int mode) {
+        if (total == 0) {
+            fail(getString(R.string.err_all_read));
+        }
         MediaPlaybackService.TEST_DURATION = 100;
         trackCount = albumCount = 0;
         currentAlbum = "";

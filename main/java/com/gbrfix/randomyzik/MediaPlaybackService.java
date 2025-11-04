@@ -2,20 +2,23 @@ package com.gbrfix.randomyzik;
 
 import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_BROWSABLE;
 import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
+import static android.support.v4.media.session.PlaybackStateCompat.ACTION_PLAY;
+import static android.support.v4.media.session.PlaybackStateCompat.ACTION_PLAY_PAUSE;
+import static android.support.v4.media.session.PlaybackStateCompat.ACTION_REWIND;
+import static android.support.v4.media.session.PlaybackStateCompat.ACTION_SKIP_TO_NEXT;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
-import android.database.sqlite.SQLiteCursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
@@ -32,6 +35,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import android.support.v4.media.MediaBrowserCompat;
+
 import androidx.media.MediaBrowserServiceCompat;
 
 import android.support.v4.media.MediaDescriptionCompat;
@@ -98,7 +102,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // and put them in the mediaItems list...
             MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
                     .setMediaId(getString(R.string.app_name)+"_PLAYLIST")
-                    .setTitle(provider.getDbName())
+                    .setTitle(getString(R.string.app_name))
                     .build();
             MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_BROWSABLE);
             mediaItems.add(item);
@@ -108,9 +112,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (TextUtils.equals(getString(R.string.app_name)+"_PLAYLIST", parentId)) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                 int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
+                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_play);
                 MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
                         .setMediaId(String.valueOf(currentId))
-                        .setTitle("Play")
+                        .setTitle(getString(R.string.auto_start))
+                        .setIconBitmap(icon)
                         .build();
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
                 mediaItems.add(item);
@@ -131,7 +137,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         // Set an initial playback state with ACTION_PLAY, so media buttons can start the player
-        stateBuilder = new PlaybackStateCompat.Builder().setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
+        stateBuilder = new PlaybackStateCompat.Builder().setActions(ACTION_PLAY | ACTION_PLAY_PAUSE | ACTION_SKIP_TO_NEXT | ACTION_REWIND);
         session.setPlaybackState(stateBuilder.build());
 
         // Set metadata builder
@@ -576,7 +582,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 args.putInt("code", 2);
                 args.putString("message", e.getMessage());
                 session.sendSessionEvent("onError", args);
-                session.getController().getTransportControls().stop();
+                //session.getController().getTransportControls().stop();
+                session.setPlaybackState(new PlaybackStateCompat.Builder()
+                        .setState(PlaybackStateCompat.STATE_ERROR, 0, 0)
+                        .setErrorMessage(PlaybackStateCompat.ERROR_CODE_END_OF_QUEUE, e.getMessage() + "... " + getString(R.string.auto_warning))
+                        .build());
             } catch (Exception e) {
                 Bundle args = new Bundle();
                 args.putString("message", e.getMessage());
@@ -886,7 +896,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add a pause button
             .addAction(new NotificationCompat.Action(
                 controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)))
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, ACTION_PLAY_PAUSE)))
 
             /*.addAction(new NotificationCompat.Action(R.drawable.ic_action_rewind, "Rewind",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_REWIND)))*/

@@ -61,6 +61,9 @@
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
     <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
-    <string name="err_amp_cat_undefined">Aucun catalogue definit, Veuillez vérifier les paramètres...</string>
+    <string name="err_amp_cat_undefined">Aucun catalogue définit, Veuillez vérifier les paramètres...</string>
 
+    <!-- Android Auto -->
+    <string name="auto_start">Démarrer ou reprendre la lecture aléatoire</string>
+    <string name="auto_warning">Soyez vigilant au volant, n\'utilisez votre téléphone que si votre véhicule est à l\'arrêt.</string>
 </resources>
