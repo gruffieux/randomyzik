@@ -4,8 +4,8 @@ import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_BROWSAB
 import static android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE;
 import static android.support.v4.media.session.PlaybackStateCompat.ACTION_PLAY;
 import static android.support.v4.media.session.PlaybackStateCompat.ACTION_PLAY_PAUSE;
-import static android.support.v4.media.session.PlaybackStateCompat.ACTION_REWIND;
 import static android.support.v4.media.session.PlaybackStateCompat.ACTION_SKIP_TO_NEXT;
+import static android.support.v4.media.session.PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -137,7 +137,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         session.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
 
         // Set an initial playback state with ACTION_PLAY, so media buttons can start the player
-        stateBuilder = new PlaybackStateCompat.Builder().setActions(ACTION_PLAY | ACTION_PLAY_PAUSE | ACTION_SKIP_TO_NEXT | ACTION_REWIND);
+        stateBuilder = new PlaybackStateCompat.Builder().setActions(ACTION_PLAY | ACTION_PLAY_PAUSE | ACTION_SKIP_TO_NEXT | ACTION_SKIP_TO_PREVIOUS);
         session.setPlaybackState(stateBuilder.build());
 
         // Set metadata builder
@@ -463,8 +463,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         session.getController().getTransportControls().skipToNext();
                         return true;
                     case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-                    case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
-                        session.getController().getTransportControls().rewind();
+                        session.getController().getTransportControls().skipToPrevious();
                         return true;
                 }
             }
@@ -596,6 +595,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         @Override
+        public void onPlayFromSearch(String query, Bundle extras) {
+            if (TextUtils.isEmpty(query)) {
+                // The user provided generic string e.g. 'Play music'
+                session.getController().getTransportControls().play();
+            } else {
+                super.onPlayFromSearch(query, extras);
+            }
+        }
+
+        @Override
         public void onPause() {
             player.pause();
             progress.suspend();
@@ -617,7 +626,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         @Override
-        public void onRewind() {
+        public void onSkipToPrevious() {
             saveTrack(0, 0);
             progress.stop();
             provider.setSelectId(provider.getCurrentId());
@@ -877,7 +886,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             .setContentIntent(pendingIntent)
 
             // Stop the service when the notification is swiped away
-            //.setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP))
             .setDeleteIntent(stopPendingIntent)
 
             // Make the transport controls visible on the lockscreen
@@ -893,15 +901,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             .addAction(new NotificationCompat.Action(
                 controller.getPlaybackState().getState() == PlaybackStateCompat.STATE_PLAYING ? R.drawable.ic_action_pause : R.drawable.ic_action_play, "Resume",
                 MediaButtonReceiver.buildMediaButtonPendingIntent(this, ACTION_PLAY_PAUSE)))
-
-            /*.addAction(new NotificationCompat.Action(R.drawable.ic_action_rewind, "Rewind",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_REWIND)))*/
-
-            /*addAction(new NotificationCompat.Action(R.drawable.ic_action_skip, "Skip",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_NEXT)))*/
-
-            /*.addAction(new NotificationCompat.Action(R.drawable.ic_action_cancel, "Stop",
-                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_STOP)))*/
 
             // Add a cancel button
             .addAction(new NotificationCompat.Action(

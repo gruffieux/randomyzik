@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Handle rewind button
             rewBtn.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
-                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().rewind();
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToPrevious();
                 }
             });
 
