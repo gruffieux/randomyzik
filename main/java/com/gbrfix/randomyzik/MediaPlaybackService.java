@@ -492,6 +492,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     Media media = provider.selectTrack();
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
+                    Bitmap thumbnail = null;
+                    String thumbnailUri = null;
 
                     session.setActive(true);
 
@@ -500,9 +502,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         if (ampSession.hasValidAuth()) {
                             prepareMediaStreaming(media.getMediaId());
-                            String url = ampSession.get_art_url(media.getMediaId());
-                            metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
-                                    .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
+                            thumbnailUri = ampSession.get_art_url(media.getMediaId());
                         } else {
                             executor.execute(() -> {
                                 try {
@@ -516,10 +516,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 handler.post(() -> {
                                     try {
                                         prepareMediaStreaming(media.getMediaId());
-                                        String url = ampSession.get_art_url(media.getMediaId());
-                                        metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
-                                                .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, url);
-                                        session.setMetadata(metaDataBuilder.build());
                                     } catch (IOException e) {
                                         Bundle args = new Bundle();
                                         args.putString("message", e.getMessage());
@@ -535,9 +531,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             try {
-                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
-                                metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, null)
-                                        .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail);
+                                thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
                             } catch (IOException e) {
                                 Bundle args = new Bundle();
                                 args.putInt("code", 2);
@@ -556,6 +550,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
+                            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
+                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
