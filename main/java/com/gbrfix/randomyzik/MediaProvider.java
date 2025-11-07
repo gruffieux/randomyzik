@@ -13,6 +13,7 @@ public class MediaProvider {
     public final static int MODE_ALBUM = 1;
     private int currentId, selectId, position;
     private int total, totalRead;
+
     private int mode;
     private boolean lastOfAlbum;
     private Context context;
@@ -147,6 +148,10 @@ public class MediaProvider {
         dao.close();
 
         return media;
+    }
+
+    public int getMode() {
+        return mode;
     }
 
     public static String getTrackLabel(String title, String album, String artist) {

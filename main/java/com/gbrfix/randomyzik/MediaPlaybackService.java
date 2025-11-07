@@ -138,6 +138,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Set an initial playback state with ACTION_PLAY, so media buttons can start the player
         stateBuilder = new PlaybackStateCompat.Builder().setActions(ACTION_PLAY | ACTION_PLAY_PAUSE | ACTION_SKIP_TO_NEXT | ACTION_SKIP_TO_PREVIOUS);
+        stateBuilder.addCustomAction("modeByTrack", "ModeTrack", R.drawable.ic_action_track);
+        stateBuilder.addCustomAction("modeByAlbum", "ModeAlbum", R.drawable.ic_action_album);
         session.setPlaybackState(stateBuilder.build());
 
         // Set metadata builder
@@ -469,6 +471,23 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
 
             return super.onMediaButtonEvent(mediaButtonEvent);
+        }
+
+        public void onCustomAction(@NonNull String action, Bundle extras) {
+            if (action.equals("modeByTrack") || action.equals("modeByAlbum")) {
+                int mode = action.equals("modeByAlbum") ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+
+                // Save mode as preferences
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putInt("mode", mode);
+                editor.apply();
+
+                provider.setMode(mode);
+                /*Bundle args = new Bundle();
+                args.putInt("mode", mode);
+                session.sendSessionEvent("onChangeMode", args);*/
+            }
         }
 
         @Override
