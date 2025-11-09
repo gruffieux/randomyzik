@@ -74,6 +74,10 @@ public class SettingsActivity extends AppCompatActivity {
                         catalogsPref.setEntryValues(values);
                         catalogsPref.setDefaultValue(values[0]);
                         catalogsPref.setEnabled(true);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("amp_catalog_entries", String.join(";", entries));
+                        editor.putString("amp_catalog_values", String.join(";", values));
+                        editor.apply();
                     });
                 }
             });

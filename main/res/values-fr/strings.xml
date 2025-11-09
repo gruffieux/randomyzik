@@ -64,6 +64,8 @@
     <string name="err_amp_cat_undefined">Aucun catalogue définit, Veuillez vérifier les paramètres...</string>
 
     <!-- Android Auto -->
-    <string name="auto_start">Démarrer ou reprendre la lecture aléatoire</string>
+    <string name="auto_start">Lire le dossier musical</string>
     <string name="auto_warning">Soyez vigilant au volant, n\'utilisez votre téléphone que si votre véhicule est à l\'arrêt.</string>
+    <string name="auto_item1">Mon appareil</string>
+    <string name="auto_item2">Catalogues Ampache</string>
 </resources>

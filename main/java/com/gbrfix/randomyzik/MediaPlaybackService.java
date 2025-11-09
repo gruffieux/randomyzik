@@ -100,26 +100,46 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         if (TextUtils.equals(getString(R.string.app_name)+"_ROOT_ID", parentId)) {
             // Build the MediaItem objects for the top level,
             // and put them in the mediaItems list...
-            MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                    .setMediaId(getString(R.string.app_name)+"_PLAYLIST")
-                    .setTitle(getString(R.string.app_name))
+            MediaDescriptionCompat descItem1 = new MediaDescriptionCompat.Builder()
+                    .setMediaId(getString(R.string.app_name)+"_ITEM1")
+                    .setTitle(getString(R.string.auto_item1))
                     .build();
-            MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_BROWSABLE);
-            mediaItems.add(item);
+            MediaBrowserCompat.MediaItem item1 = new MediaBrowserCompat.MediaItem(descItem1, FLAG_BROWSABLE);
+            mediaItems.add(item1);
+            MediaDescriptionCompat descItem2 = new MediaDescriptionCompat.Builder()
+                    .setMediaId(getString(R.string.app_name) + "_ITEM2")
+                    .setTitle(getString(R.string.auto_item2))
+                    .build();
+            MediaBrowserCompat.MediaItem item2 = new MediaBrowserCompat.MediaItem(descItem2, FLAG_BROWSABLE);
+            mediaItems.add(item2);
         } else {
             // Examine the passed parentMediaId to see which submenu we're at,
             // and put the children of that menu in the mediaItems list...
-            if (TextUtils.equals(getString(R.string.app_name)+"_PLAYLIST", parentId)) {
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                int currentId = prefs.getInt("currentId_" + provider.getDbName(), 0);
-                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_play);
+            if (TextUtils.equals(getString(R.string.app_name)+"_ITEM1", parentId)) {
+                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_playlist);
                 MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
-                        .setMediaId(String.valueOf(currentId))
+                        .setMediaId("MUSIC_FOLDER")
                         .setTitle(getString(R.string.auto_start))
                         .setIconBitmap(icon)
                         .build();
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
                 mediaItems.add(item);
+            } else if (TextUtils.equals(getString(R.string.app_name)+"_ITEM2", parentId)) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_playlist);
+                CharSequence[] entries = prefs.getString("amp_catalog_entries", "").split(";");
+                CharSequence[] values = prefs.getString("amp_catalog_values", "").split(";");
+                for (int i = 0; i < entries.length; i++) {
+                    String catName = entries[i].toString();
+                    String catId = values[i].toString();
+                    MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
+                            .setMediaId("AMP_" + catId)
+                            .setTitle(catName)
+                            .setIconBitmap(icon)
+                            .build();
+                    MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
+                    mediaItems.add(item);
+                }
             }
         }
 
@@ -610,6 +630,26 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
+            SharedPreferences.Editor editor = prefs.edit();
+            int id = provider.getCurrentId();
+            if (id > 0) {
+                saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
+            }
+
+            if (mediaId.equals("MUSIC_FOLDER")) {
+                editor.putBoolean("amp", false);
+                editor.putBoolean("amp_streaming", false);
+            } else if (mediaId.startsWith("AMP_")) {
+                String catId = mediaId.substring(4);
+                editor.putBoolean("amp", true);
+                editor.putBoolean("amp_streaming", true);
+                editor.putString("amp_catalog", catId);
+            }
+
+            editor.apply();
+            init();
+            session.getController().getTransportControls().stop();
             session.getController().getTransportControls().play();
         }
 
