@@ -147,11 +147,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
                     }
                     break;
-                case "onChangeMode":
-                    /*Switch modeBtn = findViewById(R.id.mode);
-                    int mode = extras.getInt("mode");
-                    modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);*/ // L'app plante si pas en premier plan
-                    break;
                 case "onError":
                     int code = extras.getInt("code");
                     String errorMsg = extras.getString("message");

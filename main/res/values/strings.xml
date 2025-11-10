@@ -64,9 +64,9 @@
     <string name="err_amp_cat_undefined">Catalog undefined, please check settings...</string>
 
     <!-- Android Auto -->
-    <string name="auto_start">Read music folder</string>
     <string name="auto_warning">Be vigilant while driving, only interact with your phone when your vehicle is stopped.</string>
     <string name="auto_item1">My device</string>
+    <string name="auto_item1_folder">Music folder</string>
     <string name="auto_item2">Ampache catalogs</string>
 
 </resources>

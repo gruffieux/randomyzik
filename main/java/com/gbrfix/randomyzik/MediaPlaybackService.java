@@ -95,6 +95,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         // Assume for example that the music catalog is already loaded/cached.
         List<MediaBrowserCompat.MediaItem> mediaItems = new ArrayList<>();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String[] entries = prefs.getString("amp_catalog_entries", "").split(";");
+        String[] values = prefs.getString("amp_catalog_values", "").split(";");
 
         // Check if this is the root menu:
         if (TextUtils.equals(getString(R.string.app_name)+"_ROOT_ID", parentId)) {
@@ -106,12 +109,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     .build();
             MediaBrowserCompat.MediaItem item1 = new MediaBrowserCompat.MediaItem(descItem1, FLAG_BROWSABLE);
             mediaItems.add(item1);
-            MediaDescriptionCompat descItem2 = new MediaDescriptionCompat.Builder()
-                    .setMediaId(getString(R.string.app_name) + "_ITEM2")
-                    .setTitle(getString(R.string.auto_item2))
-                    .build();
-            MediaBrowserCompat.MediaItem item2 = new MediaBrowserCompat.MediaItem(descItem2, FLAG_BROWSABLE);
-            mediaItems.add(item2);
+            if (entries.length > 0 && !entries[0].isEmpty()) {
+                MediaDescriptionCompat descItem2 = new MediaDescriptionCompat.Builder()
+                        .setMediaId(getString(R.string.app_name) + "_ITEM2")
+                        .setTitle(getString(R.string.auto_item2))
+                        .build();
+                MediaBrowserCompat.MediaItem item2 = new MediaBrowserCompat.MediaItem(descItem2, FLAG_BROWSABLE);
+                mediaItems.add(item2);
+            }
         } else {
             // Examine the passed parentMediaId to see which submenu we're at,
             // and put the children of that menu in the mediaItems list...
@@ -119,19 +124,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_playlist);
                 MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
                         .setMediaId("MUSIC_FOLDER")
-                        .setTitle(getString(R.string.auto_start))
+                        .setTitle(getString(R.string.auto_item1_folder))
                         .setIconBitmap(icon)
                         .build();
                 MediaBrowserCompat.MediaItem item = new MediaBrowserCompat.MediaItem(description, FLAG_PLAYABLE);
                 mediaItems.add(item);
             } else if (TextUtils.equals(getString(R.string.app_name)+"_ITEM2", parentId)) {
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                 Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_playlist);
-                CharSequence[] entries = prefs.getString("amp_catalog_entries", "").split(";");
-                CharSequence[] values = prefs.getString("amp_catalog_values", "").split(";");
                 for (int i = 0; i < entries.length; i++) {
-                    String catName = entries[i].toString();
-                    String catId = values[i].toString();
+                    String catName = entries[i];
+                    String catId = values[i];
                     MediaDescriptionCompat description = new MediaDescriptionCompat.Builder()
                             .setMediaId("AMP_" + catId)
                             .setTitle(catName)
@@ -504,9 +506,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 editor.apply();
 
                 provider.setMode(mode);
-                /*Bundle args = new Bundle();
-                args.putInt("mode", mode);
-                session.sendSessionEvent("onChangeMode", args);*/
             }
         }
 
@@ -548,6 +547,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 } catch (Exception e) {
                                     Bundle args = new Bundle();
                                     args.putString("message", e.getMessage());
+                                    args.putInt("code", 1);
+                                    session.setPlaybackState(new PlaybackStateCompat.Builder()
+                                            .setState(PlaybackStateCompat.STATE_ERROR, 0, 0)
+                                            .setErrorMessage(PlaybackStateCompat.ERROR_CODE_AUTHENTICATION_EXPIRED, e.getMessage() + "... " + getString(R.string.auto_warning))
+                                            .build());
                                     session.sendSessionEvent("onError", args);
                                     return;
                                 }
