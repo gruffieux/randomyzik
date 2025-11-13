@@ -319,6 +319,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private void prepareMediaStreaming(int mediaId) throws IOException {
         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
         String url = ampSession.streaming_url(mediaId, 0);
+        String thumbnailUri = ampSession.get_art_url(mediaId);
+        session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
         player.setDataSource(url);
         player.prepareAsync();
         stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
@@ -530,7 +532,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
                     Bitmap thumbnail = null;
-                    String thumbnailUri = null;
 
                     session.setActive(true);
 
@@ -539,7 +540,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                         if (ampSession.hasValidAuth()) {
                             prepareMediaStreaming(media.getMediaId());
-                            thumbnailUri = ampSession.get_art_url(media.getMediaId());
                         } else {
                             executor.execute(() -> {
                                 try {
@@ -593,7 +593,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
                             .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
-                            .putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
