@@ -334,7 +334,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         // Sauve piste en cours
         editor.putInt("currentId_" + provider.getDbName(), id);
         editor.putInt("position_" + provider.getDbName(), position);
-        editor.commit();
+        editor.apply();
     }
 
     private int requestAudioFocus() {

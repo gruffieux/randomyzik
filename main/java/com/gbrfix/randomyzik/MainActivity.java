@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putInt("mode", mode);
-            editor.commit();
+            editor.apply();
 
             // Send action to browser service (Depracated)
             Bundle args = new Bundle();
@@ -492,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         // Write test preference
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("test", false);
-        editor.commit();
+        editor.apply();
 
         try {
             if (perms == 1) {

@@ -67,7 +67,7 @@ public class TestActivity extends AppCompatActivity {
                 if (prefs.getString("amp_catalog", "0").equals("0")) {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("amp_catalog", String.valueOf(catalogId));
-                    editor.commit();
+                    editor.apply();
                 }
                 try {
                     String dbName = AmpRepository.dbName(server, String.valueOf(catalogId));
