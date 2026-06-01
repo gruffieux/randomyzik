@@ -128,10 +128,13 @@ public class DbWorker extends Worker {
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("id"));
                 int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
+                String title = cursor.getString(cursor.getColumnIndex("title"));
+                String album = cursor.getString(cursor.getColumnIndex("album"));
+                String artist = cursor.getString(cursor.getColumnIndex("artist"));
                 int i;
                 for (i = 0; i < list.size(); i++) {
                     Media media = list.get(i);
-                    if (media.getMediaId() == media_id) {
+                    if (media.getMediaId() == media_id || (media.getTitle().equals(title) && media.getAlbum().equals(album) && media.getArtist().equals(artist))) {
                         dao.update(list.get(i), id);
                         updated = true;
                         break;
