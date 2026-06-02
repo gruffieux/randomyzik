@@ -29,7 +29,7 @@ public class AmpSessionTest {
     private SharedPreferences prefs;
     public final static String TEST_SERVER = "http://raspberrypi/ampache";
     //public final static String TEST_SERVER = "https://gbrfix.internet-box.ch/ampache";
-    public final static String TEST_API_KEY = "7e5b37f14c08b28bdff73abe8f990c0b";
+    public final static String TEST_API_KEY = "8c05c49211386831f09d701b7a29939d";
 
     @Before
     public void setUp() throws Exception {

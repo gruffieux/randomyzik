@@ -24,7 +24,7 @@ import androidx.work.WorkerParameters;
 import java.util.ArrayList;
 
 public class DbWorker extends Worker {
-    private Context context;
+    private final Context context;
     public DbWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.context = context;
@@ -41,11 +41,10 @@ public class DbWorker extends Worker {
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);
         String contentTitle = context.getString(R.string.info_scanning);
-        String contentText = "";
-        String subText = "Playlist scan";
+        String contentText, subText;
         MediaDAO dao = new MediaDAO(context, dbName);
         dao.open();
-        ArrayList<Media> list = new ArrayList<Media>();
+        ArrayList<Media> list = new ArrayList<>();
         SQLiteCursor cursor = dao.getAll();
 
         if (amp) {
@@ -60,8 +59,8 @@ public class DbWorker extends Worker {
                 }
                 int offset = 0;
                 int limit = test ? DbService.TEST_MAX_TRACKS : AmpRepository.MAX_ELEMENTS_PER_REQUEST;
-                int total = 0;
-                ArrayList<Media> elements = new ArrayList<Media>();
+                int total;
+                ArrayList<Media> elements = new ArrayList<>();
                 do {
                     elements.clear();
                     elements = (ArrayList<Media>) ampSession.advanced_search(offset, limit, catalogId);
@@ -148,7 +147,7 @@ public class DbWorker extends Worker {
                     list.remove(i);
                 }
             }
-            if (list.size() > 0) {
+            if (!list.isEmpty()) {
                 contentTitle = context.getString(R.string.info_inserting);
                 contentText = list.size() + " elements";
                 setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
@@ -192,6 +191,10 @@ public class DbWorker extends Worker {
                 .setOngoing(true)
                 .addAction(R.drawable.ic_action_cancel, "Stop", stopPendingIntent);
 
-        return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+        } else {
+            return new ForegroundInfo(DbService.NOTIFICATION_ID, builder.build());
+        }
     }
 }

@@ -29,7 +29,6 @@ public class MediaDAO extends DAOBase {
     public long insert(Media media) {
         ContentValues values = new ContentValues();
 
-
         values.put("media_id", media.getMediaId());
         values.put("album_key", media.getAlbumKey());
         values.put("flag", media.getFlag());
