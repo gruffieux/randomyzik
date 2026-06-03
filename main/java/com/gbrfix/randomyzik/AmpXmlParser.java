@@ -32,28 +32,55 @@ public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
 
-    // Read content in lonely tag or select tag name
-    private String readEntry(XmlPullParser parser, String entry) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, entry);
-        String value = null;
-        while (parser.nextToken() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() == XmlPullParser.CDSECT) {
-                value = parser.getText();
-                parser.nextTag();
-                parser.require(XmlPullParser.END_TAG, ns, entry);
-                return value;
-            }
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            if (name.equals("name")) {
-                value = readTag(parser, "name");
-            } else {
-                skip(parser);
-            }
+    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readCatalogs(parser);
+        } finally {
+            in.close();
         }
-        return value;
+    }
+
+    public List parseSongs(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readSongs(parser);
+        } finally {
+            in.close();
+        }
+    }
+
+    public Bundle parseStatus(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            parser.nextTag();
+            parser.nextTag();
+            parser.nextTag();
+            return readStatus(parser);
+        } finally {
+            in.close();
+        }
+    }
+
+    public Bundle parseUser(InputStream in) throws XmlPullParserException, IOException {
+        try {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+            parser.setInput(new BufferedInputStream(in), null);
+            parser.nextTag();
+            return readUser(parser);
+        } finally {
+            in.close();
+        }
     }
 
     private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
@@ -91,6 +118,30 @@ public class AmpXmlParser {
             }
         }
         return catalogs;
+    }
+
+    // Read content in lonely tag or select tag name
+    private String readEntry(XmlPullParser parser, String entry) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, entry);
+        String value = null;
+        while (parser.nextToken() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() == XmlPullParser.CDSECT) {
+                value = parser.getText();
+                parser.nextTag();
+                parser.require(XmlPullParser.END_TAG, ns, entry);
+                return value;
+            }
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("name")) {
+                value = readTag(parser, "name");
+            } else {
+                skip(parser);
+            }
+        }
+        return value;
     }
 
     // Parses the contents of an entry. If it encounters a song, hands them off
@@ -240,57 +291,6 @@ public class AmpXmlParser {
                     depth++;
                     break;
             }
-        }
-    }
-
-    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readCatalogs(parser);
-        } finally {
-            in.close();
-        }
-    }
-
-    public List parseSongs(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readSongs(parser);
-        } finally {
-            in.close();
-        }
-    }
-
-    public Bundle parseStatus(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            parser.nextTag();
-            parser.nextTag();
-            parser.nextTag();
-            return readStatus(parser);
-        } finally {
-            in.close();
-        }
-    }
-
-    public Bundle parseUser(InputStream in) throws XmlPullParserException, IOException {
-        try {
-            XmlPullParser parser = Xml.newPullParser();
-            parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-            parser.setInput(new BufferedInputStream(in), null);
-            parser.nextTag();
-            return readUser(parser);
-        } finally {
-            in.close();
         }
     }
 }
