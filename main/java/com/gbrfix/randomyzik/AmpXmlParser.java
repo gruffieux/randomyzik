@@ -32,6 +32,30 @@ public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
 
+    // Read content in lonely tag or select tag name
+    private String readEntry(XmlPullParser parser, String entry) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, entry);
+        String value = null;
+        while (parser.nextToken() != XmlPullParser.END_TAG) {
+            if (parser.getEventType() == XmlPullParser.CDSECT) {
+                value = parser.getText();
+                parser.nextTag();
+                parser.require(XmlPullParser.END_TAG, ns, entry);
+                return value;
+            }
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if (name.equals("name")) {
+                value = readTag(parser, "name");
+            } else {
+                skip(parser);
+            }
+        }
+        return value;
+    }
+
     private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "catalog");
         String value = parser.getAttributeValue(0);
@@ -88,10 +112,10 @@ public class AmpXmlParser {
             if (name.equals("title")) {
                 title = readTag(parser, "title");
             }  else if (name.equals("artist")) {
-                artist = readTag(parser, "artist");
+                artist = readEntry(parser, "artist");
             } else if (name.equals("album")) {
                 albumKey = parser.getAttributeValue(0);
-                album = readTag(parser, "album");
+                album = readEntry(parser, "album");
             } else if (name.equals("track")) {
                 trackNb = readTag(parser, "track");
             } else if (name.equals("time")) {
