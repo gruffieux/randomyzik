@@ -205,24 +205,28 @@ public class DbService implements Observer<WorkInfo> {
         boolean test = prefs.getBoolean("test", false);
 
         if (amp && catalog.equals("0")) {
-            scan(false, catalog);
-        } else {
-            try {
-                String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-                if (test) {
-                    dbName = "test-" + dbName;
-                }
-                MediaDAO dao = new MediaDAO(context, dbName);
-                dao.open();
-                SQLiteCursor cursor = dao.getAll();
-                int total = cursor.getCount();
-                dao.close();
-                if (total == 0) {
-                    scan(false, catalog);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            return;
         }
+
+        try {
+            String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+            if (test) {
+                dbName = "test-" + dbName;
+            }
+            MediaDAO dao = new MediaDAO(context, dbName);
+            dao.open();
+            SQLiteCursor cursor = dao.getAll();
+            int total = cursor.getCount();
+            dao.close();
+            if (total == 0) {
+                scan(false, catalog);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void checkAll() {
+        scan(false, "0");
     }
 }

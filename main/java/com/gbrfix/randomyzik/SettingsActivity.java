@@ -113,6 +113,7 @@ public class SettingsActivity extends AppCompatActivity {
                     apiKeyPref.setVisible(value);
                     userPref.setVisible(!value);
                     pwdPref.setVisible(!value);
+                    loadCatalogs(prefs, catalogsPref);
                     stopPlay();
                     return true;
                 }
@@ -122,6 +123,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
                     catalogsPref.setValue("0");
+                    loadCatalogs(prefs, catalogsPref);
                     stopPlay();
                     return true;
                 }
@@ -143,6 +145,7 @@ public class SettingsActivity extends AppCompatActivity {
             userPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    loadCatalogs(prefs, catalogsPref);
                     stopPlay();
                     return true;
                 }
@@ -151,6 +154,7 @@ public class SettingsActivity extends AppCompatActivity {
             apiKeyPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    loadCatalogs(prefs, catalogsPref);
                     stopPlay();
                     return true;
                 }
@@ -159,6 +163,7 @@ public class SettingsActivity extends AppCompatActivity {
             pwdPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                    loadCatalogs(prefs, catalogsPref);
                     stopPlay();
                     return true;
                 }

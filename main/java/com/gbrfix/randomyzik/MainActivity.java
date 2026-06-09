@@ -413,37 +413,38 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
-        String catalog = prefs.getString("amp_catalog", "0");
 
+        // Scan database
         if (amp) {
             String server = prefs.getString("amp_server", "");
+            String catalog = prefs.getString("amp_catalog", "0");
             boolean streaming = prefs.getBoolean("amp_streaming", false);
-            try {
-                dbName = AmpRepository.dbName(server, catalog);
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
+            if (catalog.equals("0")) {
+                infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
+            } else {
+                try {
+                    dbName = AmpRepository.dbName(server, catalog);
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+                dbService.check();
             }
             if (!streaming) {
                 ignoreBatteryOptimization();
             }
         } else {
             dbName = DAOBase.DEFAULT_NAME;
+            dbService.check();
         }
 
         // Refresh playlist
-        if (amp && catalog.equals("0")) {
-            infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
-        } else {
-            MediaDAO dao = new MediaDAO(this, dbName);
-            dao.open();
-            SQLiteCursor cursor = dao.getAllOrdered();
-            ListView listView = findViewById(R.id.playlist);
-            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-            adapter.changeCursor(cursor);
-            dao.close();
-        }
-
-        dbService.check();
+        MediaDAO dao = new MediaDAO(this, dbName);
+        dao.open();
+        SQLiteCursor cursor = dao.getAllOrdered();
+        ListView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+        adapter.changeCursor(cursor);
+        dao.close();
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
