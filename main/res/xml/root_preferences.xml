@@ -15,6 +15,7 @@
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:dependency="amp"
             app:key="amp_api"
             app:title="@string/amp_api"
@@ -50,6 +51,7 @@
             app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
+            app:defaultValue="true"
             app:key="amp_streaming"
             app:dependency="amp"
             app:title="@string/amp_streaming"
