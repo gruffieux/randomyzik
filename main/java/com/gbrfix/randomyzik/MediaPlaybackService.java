@@ -606,6 +606,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("artist", media.getArtist());
                     bundle.putInt("duration", duration);
                     bundle.putString("albumKey", media.getAlbumKey());
+                    bundle.putInt("current", provider.getTotalRead()+1);
+                    bundle.putInt("total", provider.getTotal());
                     session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
                     player.start();
@@ -806,6 +808,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             bundle.putString("album", media.getAlbum());
                             bundle.putString("artist", media.getArtist());
                             bundle.putInt("duration", duration);
+                            bundle.putString("albumKey", media.getAlbumKey());
+                            bundle.putInt("current", provider.getTotalRead()+1);
+                            bundle.putInt("total", provider.getTotal());
                             session.sendSessionEvent("onTrackSelect", bundle);
 
                             // Update state and notif
@@ -942,7 +947,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             // Add the metadata for the currently playing track
             .setContentTitle(contentTitle)
             .setContentText(contentText)
-            .setSubText(provider.getSummary())
+            //.setSubText(provider.getSummary())
 
             // Enable launching the app by clicking the notification
             .setContentIntent(pendingIntent)

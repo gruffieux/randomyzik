@@ -45,7 +45,6 @@
     <!-- Info -->
     <string name="info">Info</string>
     <string name="info_play_end">Liste de lecture terminée</string>
-    <string name="info_track_summary">Piste: %1$d/%2$d Liste lue: %3$.1f%%</string>
     <string name="info_scanning">Scan des fichiers audio, veuillez patienter...</string>
     <string name="info_searching">Recherche dans le dossier audio interne: %1$s</string>
     <string name="info_cat_searching">Recherche dans le catalogue: %1$s</string>

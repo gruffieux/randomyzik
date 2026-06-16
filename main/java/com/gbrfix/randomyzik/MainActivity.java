@@ -121,12 +121,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String title = extras.getString("title");
                     String album = extras.getString("album");
                     String artist = extras.getString("artist");
+                    int current = extras.getInt("current");
+                    int total = extras.getInt("total");
                     positionLabel.setText(dateFormat.format(new Date(0)));
                     durationLabel.setText(dateFormat.format(new Date(duration)));
                     progressBar.setProgress(0);
                     progressBar.setMax(duration);
-                    String label = MediaProvider.getTrackLabel(title, album, artist);
-                    infoMsg(label, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
+                    String msg = MediaProvider.getTrackCounter(current, total);
+                    msg += " " + MediaProvider.getTrackLabel(title, album, artist);
+                    infoMsg(msg, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
@@ -233,7 +236,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 duration = (int) metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
                 Bundle extras = MediaControllerCompat.getMediaController(MainActivity.this).getExtras();
                 position = extras != null ? extras.getInt("position") : 0;
-                infoMsg(MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST)), color);
+                String msg = MediaProvider.getTrackCounter((int)metaData.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER), (int)metaData.getLong(MediaMetadata.METADATA_KEY_NUM_TRACKS));
+                msg += " " + MediaProvider.getTrackLabel(metaData.getString(MediaMetadata.METADATA_KEY_TITLE), metaData.getString(MediaMetadata.METADATA_KEY_ALBUM), metaData.getString(MediaMetadata.METADATA_KEY_ARTIST));
+                infoMsg(msg, color);
                 progressBar.setMax(duration);
                 progressBar.setProgress(position);
                 durationLabel.setText(dateFormat.format(new Date(duration)));

@@ -16,7 +16,7 @@ public class MediaProvider {
 
     private int mode;
     private boolean lastOfAlbum;
-    private Context context;
+    private final Context context;
 
     private String dbName;
 
@@ -174,14 +174,8 @@ public class MediaProvider {
         return label;
     }
 
-    public String getSummary() {
-        int current = totalRead + 1;
-        float percent = (float)current / (float)total * 100;
-        float f = percent * 10;
-        int n = (int)f;
-        percent = (float)n / 10;
-
-        return String.format(context.getString(R.string.info_track_summary), current, total, percent);
+    public static String getTrackCounter(int current, int total) {
+        return String.format("[%1$d/%2$d]", current, total);
     }
 
     public void updateState(String flag) {
