@@ -321,6 +321,18 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         String url = ampSession.streaming_url(mediaId, 0);
         String thumbnailUri = ampSession.get_art_url(mediaId);
         session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
+
+        // Get remote art cover
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                Bitmap thumbnail = ampSession.get_art(mediaId);
+                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
         player.setDataSource(url);
         player.prepareAsync();
         stateBuilder.setState(PlaybackStateCompat.STATE_BUFFERING, 0, 0);
@@ -531,7 +543,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     Media media = provider.selectTrack();
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Handler handler = new Handler(Looper.getMainLooper());
-                    Bitmap thumbnail = null;
 
                     session.setActive(true);
 
@@ -573,7 +584,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             try {
-                                thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
                             } catch (IOException e) {
                                 Bundle args = new Bundle();
                                 args.putInt("code", 2);
@@ -592,7 +604,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
-                            .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail)
                             .putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, provider.getTotalRead()+1)
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal())
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);

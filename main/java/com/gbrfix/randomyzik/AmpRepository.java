@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 
 import org.xmlpull.v1.XmlPullParserException;
@@ -117,10 +119,10 @@ abstract class AmpRepository {
         return server+"/server/xml.server.php?action=stream&auth="+auth+"&id="+oid+"&type=song&offset="+offset;
     }
 
-    public static InputStream get_art(String server, String auth, int oid) throws IOException {
+    public static Bitmap get_art(String server, String auth, int oid) throws IOException {
         URL url = new URL(server+"/server/xml.server.php?action=get_art&auth="+auth+"&id="+oid+"&type=song");
         URLConnection conn = url.openConnection();
-        return conn.getInputStream();
+        return BitmapFactory.decodeStream(conn.getInputStream());
     }
 
     public static String get_art_url(String server, String auth, int oid) {

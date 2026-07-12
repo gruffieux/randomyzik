@@ -2,6 +2,7 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import androidx.preference.PreferenceManager;
@@ -9,7 +10,6 @@ import androidx.preference.PreferenceManager;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -134,7 +134,7 @@ public class AmpSession extends AmpRepository {
         return streaming_url(prefs.getString("amp_server", ""), auth, oid, offset);
     }
 
-    public InputStream get_art(int oid) throws IOException {
+    public Bitmap get_art(int oid) throws IOException {
         return get_art(prefs.getString("amp_server", ""), auth, oid);
     }
 
