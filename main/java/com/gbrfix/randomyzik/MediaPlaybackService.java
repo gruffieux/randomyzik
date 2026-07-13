@@ -51,6 +51,12 @@ import android.util.Log;
 import android.util.Size;
 import android.view.KeyEvent;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -317,21 +323,27 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private void prepareMediaStreaming(int mediaId) throws IOException {
-        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+        AmpSession ampSession = AmpSession.getInstance(this);
         String url = ampSession.streaming_url(mediaId, 0);
         String thumbnailUri = ampSession.get_art_url(mediaId);
         session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
 
         // Get remote art cover
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            try {
-                Bitmap thumbnail = ampSession.get_art(mediaId);
-                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
-            } catch (IOException e) {
-                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
-            }
-        });
+        Glide.with(this)
+                .asBitmap()
+                .load(thumbnailUri)
+                .listener(new RequestListener<Bitmap>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
+                        session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
+                        return false;
+                    }
+                    @Override
+                    public boolean onResourceReady(@NonNull Bitmap resource, @NonNull Object model, Target<Bitmap> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                        session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, resource).build());
+                        return false;
+                    }
+                }).submit();
 
         player.setDataSource(url);
         player.prepareAsync();
@@ -788,14 +800,21 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.setMetadata(metaDataBuilder.build());
 
                     // Get remote art cover
-                    executor.execute(() -> {
-                        try {
-                            Bitmap thumbnail = ampSession.get_art(media.getMediaId());
-                            session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
-                        } catch (IOException e) {
-                            session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
-                        }
-                    });
+                    Glide.with(getApplicationContext())
+                            .asBitmap()
+                            .load(ampSession.get_art_url(media.getMediaId()))
+                            .listener(new RequestListener<Bitmap>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
+                                    session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
+                                    return false;
+                                }
+                                @Override
+                                public boolean onResourceReady(@NonNull Bitmap resource, @NonNull Object model, Target<Bitmap> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+                                    session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, resource).build());
+                                    return false;
+                                }
+                            }).submit();
 
                     // Start localplay
                     executor.execute(() -> {
