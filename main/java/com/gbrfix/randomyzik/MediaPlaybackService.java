@@ -329,7 +329,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 Bitmap thumbnail = ampSession.get_art(mediaId);
                 session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
             }
         });
 
@@ -587,10 +587,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                 Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
                                 session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
                             } catch (IOException e) {
-                                Bundle args = new Bundle();
-                                args.putInt("code", 2);
-                                args.putString("message", e.getMessage());
-                                session.sendSessionEvent("onError", args);
+                                session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
                             }
                         }
                         player.setDataSource(MediaPlaybackService.this, uri);
@@ -789,6 +786,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putLong(MediaMetadata.METADATA_KEY_NUM_TRACKS, provider.getTotal()) // A tester
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
+
+                    // Get remote art cover
+                    executor.execute(() -> {
+                        try {
+                            Bitmap thumbnail = ampSession.get_art(media.getMediaId());
+                            session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
+                        } catch (IOException e) {
+                            session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
+                        }
+                    });
 
                     // Start localplay
                     executor.execute(() -> {

@@ -6,7 +6,6 @@ import android.os.Bundle;
 
 import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -119,14 +118,14 @@ abstract class AmpRepository {
         return server+"/server/xml.server.php?action=stream&auth="+auth+"&id="+oid+"&type=song&offset="+offset;
     }
 
-    public static Bitmap get_art(String server, String auth, int oid) throws IOException {
-        URL url = new URL(server+"/server/xml.server.php?action=get_art&auth="+auth+"&id="+oid+"&type=song");
-        URLConnection conn = url.openConnection();
-        return BitmapFactory.decodeStream(conn.getInputStream());
-    }
-
     public static String get_art_url(String server, String auth, int oid) {
         return server+"/server/xml.server.php?action=get_art&auth="+auth+"&id="+oid+"&type=song";
+    }
+
+    public static Bitmap get_art(String server, String auth, int oid) throws IOException {
+        URL url = new URL(get_art_url(server, auth, oid));
+        URLConnection conn = url.openConnection();
+        return BitmapFactory.decodeStream(conn.getInputStream());
     }
 
     public static String dbName(String server, String catalog) throws MalformedURLException {
