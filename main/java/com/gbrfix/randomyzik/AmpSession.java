@@ -2,7 +2,6 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import androidx.preference.PreferenceManager;
@@ -132,10 +131,6 @@ public class AmpSession extends AmpRepository {
 
     public String streaming_url(int oid, int offset) {
         return streaming_url(prefs.getString("amp_server", ""), auth, oid, offset);
-    }
-
-    public Bitmap get_art(int oid) throws IOException {
-        return get_art(prefs.getString("amp_server", ""), auth, oid);
     }
 
     public String get_art_url(int oid) {
