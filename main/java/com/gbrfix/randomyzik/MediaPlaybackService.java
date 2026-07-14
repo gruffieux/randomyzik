@@ -211,7 +211,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
-            init();
+            //init(); // BUG: Ne stop pas localplay
             session.getController().getTransportControls().stop();
         }
 
@@ -326,7 +326,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         AmpSession ampSession = AmpSession.getInstance(this);
         String url = ampSession.streaming_url(mediaId, 0);
         String thumbnailUri = ampSession.get_art_url(mediaId);
-        session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
+        //session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
 
         // Get remote art cover
         Glide.with(this)
