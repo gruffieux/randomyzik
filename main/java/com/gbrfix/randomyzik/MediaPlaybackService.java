@@ -211,7 +211,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
-            //init(); // BUG: Ne stop pas localplay
             session.getController().getTransportControls().stop();
         }
 
