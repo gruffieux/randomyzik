@@ -321,16 +321,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
     }
 
-    private void prepareMediaStreaming(int mediaId) throws IOException {
-        AmpSession ampSession = AmpSession.getInstance(this);
-        String url = ampSession.streaming_url(mediaId, 0);
-        String thumbnailUri = ampSession.get_art_url(mediaId);
-        //session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
-
-        // Get remote art cover
+    private void loadMediaThumbnail(String uri) {
         Glide.with(this)
                 .asBitmap()
-                .load(thumbnailUri)
+                .load(uri)
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
@@ -343,6 +337,15 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         return false;
                     }
                 }).submit();
+    }
+
+    private void prepareMediaStreaming(int mediaId) throws IOException {
+        AmpSession ampSession = AmpSession.getInstance(this);
+        String url = ampSession.streaming_url(mediaId, 0);
+        String thumbnailUri = ampSession.get_art_url(mediaId);
+        //session.setMetadata(metaDataBuilder.putString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI, thumbnailUri).build());
+
+        loadMediaThumbnail(thumbnailUri);
 
         player.setDataSource(url);
         player.prepareAsync();
@@ -798,23 +801,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             .putLong(MediaMetadata.METADATA_KEY_DURATION, duration);
                     session.setMetadata(metaDataBuilder.build());
 
-                    // Get remote art cover
-                    Glide.with(getApplicationContext())
-                            .asBitmap()
-                            .load(ampSession.get_art_url(media.getMediaId()))
-                            .listener(new RequestListener<Bitmap>() {
-                                @Override
-                                public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
-                                    session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
-                                    return false;
-                                }
-                                @Override
-                                public boolean onResourceReady(@NonNull Bitmap resource, @NonNull Object model, Target<Bitmap> target, @NonNull DataSource dataSource, boolean isFirstResource) {
-                                    session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, resource).build());
-                                    return false;
-                                }
-                            }).submit();
-
                     // Start localplay
                     executor.execute(() -> {
                         try {
@@ -824,6 +810,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             if (!session.isActive()) {
                                 ampSession.checkAction("stop", null);
                             }
+                            loadMediaThumbnail(ampSession.get_art_url(media.getMediaId()));
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
                             progress.start(duration, MediaPlaybackService.this);
