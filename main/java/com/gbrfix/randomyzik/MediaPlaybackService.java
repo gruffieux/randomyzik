@@ -71,6 +71,7 @@ import java.util.concurrent.Executors;
 public class MediaPlaybackService extends MediaBrowserServiceCompat implements MediaPlayer.OnCompletionListener, MediaPlayer.OnPreparedListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnErrorListener, AudioManager.OnAudioFocusChangeListener {
     public final static int NOTIFICATION_ID = 1;
     public static int TEST_DURATION = 100;
+    public static int THUMBNAIL_SIZE = 300;
     final static String NOTIFICATION_CHANNEL = "MediaPlayback channel";
     private MediaSessionCompat session;
     private PlaybackStateCompat.Builder stateBuilder;
@@ -325,6 +326,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         Glide.with(this)
                 .asBitmap()
                 .load(uri)
+                .override(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
                 .listener(new RequestListener<Bitmap>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
@@ -598,7 +600,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                         Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, media.getMediaId());
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             try {
-                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(300, 300), null);
+                                Bitmap thumbnail = getContentResolver().loadThumbnail(uri, new Size(THUMBNAIL_SIZE, THUMBNAIL_SIZE), null);
                                 session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, thumbnail).build());
                             } catch (IOException e) {
                                 session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
