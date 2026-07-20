@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -207,7 +208,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Arrêt forcé, on sauve la piste en cours
-        if (intent.getAction() == "stop") {
+        if (Objects.equals(intent.getAction(), "stop")) {
             int id = provider.getCurrentId();
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
@@ -216,7 +217,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Arrêt intentionnel, on annule la sauvegarde
-        if (intent.getAction() == "close") {
+        if (Objects.equals(intent.getAction(), "close")) {
             saveTrack(0, 0);
             session.getController().getTransportControls().stop();
         }
@@ -413,7 +414,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         MediaMetadataCompat metadata = session.getController().getMetadata();
 
-        media.setId(Integer.valueOf(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)));
+        media.setId(Integer.parseInt(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)));
         media.setTitle(metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
         media.setAlbum(metadata.getString(MediaMetadata.METADATA_KEY_ALBUM));
         media.setArtist(metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
@@ -497,8 +498,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     private class MediaSessionCallback extends MediaSessionCompat.Callback {
-        private BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
-        private IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
+        private final BecomingNoisyReceiver myNoisyAudioReceiver = new BecomingNoisyReceiver();
+        private final IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         private boolean myNoisyAudioRegistred = false;
         @Override
         public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
@@ -589,7 +590,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                         Bundle args = new Bundle();
                                         args.putString("message", e.getMessage());
                                         session.sendSessionEvent("onError", args);
-                                        return;
                                     }
                                 });
                             });

@@ -21,6 +21,7 @@ import android.os.Build;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.AppCompatToggleButton;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -103,10 +104,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 progressBar.setProgress(0);
                 progressBar.setMax(0);
             }
-        }
-
-        @Override
-        public void onMetadataChanged(MediaMetadataCompat metadata) {
         }
 
         @Override
@@ -208,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             ImageButton playBtn = findViewById(R.id.play);
             ImageButton rewBtn = findViewById(R.id.rew);
             ImageButton fwdBtn = findViewById(R.id.fwd);
-            Switch modeBtn = findViewById(R.id.mode);
+            AppCompatToggleButton modeBtn = findViewById(R.id.mode);
             TextView positionLabel = findViewById(R.id.position);
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
@@ -233,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
-                currentId = Integer.valueOf(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+                currentId = Integer.parseInt(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 duration = (int) metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
                 Bundle extras = MediaControllerCompat.getMediaController(MainActivity.this).getExtras();
                 position = extras != null ? extras.getInt("position") : 0;
@@ -283,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         void changeMode(boolean b) {
-            int mode = b == true ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+            int mode = b ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
             // Save mode as preferences
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
@@ -490,7 +487,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         fwdBtn.setColorFilter(Color.GRAY);
 
         // Read preferences
-        Switch modeBtn = findViewById(R.id.mode);
+        AppCompatToggleButton modeBtn = findViewById(R.id.mode);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
@@ -551,7 +548,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                     }
                                 }
                                 String catalog = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
-                                if (catalogId != 0 && catalogId != Integer.valueOf(catalog)) {
+                                if (catalogId != 0 && catalogId != Integer.parseInt(catalog)) {
                                     return;
                                 }
                                 playBtn.setEnabled(true);

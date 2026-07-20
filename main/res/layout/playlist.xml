@@ -10,7 +10,7 @@
         style="@style/playlist"
         android:id="@+id/playlist"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_weight="1"
         android:fastScrollEnabled="true" />
 
@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
-            android:layout_gravity="right">
+            android:layout_gravity="end">
 
             <ImageButton
                 android:id="@+id/rew"
@@ -51,20 +51,27 @@
                 android:layout_weight="1"
                 app:srcCompat="@drawable/ic_action_skip" />
 
-            <Switch
-                style="@style/track"
+            <TextView
+                android:id="@+id/mode_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/mode"
+                app:layout_constraintHorizontal_chainStyle="packed"
+                app:layout_constraintBaseline_toBaselineOf="@id/mode"
+                android:text="@string/switch_mode"
+                android:textColor="@color/colorAccent" />
+
+            <androidx.appcompat.widget.AppCompatToggleButton
                 android:id="@+id/mode"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="2"
-                android:layout_gravity="end"
-                android:textAlignment="center"
-                android:showText="true"
-                android:splitTrack="true"
-                android:text="@string/switch_mode"
+                android:layout_height="wrap_content"
                 android:textOff="@string/switch_mode_track"
                 android:textOn="@string/switch_mode_album"
-                android:thumb="@android:drawable/btn_default_small" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/mode_label"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"/>
 
         </LinearLayout>
 
@@ -106,7 +113,7 @@
             style="@style/info"
             android:id="@+id/infoMsg"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_weight="1"
             android:text=""
             android:maxLines="1"/>
