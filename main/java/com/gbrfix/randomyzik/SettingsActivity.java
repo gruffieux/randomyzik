@@ -10,12 +10,12 @@ import android.view.View;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.fragment.app.FragmentActivity;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
@@ -23,6 +23,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -84,9 +85,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private void stopPlay() {
-            Intent intent = new Intent(getActivity(), MediaPlaybackService.class);
+            FragmentActivity activity = getActivity();
+            Intent intent = new Intent(activity, MediaPlaybackService.class);
             intent.setAction("stop");
-            getActivity().startService(intent);
+            Objects.requireNonNull(activity).startService(intent);
         }
 
         @Override
@@ -102,9 +104,14 @@ public class SettingsActivity extends AppCompatActivity {
             final EditTextPreference pwdPref = findPreference("amp_pwd");
             final ListPreference catalogsPref = findPreference("amp_catalog");
             final SwitchPreferenceCompat modeSwitcher = findPreference("amp_streaming");
+
+            assert apiKeyPref != null && apiKeySwicher != null;
             apiKeyPref.setVisible(apiKeySwicher.isChecked());
+            assert userPref != null;
             userPref.setVisible(!apiKeySwicher.isChecked());
+            assert pwdPref != null;
             pwdPref.setVisible(!apiKeySwicher.isChecked());
+            assert prefs != null && catalogsPref != null;
 
             apiKeySwicher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
@@ -119,6 +126,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            assert serverPref != null;
             serverPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
@@ -130,7 +138,6 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             pwdPref.setSummaryProvider(new Preference.SummaryProvider() {
-                @Nullable
                 @Override
                 public CharSequence provideSummary(@NonNull Preference preference) {
                     String pwd = prefs.getString("amp_pwd", "");
@@ -176,6 +183,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            assert ampSwitcher != null;
             ampSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
@@ -195,6 +203,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
+            assert modeSwitcher != null;
             modeSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {

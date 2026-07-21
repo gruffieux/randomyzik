@@ -42,7 +42,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -52,7 +51,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.CompoundButton;
 import android.util.Log;
@@ -60,6 +58,7 @@ import android.util.Log;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
@@ -184,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                 mediaController.registerCallback(controllerCallback);
             } catch (IllegalStateException e) {
-                Log.v("IllegalStateException", e.getMessage());
+                Log.v("IllegalStateException", Objects.requireNonNull(e.getMessage()));
             }
 
             // Finish building the UI
@@ -299,27 +298,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         int[] attrs = {id};
         TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs);
         int color = ta.getColor(0, Color.BLACK);
+        ta.recycle();
         return color;
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return super.onKeyDown(keyCode, event);
-        }
-
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_MEDIA_PLAY:
-            case KeyEvent.KEYCODE_MEDIA_PAUSE:
-            case KeyEvent.KEYCODE_MEDIA_NEXT:
-            case KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD:
-            case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
-            case KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD:
-                MediaControllerCompat.getMediaController(MainActivity.this).dispatchMediaButtonEvent(event);
-                return true;
-        }
-
-        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -562,7 +542,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                     adapter.changeCursor(cursor);
                                     dao.close();
                                 } catch (SQLException e) {
-                                    Log.v("SQLException", e.getMessage());
+                                    Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
                                 }
                             }
                         });
