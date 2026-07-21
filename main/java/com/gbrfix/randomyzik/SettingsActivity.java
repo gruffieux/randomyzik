@@ -107,12 +107,14 @@ public class SettingsActivity extends AppCompatActivity {
 
             assert apiKeyPref != null && apiKeySwicher != null;
             apiKeyPref.setVisible(apiKeySwicher.isChecked());
+
             assert userPref != null;
             userPref.setVisible(!apiKeySwicher.isChecked());
+
             assert pwdPref != null;
             pwdPref.setVisible(!apiKeySwicher.isChecked());
-            assert prefs != null && catalogsPref != null;
 
+            assert prefs != null && catalogsPref != null;
             apiKeySwicher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
