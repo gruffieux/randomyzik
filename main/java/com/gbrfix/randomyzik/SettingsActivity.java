@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -40,6 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        EdgeToEdge.enable(this);
         final View mainView = findViewById(R.id.mainView);
         ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());

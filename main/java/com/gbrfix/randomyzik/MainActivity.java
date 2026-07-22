@@ -46,6 +46,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -307,8 +308,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        EdgeToEdge.enable(this);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -574,13 +573,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
         });
 
+        EdgeToEdge.enable(this);
         final View mainView = findViewById(R.id.mainView);
         ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, windowInsets) -> {
-            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                    | WindowInsetsCompat.Type.displayCutout() | WindowInsetsCompat.Type.systemGestures());
             // Apply the insets as padding to the view. Here, set all the dimensions
             // as appropriate to your layout. You can also update the view's margin if
             // more appropriate.
-            mainView.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
 
             // Return CONSUMED if you don't want the window insets to keep passing down
             // to descendant views.
