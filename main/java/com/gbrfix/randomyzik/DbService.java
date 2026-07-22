@@ -97,7 +97,7 @@ public class DbService implements Observer<WorkInfo> {
                                     .setInputData(
                                             new Data.Builder()
                                                     .putString("dbName", dbName)
-                                                    .putInt("catalogId", Integer.valueOf(value))
+                                                    .putInt("catalogId", Integer.parseInt(value))
                                                     .putString("catalogName", key)
                                                     .build()
                                     )
@@ -113,7 +113,6 @@ public class DbService implements Observer<WorkInfo> {
                         workContinuation.enqueue();
                     } catch (Exception e) {
                         dbSignalListener.onError(e.getMessage());
-                        return;
                     }
                 });
             });

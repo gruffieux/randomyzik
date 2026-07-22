@@ -1,7 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -20,26 +19,15 @@ public class RescanDialogFragment extends DialogFragment {
 
         builder.setTitle(getText(R.string.rescan_title))
                 .setMessage(getText(R.string.rescan_msg))
-                .setNegativeButton(getText(R.string.rescan_current), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-                        String catalog = prefs.getString("amp_catalog", "0");
-                        activity.dbService.scan(false, catalog);
-                    }
+                .setNegativeButton(getText(R.string.rescan_current), (dialog, which) -> {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                    String catalog = prefs.getString("amp_catalog", "0");
+                    activity.dbService.scan(false, catalog);
                 })
-                .setNeutralButton(R.string.dialog_cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                .setNeutralButton(R.string.dialog_cancel, (dialog, which) -> {
 
-                    }
                 })
-                .setPositiveButton(getText(R.string.rescan_all), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        activity.dbService.scan(false,"0");
-                    }
-                });
+                .setPositiveButton(getText(R.string.rescan_all), (dialog, which) -> activity.dbService.scan(false,"0"));
 
         return builder.create();
     }

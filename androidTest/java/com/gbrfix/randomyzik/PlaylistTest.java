@@ -48,12 +48,7 @@ public class PlaylistTest {
         dao.close();
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.playAllTracks(total, MediaProvider.MODE_TRACK);
-            }
-        });
+        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
         int res = scenario.getResult().getResultCode();
     }
 
@@ -67,24 +62,14 @@ public class PlaylistTest {
         dao.close();
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.playAllTracks(total, MediaProvider.MODE_ALBUM);
-            }
-        });
+        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_ALBUM));
         int res = scenario.getResult().getResultCode();
     }
 
     @Test
     public void playEndedList() throws Exception {
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.playEndedList();
-            }
-        });
+        scenario.onActivity(activity -> activity.playEndedList());
         int res = scenario.getResult().getResultCode();
     }
 

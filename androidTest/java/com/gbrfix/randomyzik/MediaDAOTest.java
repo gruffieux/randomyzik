@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Created by gab on 21.09.2017.
@@ -39,44 +40,44 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumEmpty() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum("", "unread");
+            dao.getFromAlbum("", "unread");
             assertTrue(true);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 
     @Test
     public void selectAlbumNull() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, "");
+            dao.getFromAlbum(null, "");
             assertTrue(true);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 
     @Test
     public void selectAlbumAllEmpty() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum("", "");
+            dao.getFromAlbum("", "");
             assertTrue(true);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 
     @Test
     public void selectAlbumAllNull() {
         try {
-            SQLiteCursor cursor = dao.getFromAlbum(null, "unread");
+            dao.getFromAlbum(null, "unread");
             assertTrue(true);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 
@@ -93,7 +94,7 @@ public class MediaDAOTest {
             assertEquals(mediaTotalExcepted, count);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 
@@ -110,7 +111,7 @@ public class MediaDAOTest {
             assertEquals(mediaTotalExcepted, count);
         }
         catch (Exception e) {
-            assertTrue(false);
+            fail();
         }
     }
 

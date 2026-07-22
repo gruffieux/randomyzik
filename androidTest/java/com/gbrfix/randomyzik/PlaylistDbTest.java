@@ -54,12 +54,7 @@ public class PlaylistDbTest {
         editor.commit();
         deleteDatabases("test-amp-");
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.createAmpacheCatalogs();
-            }
-        });
+        scenario.onActivity(activity -> activity.createAmpacheCatalogs());
         int res = scenario.getResult().getResultCode();
     }
 
@@ -69,12 +64,7 @@ public class PlaylistDbTest {
         editor.commit();
         deleteDatabases("test-"+DAOBase.DEFAULT_NAME);
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.createList();
-            }
-        });
+        scenario.onActivity(activity -> activity.createList());
         int res = scenario.getResult().getResultCode();
     }
 }

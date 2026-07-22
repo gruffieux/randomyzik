@@ -11,6 +11,8 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import java.util.Objects;
+
 /**
  * Created by gab on 16.07.2017.
  */
@@ -46,7 +48,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE `medias` ADD `track_nb` TEXT;");
             }
             catch (SQLiteException e) {
-                Log.v("SQLiteException", e.getMessage());
+                Log.v("SQLiteException", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 3 && newVersion >= 4) {
@@ -59,7 +61,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 fixMediaTags(db, true, true, true, true);
             }
             catch (Exception e) {
-                Log.v("Exception", e.getMessage());
+                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 4 && newVersion >= 5) {
@@ -68,7 +70,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 fixMediaTags(db, false, true, false, false);
             }
             catch (Exception e) {
-                Log.v("Exception", e.getMessage());
+                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 5 && newVersion >= 6) {
@@ -77,7 +79,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 fixMediaTags(db, false, false, false, true);
             }
             catch (Exception e) {
-                Log.v("Exception", e.getMessage());
+                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 6 && newVersion >= 7) {
@@ -86,7 +88,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 fixMediaTags(db, true, true, true, true);
             }
             catch (Exception e) {
-                Log.v("Exception", e.getMessage());
+                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 7 && newVersion >= 8) {
@@ -98,7 +100,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 fixMediaTags(db, false, false, true, false);
             }
             catch (Exception e) {
-                Log.v("Exception", e.getMessage());
+                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 8 && newVersion >= 9) {
@@ -106,7 +108,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 db.execSQL("ALTER TABLE `medias` ADD `duration` INTEGER;");
             }
             catch (SQLiteException e) {
-                Log.v("SQLiteException", e.getMessage());
+                Log.v("SQLiteException", Objects.requireNonNull(e.getMessage()));
             }
         }
         if (oldVersion <= 9 && newVersion >= 10) {

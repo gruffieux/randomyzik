@@ -7,9 +7,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
-import android.widget.EditText;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -18,7 +16,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
@@ -115,103 +112,71 @@ public class SettingsActivity extends AppCompatActivity {
             pwdPref.setVisible(!apiKeySwicher.isChecked());
 
             assert prefs != null && catalogsPref != null;
-            apiKeySwicher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    boolean value = (boolean) newValue;
-                    apiKeyPref.setVisible(value);
-                    userPref.setVisible(!value);
-                    pwdPref.setVisible(!value);
-                    loadCatalogs(prefs, catalogsPref);
-                    stopPlay();
-                    return true;
-                }
+            apiKeySwicher.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean value = (boolean) newValue;
+                apiKeyPref.setVisible(value);
+                userPref.setVisible(!value);
+                pwdPref.setVisible(!value);
+                loadCatalogs(prefs, catalogsPref);
+                stopPlay();
+                return true;
             });
 
             assert serverPref != null;
-            serverPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    catalogsPref.setValue("0");
-                    loadCatalogs(prefs, catalogsPref);
-                    stopPlay();
-                    return true;
-                }
+            serverPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                catalogsPref.setValue("0");
+                loadCatalogs(prefs, catalogsPref);
+                stopPlay();
+                return true;
             });
 
-            pwdPref.setSummaryProvider(new Preference.SummaryProvider() {
-                @Override
-                public CharSequence provideSummary(@NonNull Preference preference) {
-                    String pwd = prefs.getString("amp_pwd", "");
-                    StringBuilder sb = new StringBuilder();
-                    for (int s = 0; s < pwd.length(); s++) {
-                        sb.append("*");
-                    }
-                    return sb.toString();
+            pwdPref.setSummaryProvider(preference -> {
+                String pwd = prefs.getString("amp_pwd", "");
+                StringBuilder sb = new StringBuilder();
+                for (int s = 0; s < pwd.length(); s++) {
+                    sb.append("*");
                 }
+                return sb.toString();
             });
 
-            userPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    loadCatalogs(prefs, catalogsPref);
-                    stopPlay();
-                    return true;
-                }
+            userPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                loadCatalogs(prefs, catalogsPref);
+                stopPlay();
+                return true;
             });
 
-            apiKeyPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    loadCatalogs(prefs, catalogsPref);
-                    stopPlay();
-                    return true;
-                }
+            apiKeyPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                loadCatalogs(prefs, catalogsPref);
+                stopPlay();
+                return true;
             });
 
-            pwdPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    loadCatalogs(prefs, catalogsPref);
-                    stopPlay();
-                    return true;
-                }
+            pwdPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                loadCatalogs(prefs, catalogsPref);
+                stopPlay();
+                return true;
             });
 
-            pwdPref.setOnBindEditTextListener(new EditTextPreference.OnBindEditTextListener() {
-                @Override
-                public void onBindEditText(@NonNull EditText editText) {
-                    editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                }
-            });
+            pwdPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
 
             assert ampSwitcher != null;
-            ampSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    if ((boolean)newValue) {
-                        loadCatalogs(prefs, catalogsPref);
-                    }
-                    stopPlay();
-                    return true;
+            ampSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
+                if ((boolean)newValue) {
+                    loadCatalogs(prefs, catalogsPref);
                 }
+                stopPlay();
+                return true;
             });
 
-            catalogsPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    stopPlay();
-                    return true;
-                }
+            catalogsPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
+                return true;
             });
 
             assert modeSwitcher != null;
-            modeSwitcher.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                    stopPlay();
-                    return true;
-                }
+            modeSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
+                return true;
             });
 
             // Chargement de la liste des catalogues par le serveur

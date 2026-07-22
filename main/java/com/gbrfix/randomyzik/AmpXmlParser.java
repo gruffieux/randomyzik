@@ -148,7 +148,7 @@ public class AmpXmlParser {
     // to their respective "read" methods for processing. Otherwise, skips the tag.
     private Media readSong(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "song");
-        int id = Integer.valueOf(parser.getAttributeValue(0));
+        int id = Integer.parseInt(parser.getAttributeValue(0));
         int duration = 0;
         String title = null;
         String album = null;
@@ -160,19 +160,26 @@ public class AmpXmlParser {
                 continue;
             }
             String name = parser.getName();
-            if (name.equals("title")) {
-                title = readTag(parser, "title");
-            }  else if (name.equals("artist")) {
-                artist = readEntry(parser, "artist");
-            } else if (name.equals("album")) {
-                albumKey = parser.getAttributeValue(0);
-                album = readEntry(parser, "album");
-            } else if (name.equals("track")) {
-                trackNb = readTag(parser, "track");
-            } else if (name.equals("time")) {
-                duration = Integer.valueOf(readTag(parser, "time"));
-            } else {
-                skip(parser);
+            switch (name) {
+                case "title":
+                    title = readTag(parser, "title");
+                    break;
+                case "artist":
+                    artist = readEntry(parser, "artist");
+                    break;
+                case "album":
+                    albumKey = parser.getAttributeValue(0);
+                    album = readEntry(parser, "album");
+                    break;
+                case "track":
+                    trackNb = readTag(parser, "track");
+                    break;
+                case "time":
+                    duration = Integer.parseInt(readTag(parser, "time"));
+                    break;
+                default:
+                    skip(parser);
+                    break;
             }
         }
         Media media = new Media();

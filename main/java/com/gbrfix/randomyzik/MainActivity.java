@@ -46,13 +46,11 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.CompoundButton;
 import android.util.Log;
 
 import java.net.MalformedURLException;
@@ -243,39 +241,23 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
 
             // Handle play button
-            playBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
-                    if (state == PlaybackStateCompat.STATE_PLAYING) {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
-                    } else {
-                        MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
-                    }
+            playBtn.setOnClickListener(v -> {
+                int state1 = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
+                if (state1 == PlaybackStateCompat.STATE_PLAYING) {
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().pause();
+                } else {
+                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().play();
                 }
             });
 
             // Handle rewind button
-            rewBtn.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToPrevious();
-                }
-            });
+            rewBtn.setOnClickListener(v -> MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToPrevious());
 
             // Handle forward button
-            fwdBtn.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext();
-                }
-            });
+            fwdBtn.setOnClickListener(v -> MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext());
 
             // Handle mode switcher
-            modeBtn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    changeMode(b);
-                }
-            });
+            modeBtn.setOnCheckedChangeListener((compoundButton, b) -> changeMode(b));
         }
 
         void changeMode(boolean b) {
@@ -306,20 +288,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        switch (requestCode) {
-            case MY_PERSMISSIONS_REQUEST_STORAGE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission was granted, app can run
-                    setContentView(R.layout.playlist);
-                    init(1);
-                    if (mediaBrowser != null && !mediaBrowser.isConnected()) {
-                        mediaBrowser.connect();
-                    }
-                } else {
-                    // Permission denied, display info
-                    setContentView(R.layout.playlist);
-                    init(0);
+        if (requestCode == MY_PERSMISSIONS_REQUEST_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission was granted, app can run
+                setContentView(R.layout.playlist);
+                init(1);
+                if (mediaBrowser != null && !mediaBrowser.isConnected()) {
+                    mediaBrowser.connect();
                 }
+            } else {
+                // Permission denied, display info
+                setContentView(R.layout.playlist);
+                init(0);
+            }
         }
     }
 
@@ -503,61 +484,52 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbService.setDbSignalListener(new DbSignal() {
                     @Override
                     public void onScanStart() {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                TextView infoMsg = findViewById(R.id.infoMsg);
-                                ColorStateList colors = infoMsg.getTextColors();
-                                int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                                if (infoMsg.getText().equals("") || colors.getDefaultColor() != fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
-                                    infoMsg(getString(R.string.info_scanning), color);
-                                }
+                        runOnUiThread(() -> {
+                            TextView infoMsg = findViewById(R.id.infoMsg);
+                            ColorStateList colors = infoMsg.getTextColors();
+                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+                            if (infoMsg.getText().equals("") || colors.getDefaultColor() != fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
+                                infoMsg(getString(R.string.info_scanning), color);
                             }
                         });
                     }
 
                     @Override
                     public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (all) {
-                                    TextView infoMsg = findViewById(R.id.infoMsg);
-                                    if (infoMsg.getText().equals(getString(R.string.info_scanning))) {
-                                        infoMsg.setText("");
-                                    }
+                        runOnUiThread(() -> {
+                            if (all) {
+                                TextView infoMsg = findViewById(R.id.infoMsg);
+                                if (infoMsg.getText().equals(getString(R.string.info_scanning))) {
+                                    infoMsg.setText("");
                                 }
-                                String catalog = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
-                                if (catalogId != 0 && catalogId != Integer.parseInt(catalog)) {
-                                    return;
-                                }
-                                playBtn.setEnabled(true);
-                                if (!update) {
-                                    return;
-                                }
-                                try {
-                                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-                                    dao.open();
-                                    SQLiteCursor cursor = dao.getAllOrdered();
-                                    adapter.changeCursor(cursor);
-                                    dao.close();
-                                } catch (SQLException e) {
-                                    Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
-                                }
+                            }
+                            String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
+                            if (catalogId != 0 && catalogId != Integer.parseInt(catalog1)) {
+                                return;
+                            }
+                            playBtn.setEnabled(true);
+                            if (!update) {
+                                return;
+                            }
+                            try {
+                                MediaDAO dao1 = new MediaDAO(MainActivity.this, dbName);
+                                dao1.open();
+                                SQLiteCursor cursor1 = dao1.getAllOrdered();
+                                adapter.changeCursor(cursor1);
+                                dao1.close();
+                            } catch (SQLException e) {
+                                Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
                             }
                         });
                     }
 
                     @Override
                     public void onError(String msg) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                infoMsg(msg, Color.RED);
-                                playBtn.setEnabled(false);
-                                rewBtn.setEnabled(false);
-                                fwdBtn.setEnabled(false);
-                            }
+                        runOnUiThread(() -> {
+                            infoMsg(msg, Color.RED);
+                            playBtn.setEnabled(false);
+                            rewBtn.setEnabled(false);
+                            fwdBtn.setEnabled(false);
                         });
                     }
                 });
@@ -576,37 +548,28 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // Dialogue d'édition du flag pour une piste
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
-                dialog.setId((int) id);
-                dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
-            }
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+            dialog.setId((int) id);
+            dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
         });
 
         // Dialogue d'édition du flag de toutes les pistes
-        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                AllTracksDialogFragment dialog = new AllTracksDialogFragment();
-                dialog.setId((int) id);
-                dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
-                return true;
-            }
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            AllTracksDialogFragment dialog = new AllTracksDialogFragment();
+            dialog.setId((int) id);
+            dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
+            return true;
         });
 
         // Sélection de la piste en cours
         TextView trackInfo = findViewById(R.id.infoMsg);
-        trackInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentId > 0) {
-                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    int pos = adapter.findView(currentId);
-                    if (pos != -1) {
-                        listView.setSelection(pos);
-                    }
+        trackInfo.setOnClickListener(v -> {
+            if (currentId > 0) {
+                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                int pos = adapter.findView(currentId);
+                if (pos != -1) {
+                    listView.setSelection(pos);
                 }
             }
         });

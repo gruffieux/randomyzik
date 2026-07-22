@@ -331,9 +331,7 @@ public class TestActivity extends AppCompatActivity {
                                         } catch (Exception e) {
                                             fail(e.getMessage());
                                         }
-                                        handler.post(() -> {
-                                            mediaController.getTransportControls().pause();
-                                        });
+                                        handler.post(() -> mediaController.getTransportControls().pause());
                                     });
                                 }
                                 break;
@@ -439,9 +437,7 @@ public class TestActivity extends AppCompatActivity {
                                         } catch (Exception e) {
                                             fail(e.getMessage());
                                         }
-                                        handler.post(() -> {
-                                            mediaController.getTransportControls().stop();
-                                        });
+                                        handler.post(() -> mediaController.getTransportControls().stop());
                                     });
                                 }
                                 break;

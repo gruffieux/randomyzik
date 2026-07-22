@@ -1,11 +1,9 @@
 package com.gbrfix.randomyzik;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
-import android.support.v4.media.session.MediaControllerCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
 
@@ -33,19 +31,16 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     }
 
     protected void updateUi() {
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAllOrdered();
-                    ListView listView = activity.findViewById(R.id.playlist);
-                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    adapter.changeCursor(cursor);
-                    dao.close();
-                } catch (SQLException e) {
-                    Log.v("SQLException", e.getMessage());
-                }
+        activity.runOnUiThread(() -> {
+            try {
+                dao.open();
+                SQLiteCursor cursor = dao.getAllOrdered();
+                ListView listView = activity.findViewById(R.id.playlist);
+                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+                adapter.changeCursor(cursor);
+                dao.close();
+            } catch (SQLException e) {
+                Log.v("SQLException", e.getMessage());
             }
         });
     }
@@ -64,26 +59,15 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(title)
-            .setNegativeButton(getText(R.string.dialog_yes), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    resetFlag();
-                }
+            .setNegativeButton(getText(R.string.dialog_yes), (dialog, which) -> resetFlag())
+            .setPositiveButton(R.string.dialog_yes_play, (dialog, which) -> {
+                resetFlag();
+                Bundle args = new Bundle();
+                args.putInt("id", id);
+                activity.currentId = id;
+                activity.mediaBrowser.sendCustomAction("singleTrack", args, null);
             })
-            .setPositiveButton(R.string.dialog_yes_play, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    resetFlag();
-                    Bundle args = new Bundle();
-                    args.putInt("id", id);
-                    activity.currentId = id;
-                    activity.mediaBrowser.sendCustomAction("singleTrack", args, null);
-                }
-            })
-            .setNeutralButton(getText(R.string.dialog_no), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
+            .setNeutralButton(getText(R.string.dialog_no), (dialog, which) -> {
             });
 
         return builder.create();

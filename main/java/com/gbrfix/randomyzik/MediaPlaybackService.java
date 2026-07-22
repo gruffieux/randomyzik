@@ -746,17 +746,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
 
             if (session.isActive()) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                        try {
-                            ampSession.unconnect();
-                        } catch (Exception e) {
-                            Bundle args = new Bundle();
-                            args.putString("message", e.getMessage());
-                            session.sendSessionEvent("onError", args);
-                        }
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                    try {
+                        ampSession.unconnect();
+                    } catch (Exception e) {
+                        Bundle args = new Bundle();
+                        args.putString("message", e.getMessage());
+                        session.sendSessionEvent("onError", args);
                     }
                 });
             }
@@ -916,22 +913,19 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
 
             if (session.isActive()) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                        try {
-                            if (!ampSession.hasValidAuth()) {
-                                ampSession.connect();
-                            }
-                            ampSession.checkAction(null, mediaFromMetadata());
-                            ampSession.localplay_stop();
-                            ampSession.unconnect();
-                        } catch (Exception e) {
-                            Bundle args = new Bundle();
-                            args.putString("message", e.getMessage());
-                            session.sendSessionEvent("onError", args);
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                    try {
+                        if (!ampSession.hasValidAuth()) {
+                            ampSession.connect();
                         }
+                        ampSession.checkAction(null, mediaFromMetadata());
+                        ampSession.localplay_stop();
+                        ampSession.unconnect();
+                    } catch (Exception e) {
+                        Bundle args = new Bundle();
+                        args.putString("message", e.getMessage());
+                        session.sendSessionEvent("onError", args);
                     }
                 });
             }

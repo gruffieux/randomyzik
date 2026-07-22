@@ -147,12 +147,7 @@ public class AmpPlaylistTest {
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCannotPlay();
-            }
-        });
+        scenario.onActivity(activity -> activity.localplayCannotPlay());
         int res = scenario.getResult().getResultCode();
     }
 
@@ -183,12 +178,7 @@ public class AmpPlaylistTest {
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCanPause(id);
-            }
-        });
+        scenario.onActivity(activity -> activity.localplayCanPause(id));
         int res = scenario.getResult().getResultCode();
     }
 
@@ -219,12 +209,7 @@ public class AmpPlaylistTest {
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCannotPause(id);
-            }
-        });
+        scenario.onActivity(activity -> activity.localplayCannotPause(id));
         int res = scenario.getResult().getResultCode();
     }
 
@@ -255,12 +240,7 @@ public class AmpPlaylistTest {
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCanStop(id);
-            }
-        });
+        scenario.onActivity(activity -> activity.localplayCanStop(id));
         int res = scenario.getResult().getResultCode();
     }
 
@@ -291,12 +271,7 @@ public class AmpPlaylistTest {
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCannotStop(id);
-            }
-        });
+        scenario.onActivity(activity -> activity.localplayCannotStop(id));
         int res = scenario.getResult().getResultCode();
     }
 

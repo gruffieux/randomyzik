@@ -85,7 +85,7 @@ public class MediaProvider {
         }
 
         if (mode == MODE_ALBUM) {
-            if (currentId == 0 || lastOfAlbum == true) {
+            if (currentId == 0 || lastOfAlbum) {
                 dao.replaceFlag("skip", "unread");
                 cursor = dao.getFromFlagAlbumGrouped("unread");
             }
