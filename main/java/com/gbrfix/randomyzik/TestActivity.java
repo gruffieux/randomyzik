@@ -30,8 +30,8 @@ import java.util.concurrent.Executors;
  */
 
 interface TestSignal {
-    public void browserConnected();
-};
+    void browserConnected();
+}
 
 public class TestActivity extends AppCompatActivity {
     int trackCount, trackTotal, albumCount;

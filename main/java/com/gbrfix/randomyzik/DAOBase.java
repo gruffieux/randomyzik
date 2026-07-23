@@ -10,7 +10,7 @@ public abstract class DAOBase {
     final static String DEFAULT_NAME = "playlist.db";
     protected final static int VERSION = 10;
     protected SQLiteDatabase db = null;
-    protected DatabaseHandler dbHandler = null;
+    protected DatabaseHandler dbHandler;
 
     public DAOBase(Context context, String name) {
         dbHandler = new DatabaseHandler(context, name, null, VERSION);

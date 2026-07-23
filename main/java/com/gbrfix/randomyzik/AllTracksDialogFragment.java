@@ -3,6 +3,8 @@ package com.gbrfix.randomyzik;
 import android.app.Dialog;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 /**
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AlertDialog;
  */
 
 public class AllTracksDialogFragment extends SingleTrackDialogFragment {
+    @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
@@ -31,7 +34,7 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
                 })
                 .setNegativeButton(R.string.dialog_album, (dialog, which) -> {
                     dao.open();
-                    SQLiteCursor cursor1 = dao.getFromId((int)id);
+                    SQLiteCursor cursor1 = dao.getFromId(id);
                     cursor1.moveToFirst();
                     String albumKey = cursor1.getString(cursor1.getColumnIndex("album_key"));
                     dao.updateFlagAlbum(albumKey, "unread");

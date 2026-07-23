@@ -24,7 +24,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             "`media_id` INTEGER, `duration` INTEGER);";
     public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
 
-    private Context context;
+    private final Context context;
 
     public DatabaseHandler(Context context, String name, CursorFactory factory, int version) {
         super(context, name, factory, version);

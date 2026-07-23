@@ -38,7 +38,7 @@ public class DbService implements Observer<WorkInfo> {
     private DbSignal dbSignalListener;
     private ContentResolver contentResolver;
     private ContentObserver mediaObserver;
-    private Context context;
+    private final Context context;
     private int catTotal, catCounter;
 
     public DbService(Context context) {

@@ -75,12 +75,7 @@ public class AmpPlaylistTest {
         }
 
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.playAllTracks(total, MediaProvider.MODE_TRACK);
-            }
-        });
+        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
         int res = scenario.getResult().getResultCode();
     }
 
