@@ -18,7 +18,7 @@ abstract class AmpRepository {
     public final static int MAX_ELEMENTS_PER_REQUEST = 5000;
 
     private static String byteToHex(byte byteData[]) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < byteData.length; i++) {
             sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
         }
@@ -29,8 +29,7 @@ abstract class AmpRepository {
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+apiKey);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Bundle user = parser.parseUser(conn.getInputStream());
-        return user;
+        return parser.parseUser(conn.getInputStream());
     }
 
     public static Bundle handshake(String server, String user, String pwd) throws NoSuchAlgorithmException, IOException, XmlPullParserException {
@@ -46,16 +45,14 @@ abstract class AmpRepository {
         URL url = new URL(server+"/server/xml.server.php?action=handshake&auth="+pass+"&timestamp="+time+"&user="+user);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Bundle data = parser.parseUser(conn.getInputStream());
-        return data;
+        return parser.parseUser(conn.getInputStream());
     }
 
     public static Bundle ping(String server, String auth) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=ping&auth="+auth);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Bundle user = parser.parseUser(conn.getInputStream());
-        return user;
+        return parser.parseUser(conn.getInputStream());
     }
 
     public static void goodbye(String server, String auth) throws IOException {
@@ -64,20 +61,18 @@ abstract class AmpRepository {
         conn.getContent();
     }
 
-    public static List advanced_search(String server, String auth, int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
+    public static List<Media> advanced_search(String server, String auth, int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=advanced_search&auth="+auth+"&operator=and&type=song&offset="+offset+"&limit="+limit+"&rule_1=catalog&rule_1_operator=0&rule_1_input="+catalogId);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        List list = parser.parseSongs(conn.getInputStream());
-        return list;
+        return parser.parseSongs(conn.getInputStream());
     }
 
-    public static Map catalogs(String server, String auth) throws IOException, XmlPullParserException {
+    public static Map<String, String> catalogs(String server, String auth) throws IOException, XmlPullParserException {
         URL url = new URL(server+"/server/xml.server.php?action=catalogs&auth="+auth);
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Map<String, Integer> map = parser.parseCatalogs(conn.getInputStream());
-        return map;
+        return parser.parseCatalogs(conn.getInputStream());
     }
 
     public static void localplay_add(String server, String auth, int oid) throws IOException {
@@ -102,8 +97,7 @@ abstract class AmpRepository {
         URL url = new URL(server+"/server/xml.server.php?action=localplay&auth="+auth+"&command=status");
         URLConnection conn = url.openConnection();
         AmpXmlParser parser = new AmpXmlParser();
-        Bundle status = parser.parseStatus(conn.getInputStream());
-        return status;
+        return parser.parseStatus(conn.getInputStream());
     }
 
     public static void localplay_stop(String server, String auth) throws IOException {

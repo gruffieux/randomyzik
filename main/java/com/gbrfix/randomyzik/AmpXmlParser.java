@@ -32,7 +32,7 @@ public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
 
-    public Map parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
+    public Map<String, String> parseCatalogs(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -44,7 +44,7 @@ public class AmpXmlParser {
         }
     }
 
-    public List parseSongs(InputStream in) throws XmlPullParserException, IOException {
+    public List<Media> parseSongs(InputStream in) throws XmlPullParserException, IOException {
         try {
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
@@ -83,7 +83,7 @@ public class AmpXmlParser {
         }
     }
 
-    private Pair readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private Pair<String, String> readCatalog(XmlPullParser parser) throws XmlPullParserException, IOException {
         parser.require(XmlPullParser.START_TAG, ns, "catalog");
         String value = parser.getAttributeValue(0);
         String key = null;
@@ -98,11 +98,11 @@ public class AmpXmlParser {
                 skip(parser);
             }
         }
-        return new Pair(key, value);
+        return new Pair<>(key, value);
     }
 
-    private Map readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
-        Map catalogs = new HashMap<String, String>();
+    private Map<String, String> readCatalogs(XmlPullParser parser) throws XmlPullParserException, IOException {
+        Map<String, String> catalogs = new HashMap<>();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -111,7 +111,7 @@ public class AmpXmlParser {
             String name = parser.getName();
             // Starts by looking for the entry tag
             if (name.equals("catalog")) {
-                Pair pair = readCatalog(parser);
+                Pair<String, String> pair = readCatalog(parser);
                 catalogs.put(pair.first, pair.second);
             } else {
                 skip(parser);
@@ -194,8 +194,8 @@ public class AmpXmlParser {
         return media;
     }
 
-    private List readSongs(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Media> songs = new ArrayList();
+    private List<Media> readSongs(XmlPullParser parser) throws XmlPullParserException, IOException {
+        List<Media> songs = new ArrayList<>();
         parser.require(XmlPullParser.START_TAG, ns, "root");
         while (parser.next() != XmlPullParser.END_TAG) {
             if (parser.getEventType() != XmlPullParser.START_TAG) {
@@ -223,16 +223,22 @@ public class AmpXmlParser {
                 continue;
             }
             String name = parser.getName();
-            if (name.equals("state")) {
-                state = readTag(parser, "state");
-            } else if (name.equals("track_title")) {
-                title = readTag(parser, "track_title");
-            } else if (name.equals("track_artist")) {
-                artist = readTag(parser, "track_artist");
-            } else if (name.equals("track_album")) {
-                album = readTag(parser, "track_album");
-            } else {
-                skip(parser);
+            switch (name) {
+                case "state":
+                    state = readTag(parser, "state");
+                    break;
+                case "track_title":
+                    title = readTag(parser, "track_title");
+                    break;
+                case "track_artist":
+                    artist = readTag(parser, "track_artist");
+                    break;
+                case "track_album":
+                    album = readTag(parser, "track_album");
+                    break;
+                default:
+                    skip(parser);
+                    break;
             }
         }
         Bundle status = new Bundle();

@@ -156,7 +156,7 @@ public class AmpSessionTest {
         try {
             Bundle data = AmpRepository.handshake(server, apiKey);
             String auth = data.getString("auth");
-            List list = AmpRepository.advanced_search(server, auth, 0, DbService.TEST_MAX_TRACKS, 0);
+            List<Media> list = AmpRepository.advanced_search(server, auth, 0, DbService.TEST_MAX_TRACKS, 0);
             AmpRepository.goodbye(server, auth);
             assertTrue(list.isEmpty());
         }

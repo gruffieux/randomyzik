@@ -15,12 +15,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class AmpSession extends AmpRepository {
     private String auth;
     private String expire;
-    private Context context;
-    private SharedPreferences prefs;
+    private final Context context;
+    private final SharedPreferences prefs;
     private static AmpSession instance = null;
 
     private AmpSession(Context context) {
@@ -42,7 +43,7 @@ public class AmpSession extends AmpRepository {
         Date now = format.parse(dateTime);
         Date expired = format.parse(expire);
 
-        return now.compareTo(expired) >= 0;
+        return Objects.requireNonNull(now).compareTo(expired) >= 0;
     }
 
     public boolean hasValidAuth() throws ParseException {
@@ -62,12 +63,12 @@ public class AmpSession extends AmpRepository {
         String album = status.getString("album");
 
         if (reqState != null && !reqState.isEmpty()) {
-            if (!state.equals(reqState)) {
+            if (state != null && !state.equals(reqState)) {
                 throw new Exception(context.getString(R.string.err_amp_excepted_state, state, reqState));
             }
         }
 
-        if (media != null) {
+        if (media != null && title != null && artist != null && album != null) {
             if (!title.equals(media.getTitle()) || !artist.equals(media.getArtist()) || !album.equals(media.getAlbum())) {
                 throw new Exception(context.getString(R.string.err_amp_track_unexcepted));
             }
@@ -105,11 +106,11 @@ public class AmpSession extends AmpRepository {
         auth = null;
     }
 
-    public List advanced_search(int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
+    public List<Media> advanced_search(int offset, int limit, int catalogId) throws IOException, XmlPullParserException {
         return advanced_search(prefs.getString("amp_server", ""), auth, offset, limit, catalogId);
     }
 
-    public Map catalogs() throws IOException, XmlPullParserException {
+    public Map<String, String> catalogs() throws IOException, XmlPullParserException {
         return catalogs(prefs.getString("amp_server", ""), auth);
     }
 
