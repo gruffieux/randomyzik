@@ -54,12 +54,12 @@
                 android:id="@+id/mode_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/switch_mode"
+                android:textColor="@color/colorAccent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/mode"
                 app:layout_constraintHorizontal_chainStyle="packed"
-                app:layout_constraintBaseline_toBaselineOf="@id/mode"
-                android:text="@string/switch_mode"
-                android:textColor="@color/colorAccent" />
+                app:layout_constraintBaseline_toBaselineOf="@id/mode" />
 
             <androidx.appcompat.widget.AppCompatToggleButton
                 android:id="@+id/mode"
