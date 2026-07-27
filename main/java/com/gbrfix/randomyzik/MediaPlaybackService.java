@@ -537,6 +537,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 editor.apply();
 
                 provider.setMode(mode);
+
+                Bundle args = new Bundle();
+                args.putInt("mode", mode);
+                session.sendSessionEvent("onChangeMode", args);
             }
         }
 

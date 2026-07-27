@@ -106,11 +106,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSessionEvent(String event, final Bundle extras) {
-            TextView positionLabel = findViewById(R.id.position);
-            TextView durationLabel = findViewById(R.id.duration);
-            ProgressBar progressBar = findViewById(R.id.progressBar);
+            TextView positionLabel;
+            ProgressBar progressBar;
 
             switch (event) {
+                case "onChangeMode":
+                    AppCompatToggleButton modeBtn = findViewById(R.id.mode);
+                    modeBtn.setChecked(extras.getInt("mode") == MediaProvider.MODE_ALBUM);
+                    break;
                 case "onTrackSelect":
                     currentId = extras.getInt("id");
                     int duration = extras.getInt("duration");
@@ -119,8 +122,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String artist = extras.getString("artist");
                     int current = extras.getInt("current");
                     int total = extras.getInt("total");
+                    positionLabel = findViewById(R.id.position);
                     positionLabel.setText(dateFormat.format(new Date(0)));
+                    TextView durationLabel = findViewById(R.id.duration);
                     durationLabel.setText(dateFormat.format(new Date(duration)));
+                    progressBar = findViewById(R.id.progressBar);
                     progressBar.setProgress(0);
                     progressBar.setMax(duration);
                     String msg = MediaProvider.getTrackCounter(current, total);
@@ -129,7 +135,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
+                    positionLabel = findViewById(R.id.position);
                     positionLabel.setText(dateFormat.format(new Date(position)));
+                    progressBar = findViewById(R.id.progressBar);
                     progressBar.setProgress(position);
                     break;
                 case "onTrackRead":
@@ -144,6 +152,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
+                        Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
+                        intent.setAction("close");
+                        startService(intent);
+                        finish();
                     }
                     break;
                 case "onError":
@@ -420,10 +432,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     protected void onStop() {
         super.onStop();
 
-        // BUG: Cause un bug lors de la dernière piste lue car l'event onTrackRead n'est pas reçu par l'activité
-        /*if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
+        if (MediaControllerCompat.getMediaController(MainActivity.this) != null) {
             MediaControllerCompat.getMediaController(MainActivity.this).unregisterCallback(controllerCallback);
-        }*/
+        }
 
         if (mediaBrowser != null) {
             mediaBrowser.disconnect();
