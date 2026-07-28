@@ -232,8 +232,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             fwdBtn.setEnabled(state == PlaybackStateCompat.STATE_PLAYING);
             fwdBtn.setColorFilter(state == PlaybackStateCompat.STATE_PLAYING ? color : Color.GRAY);
 
-            // Set mode switcher state
-            changeMode(modeBtn.isChecked());
+            // Set mode from settings
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
+            modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
 
             // Set controls info with current track
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
@@ -270,22 +272,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             fwdBtn.setOnClickListener(v -> MediaControllerCompat.getMediaController(MainActivity.this).getTransportControls().skipToNext());
 
             // Handle mode switcher
-            modeBtn.setOnCheckedChangeListener((compoundButton, b) -> changeMode(b));
-        }
+            modeBtn.setOnCheckedChangeListener((compoundButton, b) -> {
+                int val = b ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
-        void changeMode(boolean b) {
-            int mode = b ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+                // Save mode as preferences
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putInt("mode", val);
+                editor.apply();
 
-            // Save mode as preferences
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putInt("mode", mode);
-            editor.apply();
-
-            // Send action to browser service (Depracated)
-            Bundle args = new Bundle();
-            args.putInt("mode", mode);
-            mediaBrowser.sendCustomAction("changeMode", args, null);
+                // Send action to browser service (Depracated)
+                Bundle args = new Bundle();
+                args.putInt("mode", val);
+                mediaBrowser.sendCustomAction("changeMode", args, null);
+            });
         }
     };
 
