@@ -15,19 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
-URL examples
-Authentication:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=handshake&auth=7e5b37f14c08b28bdff73abe8f990c0b
-Catalogs:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=catalogs&auth=a967f8fadc3053112edf87eac271ed76
-Advanced search:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=advanced_search&auth=8e4f767d679d81345871b298b4f29ee7&operator=and&type=song&rule_1=recent_played&rule_1_operator=0&rule_1_input=1691618400
-Local play:
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=add&oid=12697&type=song&clear=1
-https://gbrfix.internet-box.ch/ampache/server/xml.server.php?action=localplay&auth=a967f8fadc3053112edf87eac271ed76&command=status
-*/
-
 public class AmpXmlParser {
     // We don't use namespaces
     private static final String ns = null;
