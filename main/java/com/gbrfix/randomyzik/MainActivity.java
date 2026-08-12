@@ -438,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     protected void init(int perms) {
         // On récup les éléments de l'UI
-        final ListView listView = findViewById(R.id.playlist);
+        ListView listView = findViewById(R.id.playlist);
         ImageButton playBtn = findViewById(R.id.play);
         ImageButton rewBtn = findViewById(R.id.rew);
         ImageButton fwdBtn = findViewById(R.id.fwd);
