@@ -579,6 +579,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
         });
 
+        // Ne fonctionne pas pour forcer le repositionnement des insets
+        // Utilisation de fitsSystemWindows=true en attendant une solution
+        // TODO: Refonte de l'UI complète
+        /*ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+            Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars()
+                            | WindowInsetsCompat.Type.displayCutout()
+            );
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });*/
+
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 

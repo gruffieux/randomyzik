@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/mainView">
+
+    <ListView
+        style="@style/playlist"
+        android:id="@+id/playlist"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fastScrollEnabled="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/rew"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageButton
+        android:id="@+id/rew"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_action_rewind"
+        app:layout_constraintTop_toBottomOf="@+id/playlist"
+        app:layout_constraintBottom_toTopOf="@+id/position"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/play"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <ImageButton
+        android:id="@+id/play"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_action_play"
+        app:layout_constraintTop_toBottomOf="@+id/playlist"
+        app:layout_constraintBottom_toTopOf="@+id/position"
+        app:layout_constraintStart_toEndOf="@+id/rew"
+        app:layout_constraintEnd_toStartOf="@+id/fwd"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <ImageButton
+        android:id="@+id/fwd"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_action_skip"
+        app:layout_constraintTop_toBottomOf="@+id/playlist"
+        app:layout_constraintBottom_toTopOf="@+id/position"
+        app:layout_constraintStart_toEndOf="@+id/play"
+        app:layout_constraintEnd_toStartOf="@+id/mode_label"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <TextView
+        android:id="@+id/mode_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/switch_mode"
+        android:textColor="@color/colorAccent"
+        app:layout_constraintTop_toBottomOf="@+id/playlist"
+        app:layout_constraintBottom_toTopOf="@+id/position"
+        app:layout_constraintStart_toEndOf="@+id/fwd"
+        app:layout_constraintEnd_toStartOf="@id/mode"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <androidx.appcompat.widget.AppCompatToggleButton
+        android:id="@+id/mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="@string/switch_mode_track"
+        android:textOn="@string/switch_mode_album"
+        app:layout_constraintTop_toBottomOf="@+id/playlist"
+        app:layout_constraintBottom_toTopOf="@+id/position"
+        app:layout_constraintStart_toEndOf="@+id/mode_label"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <TextView
+        style="@style/track"
+        android:id="@+id/position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/rew"
+        app:layout_constraintBottom_toTopOf="@+id/infoMsg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/progressBar"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"/>
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleHorizontal"
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/rew"
+        app:layout_constraintBottom_toTopOf="@+id/infoMsg"
+        app:layout_constraintStart_toEndOf="@+id/position"
+        app:layout_constraintEnd_toStartOf="@+id/duration"
+        app:layout_constraintHorizontal_chainStyle="packed" />
+
+    <TextView
+        style="@style/track"
+        android:id="@+id/duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/rew"
+        app:layout_constraintBottom_toTopOf="@+id/infoMsg"
+        app:layout_constraintStart_toEndOf="@+id/progressBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread_inside" />
+
+    <TextView
+        style="@style/info"
+        android:id="@+id/infoMsg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:maxLines="1"
+        app:layout_constraintTop_toBottomOf="@+id/position"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
