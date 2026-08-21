@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.widget.ListView;
@@ -39,9 +40,9 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
             try {
                 dao.open();
                 SQLiteCursor cursor = dao.getAllOrdered();
-                ListView listView = activity.findViewById(R.id.playlist);
+                RecyclerView listView = activity.findViewById(R.id.playlist);
                 TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                adapter.changeCursor(cursor);
+                //adapter.changeCursor(cursor);
                 dao.close();
             } catch (SQLException e) {
                 Log.v("SQLException", Objects.requireNonNull(e.getMessage()));

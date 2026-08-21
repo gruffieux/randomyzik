@@ -37,6 +37,8 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -140,9 +142,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
                     dao.open();
                     SQLiteCursor cursor = dao.getAllOrdered();
-                    ListView listView = findViewById(R.id.playlist);
+                    RecyclerView listView = findViewById(R.id.playlist);
                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    adapter.changeCursor(cursor);
+                    //adapter.changeCursor(cursor);
                     dao.close();
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
@@ -413,9 +415,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         MediaDAO dao = new MediaDAO(this, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getAllOrdered();
-        ListView listView = findViewById(R.id.playlist);
+        RecyclerView listView = findViewById(R.id.playlist);
         TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        adapter.changeCursor(cursor);
+        //adapter.changeCursor(cursor);
         dao.close();
 
         if (mediaBrowser != null) {
@@ -438,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     protected void init(int perms) {
         // On récup les éléments de l'UI
-        ListView listView = findViewById(R.id.playlist);
+        RecyclerView listView = findViewById(R.id.playlist);
         ImageButton playBtn = findViewById(R.id.play);
         ImageButton rewBtn = findViewById(R.id.rew);
         ImageButton fwdBtn = findViewById(R.id.fwd);
@@ -479,9 +481,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 SQLiteCursor cursor = dao.getAllOrdered();
 
                 // Cursor adapter pour la listeView
-                String[] fromColumns = {"track_nb", "title", "album", "artist"};
+                String[] dataset = {"track_nb", "title", "album", "artist"};
                 int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-                TrackCursorAdapter adapter = new TrackCursorAdapter(this, R.layout.track, cursor, fromColumns, toViews);
+                TrackCursorAdapter adapter = new TrackCursorAdapter(dataset);
+                listView.setLayoutManager(new LinearLayoutManager(this));
                 listView.setAdapter(adapter);
 
                 dao.close();
@@ -520,7 +523,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                 MediaDAO dao1 = new MediaDAO(MainActivity.this, dbName);
                                 dao1.open();
                                 SQLiteCursor cursor1 = dao1.getAllOrdered();
-                                adapter.changeCursor(cursor1);
+                                //adapter.changeCursor(cursor1);
                                 dao1.close();
                             } catch (SQLException e) {
                                 Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
@@ -553,7 +556,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // Dialogue d'édition du flag pour une piste
-        listView.setOnItemClickListener((parent, view, position, id) -> {
+        /*listView.setOnItemClickListener((parent, view, position, id) -> {
             SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
             dialog.setId((int) id);
             dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
@@ -565,7 +568,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             dialog.setId((int) id);
             dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
             return true;
-        });
+        });*/
 
         // Sélection de la piste en cours
         TextView trackInfo = findViewById(R.id.infoMsg);
@@ -574,7 +577,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                 int pos = adapter.findView(currentId);
                 if (pos != -1) {
-                    listView.setSelection(pos);
+                    listView.scrollToPosition(pos);
                 }
             }
         });
