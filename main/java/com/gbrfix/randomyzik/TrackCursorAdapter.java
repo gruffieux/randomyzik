@@ -1,22 +1,21 @@
 package com.gbrfix.randomyzik;
 
-import android.content.Context;
-import android.database.Cursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
 
 /**
  * Created by gab on 11.08.2017.
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
-    private String[] localDataSet;
+    private final ArrayList<Media> localDataSet;
 
     /**
      * Provide a reference to the type of views that you are using
@@ -41,6 +40,18 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         public TextView getNb() {
             return nb;
         }
+
+        public TextView getTitle() {
+            return title;
+        }
+
+        public TextView getAlbum() {
+            return album;
+        }
+
+        public TextView getArtist() {
+            return artist;
+        }
     }
 
     /**
@@ -49,7 +60,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
      * @param dataSet String[] containing the data to populate views to be used
      * by RecyclerView
      */
-    public TrackCursorAdapter(String[] dataSet) {
+    public TrackCursorAdapter(ArrayList<Media> dataSet) {
         localDataSet = dataSet;
     }
 
@@ -67,12 +78,16 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
-        holder.getNb().setText(localDataSet[position]);
+        Media media = localDataSet.get(position);
+        holder.getNb().setText(media.getTrackNb());
+        holder.getTitle().setText(media.getTitle());
+        holder.getAlbum().setText(media.getAlbum());
+        holder.getArtist().setText(media.getArtist());
     }
 
     @Override
     public int getItemCount() {
-        return localDataSet.length;
+        return localDataSet.size();
     }
 
     public int findView(int id) {

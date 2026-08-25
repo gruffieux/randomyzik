@@ -22,6 +22,7 @@ import android.os.Build;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatToggleButton;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -45,14 +46,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.util.Log;
 
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
@@ -300,14 +300,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (requestCode == MY_PERSMISSIONS_REQUEST_STORAGE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted, app can run
-                setContentView(R.layout.playlist);
+                setContentView(R.layout.main_activity);
                 init(1);
                 if (mediaBrowser != null && !mediaBrowser.isConnected()) {
                     mediaBrowser.connect();
                 }
             } else {
                 // Permission denied, display info
-                setContentView(R.layout.playlist);
+                setContentView(R.layout.main_activity);
                 init(0);
             }
         }
@@ -337,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         EdgeToEdge.enable(this);
-        setContentView(R.layout.playlist);
+        setContentView(R.layout.main_activity);
         init(1);
     }
 
@@ -445,8 +445,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         ImageButton rewBtn = findViewById(R.id.rew);
         ImageButton fwdBtn = findViewById(R.id.fwd);
 
-        LinearLayout controlLayout = findViewById(R.id.control);
-        controlLayout.setHorizontalGravity(1);
         playBtn.setEnabled(false);
         playBtn.setColorFilter(Color.GRAY);
         rewBtn.setEnabled(false);
@@ -478,12 +476,21 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
                 MediaDAO dao = new MediaDAO(this, dbName);
                 dao.open();
+                ArrayList<Media> list = new ArrayList<>();
                 SQLiteCursor cursor = dao.getAllOrdered();
+                while (cursor.moveToNext()) {
+                    Media media = new Media();
+                    media.setTrackNb(cursor.getString(2));
+                    media.setTitle(cursor.getString(4));
+                    media.setAlbum(cursor.getString(5));
+                    media.setArtist(cursor.getString(6));
+                    list.add(media);
+                }
 
                 // Cursor adapter pour la listeView
                 String[] dataset = {"track_nb", "title", "album", "artist"};
                 int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-                TrackCursorAdapter adapter = new TrackCursorAdapter(dataset);
+                TrackCursorAdapter adapter = new TrackCursorAdapter(list);
                 listView.setLayoutManager(new LinearLayoutManager(this));
                 listView.setAdapter(adapter);
 
@@ -511,24 +518,33 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                                     infoMsg.setText("");
                                 }
                             }
-                            String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
-                            if (catalogId != 0 && catalogId != Integer.parseInt(catalog1)) {
-                                return;
-                            }
                             playBtn.setEnabled(true);
-                            if (!update) {
-                                return;
-                            }
-                            try {
-                                MediaDAO dao1 = new MediaDAO(MainActivity.this, dbName);
-                                dao1.open();
-                                SQLiteCursor cursor1 = dao1.getAllOrdered();
-                                //adapter.changeCursor(cursor1);
-                                dao1.close();
-                            } catch (SQLException e) {
-                                Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
-                            }
                         });
+                        String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
+                        if (catalogId != 0 && catalogId != Integer.parseInt(catalog1)) {
+                            return;
+                        }
+                        if (!update) {
+                            return;
+                        }
+                        try {
+                            MediaDAO dao1 = new MediaDAO(MainActivity.this, dbName);
+                            dao1.open();
+                            SQLiteCursor cursor1 = dao1.getAllOrdered();
+                            list.clear();
+                            while (cursor1.moveToNext()) {
+                                Media media = new Media();
+                                media.setTrackNb(cursor1.getString(2));
+                                media.setTitle(cursor1.getString(4));
+                                media.setAlbum(cursor1.getString(5));
+                                media.setArtist(cursor1.getString(6));
+                                list.add(media);
+                            }
+                            adapter.notifyDataSetChanged();
+                            dao1.close();
+                        } catch (SQLException e) {
+                            Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
+                        }
                     }
 
                     @Override
@@ -581,6 +597,26 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             }
         });
+
+        /*ViewCompat.setOnApplyWindowInsetsListener(
+                listView,
+                (v, insets) -> {
+                    Insets innerPadding = insets.getInsets(
+                            WindowInsetsCompat.Type.systemBars() |
+                                    WindowInsetsCompat.Type.displayCutout()
+                            // If using EditText, also add
+                            // "| WindowInsetsCompat.Type.ime()" to
+                            // maintain focus when opening the IME
+                    );
+                    v.setPadding(
+                            innerPadding.left,
+                            innerPadding.top,
+                            innerPadding.right,
+                            innerPadding.bottom
+                    );
+                    return insets;
+                }
+        );*/
 
         // Ne fonctionne pas pour forcer le repositionnement des insets
         // Utilisation de fitsSystemWindows=true en attendant une solution
