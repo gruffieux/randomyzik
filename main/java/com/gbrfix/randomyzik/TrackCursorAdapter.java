@@ -85,6 +85,15 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         holder.getTitle().setText(media.getTitle());
         holder.getAlbum().setText(media.getAlbum());
         holder.getArtist().setText(media.getArtist());
+
+        holder.itemView.setId(media.getId());
+
+        if (media.getFlag().equals("read")) {
+            holder.itemView.setAlpha(0.5f);
+        }
+        else {
+            holder.itemView.setAlpha(1f);
+        }
     }
 
     @Override
@@ -113,6 +122,8 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         localDataSet.clear();
         while (cursor.moveToNext()) {
             Media media = new Media();
+            media.setId(cursor.getInt(0));
+            media.setFlag(cursor.getString(1));
             media.setTrackNb(cursor.getString(2));
             media.setTitle(cursor.getString(4));
             media.setAlbum(cursor.getString(5));
