@@ -22,7 +22,6 @@ import android.os.Build;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatToggleButton;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -139,13 +138,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     break;
                 case "onTrackRead":
                     boolean last = extras.getBoolean("last");
-                    MediaDAO dao = new MediaDAO(MainActivity.this, dbName);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAllOrdered();
                     RecyclerView listView = findViewById(R.id.playlist);
                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    //adapter.changeCursor(cursor);
-                    dao.close();
+                    adapter.allTracks(MainActivity.this, dbName);
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
@@ -412,13 +407,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         // Refresh playlist
-        MediaDAO dao = new MediaDAO(this, dbName);
-        dao.open();
-        SQLiteCursor cursor = dao.getAllOrdered();
         RecyclerView listView = findViewById(R.id.playlist);
         TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        //adapter.changeCursor(cursor);
-        dao.close();
+        adapter.allTracks(this, dbName);
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -474,27 +465,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbService.register();
 
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-                MediaDAO dao = new MediaDAO(this, dbName);
-                dao.open();
-                ArrayList<Media> list = new ArrayList<>();
-                SQLiteCursor cursor = dao.getAllOrdered();
-                while (cursor.moveToNext()) {
-                    Media media = new Media();
-                    media.setTrackNb(cursor.getString(2));
-                    media.setTitle(cursor.getString(4));
-                    media.setAlbum(cursor.getString(5));
-                    media.setArtist(cursor.getString(6));
-                    list.add(media);
-                }
 
                 // Cursor adapter pour la listeView
-                String[] dataset = {"track_nb", "title", "album", "artist"};
-                int[] toViews = {R.id.track_nb, R.id.title, R.id.album, R.id.artist};
-                TrackCursorAdapter adapter = new TrackCursorAdapter(list);
+                TrackCursorAdapter adapter = new TrackCursorAdapter();
+                adapter.allTracks(this, dbName);
                 listView.setLayoutManager(new LinearLayoutManager(this));
                 listView.setAdapter(adapter);
-
-                dao.close();
 
                 dbService.setDbSignalListener(new DbSignal() {
                     @Override
@@ -527,24 +503,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         if (!update) {
                             return;
                         }
-                        try {
-                            MediaDAO dao1 = new MediaDAO(MainActivity.this, dbName);
-                            dao1.open();
-                            SQLiteCursor cursor1 = dao1.getAllOrdered();
-                            list.clear();
-                            while (cursor1.moveToNext()) {
-                                Media media = new Media();
-                                media.setTrackNb(cursor1.getString(2));
-                                media.setTitle(cursor1.getString(4));
-                                media.setAlbum(cursor1.getString(5));
-                                media.setArtist(cursor1.getString(6));
-                                list.add(media);
-                            }
-                            adapter.notifyDataSetChanged();
-                            dao1.close();
-                        } catch (SQLException e) {
-                            Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
-                        }
+                        adapter.allTracks(MainActivity.this, dbName);
                     }
 
                     @Override

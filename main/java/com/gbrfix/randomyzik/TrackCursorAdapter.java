@@ -1,5 +1,7 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Context;
+import android.database.sqlite.SQLiteCursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,8 +62,8 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
      * @param dataSet String[] containing the data to populate views to be used
      * by RecyclerView
      */
-    public TrackCursorAdapter(ArrayList<Media> dataSet) {
-        localDataSet = dataSet;
+    public TrackCursorAdapter() {
+        localDataSet = new ArrayList<Media>();
     }
 
     @NonNull
@@ -90,6 +92,10 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         return localDataSet.size();
     }
 
+    public ArrayList<Media> getList() {
+        return localDataSet;
+    }
+
     public int findView(int id) {
         for (int i = 0; i < getItemCount(); i++) {
             if (getItemId(i) == id) {
@@ -98,5 +104,22 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         }
 
         return -1;
+    }
+
+    public void allTracks(Context context, String dbName) {
+        MediaDAO dao = new MediaDAO(context, dbName);
+        dao.open();
+        SQLiteCursor cursor = dao.getAllOrdered();
+        localDataSet.clear();
+        while (cursor.moveToNext()) {
+            Media media = new Media();
+            media.setTrackNb(cursor.getString(2));
+            media.setTitle(cursor.getString(4));
+            media.setAlbum(cursor.getString(5));
+            media.setArtist(cursor.getString(6));
+            localDataSet.add(media);
+        }
+        dao.close();
+        notifyDataSetChanged();
     }
 }
