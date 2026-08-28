@@ -8,16 +8,19 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 /**
  * Created by gab on 11.08.2017.
+ * TODO: Rename class
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
     private final ArrayList<Media> localDataSet;
+    private final FragmentManager fm;
 
     /**
      * Provide a reference to the type of views that you are using
@@ -31,12 +34,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         public ViewHolder(View view) {
             super(view);
-            // Define click listener for the ViewHolder's View
 
-            nb = (TextView) view.findViewById(R.id.track_nb);
-            title = (TextView) view.findViewById(R.id.title);
-            album = (TextView) view.findViewById(R.id.album);
-            artist = (TextView) view.findViewById(R.id.artist);
+            nb = view.findViewById(R.id.track_nb);
+            title = view.findViewById(R.id.title);
+            album = view.findViewById(R.id.album);
+            artist = view.findViewById(R.id.artist);
         }
 
         public TextView getNb() {
@@ -56,14 +58,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         }
     }
 
-    /**
-     * Initialize the dataset of the Adapter
-     *
-     * @param dataSet String[] containing the data to populate views to be used
-     * by RecyclerView
-     */
-    public TrackCursorAdapter() {
+    public TrackCursorAdapter(FragmentManager fm) {
         localDataSet = new ArrayList<Media>();
+        this.fm = fm;
     }
 
     @NonNull
@@ -94,6 +91,21 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         else {
             holder.itemView.setAlpha(1f);
         }
+
+        // Dialogue d'édition du flag pour une piste
+        holder.itemView.setOnClickListener(view -> {
+            SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
+            dialog.setId(media.getId());
+            dialog.show(fm, "singleTrackFlagEditor");
+        });
+
+        // Dialogue d'édition du flag de toutes les pistes
+        holder.itemView.setOnLongClickListener(view -> {
+            AllTracksDialogFragment dialog = new AllTracksDialogFragment();
+            dialog.setId(media.getId());
+            dialog.show(fm, "allTrackFlagEditor");
+            return true;
+        });
     }
 
     @Override

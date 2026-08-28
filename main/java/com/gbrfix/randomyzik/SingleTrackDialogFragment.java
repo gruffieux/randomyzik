@@ -1,7 +1,6 @@
 package com.gbrfix.randomyzik;
 
 import android.app.Dialog;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 
@@ -9,11 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.util.Log;
-import android.widget.ListView;
-
-import java.util.Objects;
 
 /**
  * Created by gab on 14.10.2017.
@@ -37,16 +31,9 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
     protected void updateUi() {
         activity.runOnUiThread(() -> {
-            try {
-                dao.open();
-                SQLiteCursor cursor = dao.getAllOrdered();
-                RecyclerView listView = activity.findViewById(R.id.playlist);
-                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                //adapter.changeCursor(cursor);
-                dao.close();
-            } catch (SQLException e) {
-                Log.v("SQLException", Objects.requireNonNull(e.getMessage()));
-            }
+            RecyclerView listView = activity.findViewById(R.id.playlist);
+            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+            adapter.allTracks(getContext(), activity.dbName);
         });
     }
 

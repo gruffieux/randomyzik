@@ -49,7 +49,6 @@ import android.util.Log;
 
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
@@ -465,7 +464,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
 
                 // Cursor adapter pour la listeView
-                TrackCursorAdapter adapter = new TrackCursorAdapter();
+                TrackCursorAdapter adapter = new TrackCursorAdapter(getSupportFragmentManager());
                 adapter.allTracks(this, dbName);
                 listView.setLayoutManager(new LinearLayoutManager(this));
                 listView.setAdapter(adapter);
@@ -528,21 +527,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
-        // Dialogue d'édition du flag pour une piste
-        /*listView.setOnItemClickListener((parent, view, position, id) -> {
-            SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
-            dialog.setId((int) id);
-            dialog.show(getSupportFragmentManager(), "singleTrackFlagEditor");
-        });
-
-        // Dialogue d'édition du flag de toutes les pistes
-        listView.setOnItemLongClickListener((parent, view, position, id) -> {
-            AllTracksDialogFragment dialog = new AllTracksDialogFragment();
-            dialog.setId((int) id);
-            dialog.show(getSupportFragmentManager(), "allTrackFlagEditor");
-            return true;
-        });*/
-
         // Sélection de la piste en cours
         TextView trackInfo = findViewById(R.id.infoMsg);
         trackInfo.setOnClickListener(v -> {
@@ -554,38 +538,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 }
             }
         });
-
-        /*ViewCompat.setOnApplyWindowInsetsListener(
-                listView,
-                (v, insets) -> {
-                    Insets innerPadding = insets.getInsets(
-                            WindowInsetsCompat.Type.systemBars() |
-                                    WindowInsetsCompat.Type.displayCutout()
-                            // If using EditText, also add
-                            // "| WindowInsetsCompat.Type.ime()" to
-                            // maintain focus when opening the IME
-                    );
-                    v.setPadding(
-                            innerPadding.left,
-                            innerPadding.top,
-                            innerPadding.right,
-                            innerPadding.bottom
-                    );
-                    return insets;
-                }
-        );*/
-
-        // Ne fonctionne pas pour forcer le repositionnement des insets
-        // Utilisation de fitsSystemWindows=true en attendant une solution
-        // TODO: Refonte de l'UI complète
-        /*ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
-            Insets bars = insets.getInsets(
-                    WindowInsetsCompat.Type.systemBars()
-                            | WindowInsetsCompat.Type.displayCutout()
-            );
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            return WindowInsetsCompat.CONSUMED;
-        });*/
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
