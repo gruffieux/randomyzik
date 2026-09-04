@@ -33,7 +33,9 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
         activity.runOnUiThread(() -> {
             RecyclerView listView = activity.findViewById(R.id.playlist);
             TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-            adapter.allTracks(getContext(), activity.dbName);
+            if (adapter != null) {
+                adapter.getCurrent();
+            }
         });
     }
 

@@ -137,7 +137,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     boolean last = extras.getBoolean("last");
                     RecyclerView listView = findViewById(R.id.playlist);
                     TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                    adapter.allTracks(MainActivity.this, dbName);
+                    if (adapter != null) {
+                        adapter.getCurrent();
+                    }
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
@@ -404,9 +406,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         // Refresh playlist
+        // TODO: Sauver la liste courante (listLevel)
         RecyclerView listView = findViewById(R.id.playlist);
         TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        adapter.allTracks(this, dbName);
+        if (adapter != null) {
+            adapter.getCurrent();
+        }
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -464,8 +469,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
 
                 // Cursor adapter pour la listeView
-                TrackCursorAdapter adapter = new TrackCursorAdapter(getSupportFragmentManager());
-                adapter.allTracks(this, dbName);
+                TrackCursorAdapter adapter = new TrackCursorAdapter(this);
+                adapter.getRoot();
                 listView.setLayoutManager(new LinearLayoutManager(this));
                 listView.setAdapter(adapter);
 
@@ -500,7 +505,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         if (!update) {
                             return;
                         }
-                        adapter.allTracks(MainActivity.this, dbName);
+                        adapter.getCurrent();
                     }
 
                     @Override
