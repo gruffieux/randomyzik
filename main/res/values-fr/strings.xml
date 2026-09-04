@@ -5,7 +5,7 @@
 
     <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Indiquer cette piste comme non lue?</string>
-    <string name="edit_all_tracks_title">%1$d pistes</string>
+    <string name="edit_all_tracks_title">%1$s - %2$d pistes</string>
     <string name="edit_all_tracks_msg">Indiquer toutes les pistes comme non lues?</string>
     <string name="dialog_yes">Oui</string>
     <string name="dialog_yes_play">Oui et joue</string>

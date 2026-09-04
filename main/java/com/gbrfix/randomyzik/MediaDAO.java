@@ -88,6 +88,12 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
+    public SQLiteCursor getFromArtist(String artist) {
+        String query = "SELECT `id` FROM `medias` WHERE `artist`=?";
+
+        return (SQLiteCursor) this.db.rawQuery(query, new String[] {artist});
+    }
+
     public SQLiteCursor getFromMediaId(int media_id) {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `media_id`=?;", new String[] {String.valueOf(media_id)});
     }
@@ -151,6 +157,12 @@ public class MediaDAO extends DAOBase {
         ContentValues values = new ContentValues();
         values.put("flag", flag);
         this.db.update("medias", values,  "`album_key`=?", new String[] {albumKey});
+    }
+
+    public void updateFlagArtist(String artist, String flag) {
+        ContentValues values = new ContentValues();
+        values.put("flag", flag);
+        this.db.update("medias", values,  "`artist`=?", new String[] {artist});
     }
 
     public void updateFlagAll(String flag) {

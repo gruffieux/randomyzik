@@ -119,12 +119,20 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // Dialogue d'édition du flag de toutes les pistes
         holder.itemView.setOnLongClickListener(view -> {
             switch (listLevel) {
-                case 3:
-                    AllTracksDialogFragment dialog = new AllTracksDialogFragment();
-                    dialog.setId(media.getId());
-                    dialog.show(activity.getSupportFragmentManager(), "allTrackFlagEditor");
+                case 2:
+                    AllTracksDialogFragment dialog2 = new AllTracksDialogFragment();
+                    dialog2.setList(2, media.getAlbum(), media.getAlbumKey());
+                    dialog2.show(activity.getSupportFragmentManager(), "albumTrackFlagEditor");
+                    break;
+                case 1:
+                    AllTracksDialogFragment dialog1 = new AllTracksDialogFragment();
+                    dialog1.setList(1, media.getArtist(), media.getArtist());
+                    dialog1.show(activity.getSupportFragmentManager(), "artistTrackFlagEditor");
                     break;
                 default:
+                    AllTracksDialogFragment dialog = new AllTracksDialogFragment();
+                    dialog.setList(0, "", "");
+                    dialog.show(activity.getSupportFragmentManager(), "allTrackFlagEditor");
                     break;
             }
             return true;
