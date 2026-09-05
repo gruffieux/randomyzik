@@ -1,5 +1,6 @@
 package com.gbrfix.randomyzik;
 
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,10 +8,12 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 
 /**
@@ -110,6 +113,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     getAlbums(media.getArtist());
                     break;
                 default:
+                    changeDb(media.getId());
                     listLevel = 1;
                     getArtists();
                     break;
@@ -130,8 +134,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     dialog1.show(activity.getSupportFragmentManager(), "artistTrackFlagEditor");
                     break;
                 default:
+                    changeDb(media.getId());
                     AllTracksDialogFragment dialog = new AllTracksDialogFragment();
-                    dialog.setList(0, "", "");
+                    dialog.setList(0, media.getTitle(), String.valueOf(media.getId()));
                     dialog.show(activity.getSupportFragmentManager(), "allTrackFlagEditor");
                     break;
             }
@@ -232,10 +237,22 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.hide();
         localDataSet.clear();
+
         Media musicFolder = new Media();
         musicFolder.setId(0);
         musicFolder.setTitle(activity.getString(R.string.auto_item1_folder));
         localDataSet.add(musicFolder);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        String[] entries = prefs.getString("amp_catalog_entries", "").split(";");
+        String[] values = prefs.getString("amp_catalog_values", "").split(";");
+        for (int i = 0; i < entries.length; i++) {
+            Media catalog = new Media();
+            catalog.setId(Integer.parseInt(values[i]));
+            catalog.setTitle(entries[i]);
+            localDataSet.add(catalog);
+        }
+
         notifyDataSetChanged();
     }
 
@@ -253,6 +270,18 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             default:
                 getRoot();
                 break;
+        }
+    }
+
+    private void changeDb(int id) {
+        if (id == 0) {
+            activity.dbName = DAOBase.DEFAULT_NAME;
+        } else {
+            try {
+                activity.dbName = AmpSession.getInstance(activity).dbName();
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

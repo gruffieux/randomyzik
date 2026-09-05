@@ -45,8 +45,8 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
         int total = cursor.getCount();
         dao.close();
 
-        builder.setMessage(getText(R.string.edit_all_tracks_msg))
-                .setTitle(String.format(getString(R.string.edit_all_tracks_title), listName, total))
+        builder.setMessage(String.format(getString(R.string.edit_all_tracks_msg), total))
+                .setTitle(listName)
                 .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> {
                     dao.open();
                     switch (listLevel) {
