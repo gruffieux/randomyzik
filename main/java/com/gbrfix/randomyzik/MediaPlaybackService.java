@@ -207,6 +207,17 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Lecture d'une playlist
+        if (Objects.equals(intent.getAction(), "play")) {
+            Bundle extra = intent.getExtras();
+            int id = extra != null ? extra.getInt("mediaId", 0) : 0;
+            String mediaId = "MUSIC_FOLDER";
+            if (id > 0) {
+                mediaId = "AMP_" + id;
+            }
+            session.getController().getTransportControls().playFromMediaId(mediaId, null);
+        }
+
         // Arrêt forcé, on sauve la piste en cours
         if (Objects.equals(intent.getAction(), "stop")) {
             int id = provider.getCurrentId();

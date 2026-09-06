@@ -1,6 +1,7 @@
 package com.gbrfix.randomyzik;
 
 import android.app.Dialog;
+import android.content.Intent;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 
@@ -63,15 +64,12 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
                     dao.close();
                     updateUi();
                 })
-                /*.setNegativeButton(R.string.dialog_album, (dialog, which) -> {
-                    dao.open();
-                    SQLiteCursor cursor1 = dao.getFromId(id);
-                    cursor1.moveToFirst();
-                    String albumKey = cursor1.getString(cursor1.getColumnIndex("album_key"));
-                    dao.updateFlagAlbum(albumKey, "unread");
-                    dao.close();
-                    updateUi();
-                })*/
+                .setNegativeButton("Play", (dialog, which) -> {
+                    Intent intent = new Intent(activity, MediaPlaybackService.class);
+                    intent.putExtra("mediaId", Integer.parseInt(listValue));
+                    intent.setAction("play");
+                    activity.startService(intent);
+                })
                 .setNeutralButton(getText(R.string.dialog_no), (dialog, which) -> {
                 });
 
