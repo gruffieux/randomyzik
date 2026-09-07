@@ -54,15 +54,15 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(title)
-            .setNegativeButton(getText(R.string.dialog_yes), (dialog, which) -> resetFlag())
-            .setPositiveButton(R.string.dialog_yes_play, (dialog, which) -> {
+            .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> resetFlag())
+            /*.setPositiveButton(R.string.dialog_yes_play, (dialog, which) -> {
                 resetFlag();
                 Bundle args = new Bundle();
                 args.putInt("id", id);
                 activity.currentId = id;
                 activity.mediaBrowser.sendCustomAction("singleTrack", args, null);
-            })
-            .setNeutralButton(getText(R.string.dialog_no), (dialog, which) -> {
+            })*/
+            .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
             });
 
         return builder.create();

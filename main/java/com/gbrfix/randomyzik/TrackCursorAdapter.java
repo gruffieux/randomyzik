@@ -1,10 +1,12 @@
 package com.gbrfix.randomyzik;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -56,7 +58,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Create a new view, which defines the UI of the list item
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.track, parent, false);
+                .inflate(R.layout.item, parent, false);
 
         return new ViewHolder(view);
     }
@@ -66,63 +68,16 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
         Media media = localDataSet.get(position);
-        switch (listLevel) {
-            case 3:
-                String nb = "";
-                if (media.getTrackNb() != null) {
-                    nb = media.getTrackNb() + ". ";
-                }
-                String title = nb + media.getTitle();
-                holder.getTitle().setText(title);
-                holder.itemView.setId(media.getId());
-                if (media.getFlag().equals("read")) {
-                    holder.itemView.setAlpha(0.5f);
-                }
-                else {
-                    holder.itemView.setAlpha(1f);
-                }
-                break;
-            case 2:
-                holder.getTitle().setText(media.getAlbum());
-                holder.itemView.setAlpha(1f);
-                break;
-            case 1:
-                holder.getTitle().setText(media.getArtist());
-                holder.itemView.setAlpha(1f);
-                break;
-            default:
-                holder.getTitle().setText(media.getTitle());
-                holder.itemView.setAlpha(1f);
-                break;
-        }
 
-        // Dialogue d'édition du flag pour une piste
-        holder.itemView.setOnClickListener(view -> {
+        // Bouton flag de l'élément
+        ImageButton flagBtn = holder.itemView.findViewById(R.id.flagBtn);
+        flagBtn.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
-                    SingleTrackDialogFragment dialog = new SingleTrackDialogFragment();
-                    dialog.setId(media.getId());
-                    dialog.show(activity.getSupportFragmentManager(), "singleTrackFlagEditor");
+                    SingleTrackDialogFragment dialog3 = new SingleTrackDialogFragment();
+                    dialog3.setId(media.getId());
+                    dialog3.show(activity.getSupportFragmentManager(), "singleTrackFlagEditor");
                     break;
-                case 2:
-                    listLevel = 3;
-                    getAlbumTracks(media.getAlbumKey());
-                    break;
-                case 1:
-                    listLevel = 2;
-                    getAlbums(media.getArtist());
-                    break;
-                default:
-                    changeDb(media.getId());
-                    listLevel = 1;
-                    getArtists();
-                    break;
-            }
-        });
-
-        // Dialogue d'édition du flag de toutes les pistes
-        holder.itemView.setOnLongClickListener(view -> {
-            switch (listLevel) {
                 case 2:
                     AllTracksDialogFragment dialog2 = new AllTracksDialogFragment();
                     dialog2.setList(2, media.getAlbum(), media.getAlbumKey());
@@ -140,9 +95,75 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     dialog.show(activity.getSupportFragmentManager(), "allTrackFlagEditor");
                     break;
             }
-            return true;
         });
 
+        // Bouton play de l'élément
+        ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
+        playBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(activity, MediaPlaybackService.class);
+            intent.putExtra("mediaId", media.getId());
+            intent.setAction("play");
+            activity.startService(intent);
+        });
+
+        // Affichage élément
+        switch (listLevel) {
+            case 3:
+                String nb = "";
+                if (media.getTrackNb() != null) {
+                    nb = media.getTrackNb() + ". ";
+                }
+                String title = nb + media.getTitle();
+                holder.getTitle().setText(title);
+                holder.itemView.setId(media.getId());
+                if (media.getFlag().equals("read")) {
+                    holder.itemView.setAlpha(0.5f);
+                }
+                else {
+                    holder.itemView.setAlpha(1f);
+                }
+                playBtn.setVisibility(View.INVISIBLE);
+                break;
+            case 2:
+                holder.getTitle().setText(media.getAlbum());
+                holder.itemView.setAlpha(1f);
+                playBtn.setVisibility(View.INVISIBLE);
+                break;
+            case 1:
+                holder.getTitle().setText(media.getArtist());
+                holder.itemView.setAlpha(1f);
+                playBtn.setVisibility(View.INVISIBLE);
+                break;
+            default:
+                holder.getTitle().setText(media.getTitle());
+                holder.itemView.setAlpha(1f);
+                playBtn.setVisibility(View.VISIBLE);
+                break;
+        }
+
+        // Création de liste dynamique
+        holder.itemView.setOnClickListener(view -> {
+            switch (listLevel) {
+                case 3:
+
+                    break;
+                case 2:
+                    listLevel = 3;
+                    getAlbumTracks(media.getAlbumKey());
+                    break;
+                case 1:
+                    listLevel = 2;
+                    getAlbums(media.getArtist());
+                    break;
+                default:
+                    changeDb(media.getId());
+                    listLevel = 1;
+                    getArtists();
+                    break;
+            }
+        });
+
+        // Bouton de navigation de retour
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.setOnClickListener(view -> {
             switch (listLevel) {
