@@ -96,9 +96,11 @@ public class DbService implements Observer<WorkInfo> {
                             OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                                     .setInputData(
                                             new Data.Builder()
+                                                    .putBoolean("amp", true)
                                                     .putString("dbName", dbName)
                                                     .putInt("catalogId", Integer.parseInt(value))
                                                     .putString("catalogName", key)
+                                                    .putBoolean("test", test)
                                                     .build()
                                     )
                                     .addTag("db")
@@ -127,6 +129,7 @@ public class DbService implements Observer<WorkInfo> {
                             new Data.Builder()
                                     .putBoolean("amp", false)
                                     .putString("dbName", dbName)
+                                    .putBoolean("test", test)
                                     .build()
                     )
                     .addTag("db")
@@ -136,6 +139,55 @@ public class DbService implements Observer<WorkInfo> {
         }
 
         catCounter = 0;
+        dbSignalListener.onScanStart();
+    }
+
+    public void scanCatalog(String catId, String catName) {
+        AmpSession ampSession = AmpSession.getInstance(context);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+        executor.execute(() -> {
+            try {
+                ampSession.connect();
+            } catch (Exception e) {
+                dbSignalListener.onError(e.getMessage());
+                return;
+            }
+            handler.post(() -> {
+                try {
+                    WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                            .setInputData(
+                                    new Data.Builder()
+                                            .putBoolean("amp", true)
+                                            .putString("dbName", AmpSession.getInstance(context).dbName())
+                                            .putInt("catalogId", Integer.parseInt(catId))
+                                            .putString("catalogName", catName)
+                                            .build()
+                            )
+                            .addTag("db")
+                            .build();
+                    WorkManager.getInstance(context).enqueue(workRequest);
+                    WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
+                } catch (Exception e) {
+                    dbSignalListener.onError(e.getMessage());
+                }
+            });
+        });
+        dbSignalListener.onScanStart();
+    }
+
+    public void scanCollection() {
+        WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
+                .setInputData(
+                        new Data.Builder()
+                                .putBoolean("amp", false)
+                                .putString("dbName", DAOBase.DEFAULT_NAME)
+                                .build()
+                )
+                .addTag("db")
+                .build();
+        WorkManager.getInstance(context).enqueue(workRequest);
+        WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
         dbSignalListener.onScanStart();
     }
 

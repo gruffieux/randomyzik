@@ -16,10 +16,15 @@ import androidx.recyclerview.widget.RecyclerView;
 public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     protected int id;
     protected MediaDAO dao;
+    protected String dbName;
     protected MainActivity activity;
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
     }
 
     private void resetFlag() {
@@ -44,7 +49,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        dao = new MediaDAO(getContext(), activity.dbName);
+        dao = new MediaDAO(getContext(), dbName);
 
         dao.open();
         SQLiteCursor cursor = dao.getFromId(id);

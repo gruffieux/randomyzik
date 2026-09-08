@@ -4,7 +4,6 @@ import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
@@ -14,7 +13,6 @@ import android.provider.MediaStore;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
-import androidx.preference.PreferenceManager;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.WorkManager;
@@ -34,9 +32,8 @@ public class DbWorker extends Worker {
     @Override
     public Result doWork() {
         boolean updated = false;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean amp = prefs.getBoolean("amp", false);
-        boolean test = prefs.getBoolean("test", false);
+        boolean amp = getInputData().getBoolean("amp", false);
+        boolean test = getInputData().getBoolean("test", false);
         String dbName = getInputData().getString("dbName");
         String catalogName = getInputData().getString("catalogName");
         int catalogId = getInputData().getInt("catalogId", 0);

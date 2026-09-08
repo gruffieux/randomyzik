@@ -215,7 +215,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 mediaId = "AMP_" + id;
             }
-            session.getController().getTransportControls().playFromMediaId(mediaId, null);
+            session.getController().getTransportControls().playFromMediaId(mediaId, extra);
         }
 
         // Arrêt forcé, on sauve la piste en cours

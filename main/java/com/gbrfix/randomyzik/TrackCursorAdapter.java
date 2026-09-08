@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
     private int listLevel;
     private final ArrayList<Media> localDataSet;
-    private String artist, album;
+    private String artist, album, dbName;
     private final MainActivity activity;
 
     /**
@@ -76,21 +76,25 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 case 3:
                     SingleTrackDialogFragment dialog3 = new SingleTrackDialogFragment();
                     dialog3.setId(media.getId());
+                    dialog3.setDbName(dbName);
                     dialog3.show(activity.getSupportFragmentManager(), "singleTrackFlagEditor");
                     break;
                 case 2:
                     AllTracksDialogFragment dialog2 = new AllTracksDialogFragment();
                     dialog2.setList(2, media.getAlbum(), media.getAlbumKey());
+                    dialog2.setDbName(dbName);
                     dialog2.show(activity.getSupportFragmentManager(), "albumTrackFlagEditor");
                     break;
                 case 1:
                     AllTracksDialogFragment dialog1 = new AllTracksDialogFragment();
                     dialog1.setList(1, media.getArtist(), media.getArtist());
+                    dialog1.setDbName(dbName);
                     dialog1.show(activity.getSupportFragmentManager(), "artistTrackFlagEditor");
                     break;
                 default:
                     changeDb(media.getId());
                     AllTracksDialogFragment dialog = new AllTracksDialogFragment();
+                    dialog.setDbName(dbName);
                     dialog.setList(0, media.getTitle(), String.valueOf(media.getId()));
                     dialog.show(activity.getSupportFragmentManager(), "allTrackFlagEditor");
                     break;
@@ -104,6 +108,16 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             intent.putExtra("mediaId", media.getId());
             intent.setAction("play");
             activity.startService(intent);
+        });
+
+        // Bouton rescan de l'élément
+        ImageButton rescanBtn = holder.itemView.findViewById(R.id.rescanBtn);
+        rescanBtn.setOnClickListener(view -> {
+            if (media.getId() == 0) {
+                activity.dbService.scanCollection();
+            } else {
+                activity.dbService.scanCatalog(String.valueOf(media.getId()), media.getTitle());
+            }
         });
 
         // Affichage élément
@@ -123,21 +137,25 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     holder.itemView.setAlpha(1f);
                 }
                 playBtn.setVisibility(View.INVISIBLE);
+                rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             case 2:
                 holder.getTitle().setText(media.getAlbum());
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
+                rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             case 1:
                 holder.getTitle().setText(media.getArtist());
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
+                rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             default:
                 holder.getTitle().setText(media.getTitle());
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.VISIBLE);
+                rescanBtn.setVisibility(View.VISIBLE);
                 break;
         }
 
@@ -145,7 +163,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         holder.itemView.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
-
                     break;
                 case 2:
                     listLevel = 3;
@@ -204,7 +221,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         this.album = album;
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
-        MediaDAO dao = new MediaDAO(activity, activity.dbName);
+        MediaDAO dao = new MediaDAO(activity, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getAlbumTracks(album);
         localDataSet.clear();
@@ -224,7 +241,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         this.artist = artist;
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
-        MediaDAO dao = new MediaDAO(activity, activity.dbName);
+        MediaDAO dao = new MediaDAO(activity, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getAlbums(artist);
         localDataSet.clear();
@@ -241,7 +258,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     public void getArtists() {
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
-        MediaDAO dao = new MediaDAO(activity, activity.dbName);
+        MediaDAO dao = new MediaDAO(activity, dbName);
         dao.open();
         SQLiteCursor cursor = dao.getArtists();
         localDataSet.clear();
@@ -296,10 +313,12 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
     private void changeDb(int id) {
         if (id == 0) {
-            activity.dbName = DAOBase.DEFAULT_NAME;
+            dbName = DAOBase.DEFAULT_NAME;
         } else {
             try {
-                activity.dbName = AmpSession.getInstance(activity).dbName();
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+                String server = prefs.getString("amp_server", "");
+                dbName = AmpRepository.dbName(server, String.valueOf(id));
             } catch (MalformedURLException e) {
                 throw new RuntimeException(e);
             }

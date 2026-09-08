@@ -54,13 +54,13 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     final int MY_PERSMISSIONS_REQUEST_STORAGE = 1;
-    public final static int NOTIFICATION_ID = 2;
+    final static int NOTIFICATION_ID = 2;
     final static String NOTIFICATION_CHANNEL = "Information channel";
     DbService dbService = null;
-    MediaBrowserCompat mediaBrowser = null;
-    SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
-    int currentId = 0;
-    String dbName = DAOBase.DEFAULT_NAME;
+    private MediaBrowserCompat mediaBrowser = null;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
+    private int currentId = 0;
+    private String dbName = DAOBase.DEFAULT_NAME;
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
