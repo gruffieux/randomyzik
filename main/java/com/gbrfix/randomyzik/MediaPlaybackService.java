@@ -209,13 +209,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Lecture d'une playlist
         if (Objects.equals(intent.getAction(), "play")) {
-            Bundle extra = intent.getExtras();
-            int id = extra != null ? extra.getInt("mediaId", 0) : 0;
+            Bundle extras = intent.getExtras();
+            int id = extras != null ? extras.getInt("mediaId", 0) : 0;
             String mediaId = "MUSIC_FOLDER";
             if (id > 0) {
                 mediaId = "AMP_" + id;
             }
-            session.getController().getTransportControls().playFromMediaId(mediaId, extra);
+            session.getController().getTransportControls().playFromMediaId(mediaId, extras);
         }
 
         // Arrêt forcé, on sauve la piste en cours
@@ -680,6 +680,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
+            session.getController().getTransportControls().stop();
 
             if (mediaId.equals("MUSIC_FOLDER")) {
                 editor.putBoolean("amp", false);
@@ -693,7 +694,14 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
             editor.apply();
             init();
-            session.getController().getTransportControls().stop();
+
+            int selectId = extras != null ? extras.getInt("selectId") : 0;
+            if (selectId > 0) {
+                progress.stop();
+                provider.setSelectId(selectId);
+                provider.setPosition(0);
+            }
+
             session.getController().getTransportControls().play();
         }
 
@@ -760,7 +768,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 myNoisyAudioRegistred = false;
             }
 
-            if (session.isActive()) {
+            if (streaming && session.isActive()) {
                 Executors.newSingleThreadExecutor().execute(() -> {
                     AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                     try {

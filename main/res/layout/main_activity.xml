@@ -10,7 +10,6 @@
     android:background="@color/colorPrimaryDark" >
 
     <androidx.recyclerview.widget.RecyclerView
-        android:background="@color/colorPrimary"
         android:id="@+id/playlist"
         android:layout_width="0dp"
         android:layout_height="0dp"

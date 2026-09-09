@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="2dp" >
@@ -9,7 +10,7 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardBackgroundColor="@color/colorPrimaryDark"
+        app:cardBackgroundColor="@color/colorSecondaryDark"
         app:cardCornerRadius="8dp"
         app:cardElevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -42,6 +43,7 @@
                 app:layout_constraintTop_toBottomOf="@+id/title"/>
 
             <ImageButton
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:id="@+id/playlistBtn"
                 android:visibility="invisible"
                 android:layout_width="32dp"
@@ -51,12 +53,14 @@
 
             <ImageButton
                 android:id="@+id/flagBtn"
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 app:srcCompat="@android:drawable/ic_menu_set_as"
                 app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
+                style="@style/Widget.AppCompat.Button.Borderless"
                 android:id="@+id/rescanBtn"
                 android:visibility="invisible"
                 android:layout_width="32dp"

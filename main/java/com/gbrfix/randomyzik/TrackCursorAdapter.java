@@ -24,7 +24,7 @@ import java.util.ArrayList;
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
-    private int listLevel;
+    private int listLevel, rootId;
     private final ArrayList<Media> localDataSet;
     private String artist, album, dbName;
     private final MainActivity activity;
@@ -36,14 +36,21 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView title;
 
+        private final TextView subtitle;
+
         public ViewHolder(View view) {
             super(view);
 
             title = view.findViewById(R.id.title);
+            subtitle = view.findViewById(R.id.subtitle);
         }
 
         public TextView getTitle() {
             return title;
+        }
+
+        public TextView getSubtitle() {
+            return subtitle;
         }
     }
 
@@ -104,10 +111,21 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // Bouton play de l'élément
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
         playBtn.setOnClickListener(view -> {
-            Intent intent = new Intent(activity, MediaPlaybackService.class);
-            intent.putExtra("mediaId", media.getId());
-            intent.setAction("play");
-            activity.startService(intent);
+            switch (listLevel) {
+                case 3:
+                    Intent intent3 = new Intent(activity, MediaPlaybackService.class);
+                    intent3.putExtra("mediaId", rootId);
+                    intent3.putExtra("selectId", media.getId());
+                    intent3.setAction("play");
+                    activity.startService(intent3);
+                    break;
+                case 0:
+                    Intent intent = new Intent(activity, MediaPlaybackService.class);
+                    intent.putExtra("mediaId", media.getId());
+                    intent.setAction("play");
+                    activity.startService(intent);
+                    break;
+            }
         });
 
         // Bouton rescan de l'élément
@@ -129,30 +147,39 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 }
                 String title = nb + media.getTitle();
                 holder.getTitle().setText(title);
+                holder.getSubtitle().setText(MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist()));
                 holder.itemView.setId(media.getId());
                 if (media.getFlag().equals("read")) {
                     holder.itemView.setAlpha(0.5f);
+                    playBtn.setVisibility(View.INVISIBLE);
                 }
                 else {
                     holder.itemView.setAlpha(1f);
+                    playBtn.setVisibility(View.VISIBLE);
                 }
-                playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             case 2:
                 holder.getTitle().setText(media.getAlbum());
+                holder.getSubtitle().setText(activity.getString(R.string.switch_mode_album));
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             case 1:
                 holder.getTitle().setText(media.getArtist());
+                holder.getSubtitle().setText("Artist");
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 break;
             default:
                 holder.getTitle().setText(media.getTitle());
+                if (media.getId() == 0) {
+                    holder.getSubtitle().setText(activity.getString(R.string.auto_item1));
+                } else {
+                    holder.getSubtitle().setText(activity.getString(R.string.amp_catalog));
+                }
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.VISIBLE);
                 rescanBtn.setVisibility(View.VISIBLE);
@@ -173,7 +200,8 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     getAlbums(media.getArtist());
                     break;
                 default:
-                    changeDb(media.getId());
+                    rootId = media.getId();
+                    changeDb(rootId);
                     listLevel = 1;
                     getArtists();
                     break;
@@ -231,6 +259,8 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             media.setFlag(cursor.getString(1));
             media.setTrackNb(cursor.getString(2));
             media.setTitle(cursor.getString(3));
+            media.setAlbum(cursor.getString(4));
+            media.setArtist(cursor.getString(5));
             localDataSet.add(media);
         }
         dao.close();
