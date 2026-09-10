@@ -244,12 +244,13 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setMode(extras.getInt("mode"));
         }
 
-        if (action.equals("singleTrack")) {
+        // DEPRACATED
+        /*if (action.equals("singleTrack")) {
             progress.stop();
             provider.setSelectId(extras.getInt("id"));
             provider.setPosition(0);
             session.getController().getTransportControls().play();
-        }
+        }*/
 
         if (action.equals("stop")) {
             session.getController().getTransportControls().stop();
@@ -680,8 +681,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
-            session.getController().getTransportControls().stop();
 
+            // Change settings and reinit the service
             if (mediaId.equals("MUSIC_FOLDER")) {
                 editor.putBoolean("amp", false);
                 editor.putBoolean("amp_streaming", false);
@@ -691,17 +692,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 editor.putBoolean("amp_streaming", true);
                 editor.putString("amp_catalog", catId);
             }
-
             editor.apply();
             init();
 
+            // Selected track
             int selectId = extras != null ? extras.getInt("selectId") : 0;
             if (selectId > 0) {
                 progress.stop();
                 provider.setSelectId(selectId);
                 provider.setPosition(0);
+            } else {
+                session.getController().getTransportControls().stop();
             }
 
+            // Play collection, ampache catalog or selected track
             session.getController().getTransportControls().play();
         }
 
@@ -768,7 +772,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 myNoisyAudioRegistred = false;
             }
 
-            if (streaming && session.isActive()) {
+            // Disconnect ampache session
+            if (session.isActive()) {
                 Executors.newSingleThreadExecutor().execute(() -> {
                     AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                     try {
