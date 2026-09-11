@@ -38,9 +38,12 @@ import java.util.concurrent.Executors;
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
-    private int listLevel, rootId;
+    private int listLevel;
+    private int rootId;
+    private String artist;
+    private String album;
+    private String dbName;
     private final ArrayList<Media> localDataSet;
-    private String artist, album, dbName;
     private final MainActivity activity;
 
     /**
@@ -427,5 +430,44 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 throw new RuntimeException(e);
             }
         }
+    }
+    public String getAlbum() {
+        return album;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public String getDbName() {
+        return dbName;
+    }
+
+    public int getListLevel() {
+        return listLevel;
+    }
+
+    public int getRootId() {
+        return rootId;
+    }
+
+    public void setAlbum(String album) {
+        this.album = album;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    public void setListLevel(int listLevel) {
+        this.listLevel = listLevel;
+    }
+
+    public void setRootId(int rootId) {
+        this.rootId = rootId;
     }
 }

@@ -47,7 +47,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.util.Log;
 
-import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -60,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     private MediaBrowserCompat mediaBrowser = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     private int currentId = 0;
-    private String dbName = DAOBase.DEFAULT_NAME;
+    //private String dbName = DAOBase.DEFAULT_NAME;
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
@@ -390,27 +389,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (catalog.equals("0")) {
                 infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
             } else {
-                try {
+                /*try {
                     dbName = AmpRepository.dbName(server, catalog);
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
-                }
+                }*/
                 dbService.check();
             }
             if (!streaming) {
                 ignoreBatteryOptimization();
             }
         } else {
-            dbName = DAOBase.DEFAULT_NAME;
+            //dbName = DAOBase.DEFAULT_NAME;
             dbService.check();
-        }
-
-        // Refresh playlist
-        // TODO: Sauver la liste courante (listLevel)
-        RecyclerView listView = findViewById(R.id.playlist);
-        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-        if (adapter != null) {
-            adapter.getCurrent();
         }
 
         if (mediaBrowser != null) {
@@ -466,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbService = new DbService(this);
                 dbService.register();
 
-                dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
+                //dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
 
                 // Cursor adapter pour la listeView
                 TrackCursorAdapter adapter = new TrackCursorAdapter(this);
@@ -595,11 +586,34 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onSaveInstanceState(Bundle bundle) {
         super.onSaveInstanceState(bundle);
+
+        RecyclerView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+
+        if (adapter != null) {
+            bundle.putString("listDb", adapter.getDbName());
+            bundle.putInt("listLevel", adapter.getListLevel());
+            bundle.putInt("listRoot", adapter.getRootId());
+            bundle.putString("listArtist", adapter.getArtist());
+            bundle.putString("listAlbum", adapter.getAlbum());
+        }
     }
 
     @Override
     public void onRestoreInstanceState(Bundle bundle) {
         super.onRestoreInstanceState(bundle);
+
+        RecyclerView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+
+        if (adapter != null) {
+            adapter.setDbName(bundle.getString("listDb"));
+            adapter.setListLevel(bundle.getInt("listLevel"));
+            adapter.setRootId(bundle.getInt("listRoot"));
+            adapter.setArtist(bundle.getString("listArtist"));
+            adapter.setAlbum(bundle.getString("listAlbum"));
+            adapter.getCurrent();
+        }
     }
 
     @Override
