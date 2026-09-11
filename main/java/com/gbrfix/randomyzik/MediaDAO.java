@@ -27,7 +27,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAlbums(String artist) {
-        String sql = "SELECT `album`, `album_key` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
+        String sql = "SELECT `album`, `album_key`, `media_id` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, new String[] {artist});
     }
@@ -51,7 +51,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getArtists() {
-        String sql = "SELECT `artist` FROM `medias` GROUP BY `artist`;";
+        String sql = "SELECT `artist`, `media_id` FROM `medias` GROUP BY `artist`;";
 
         return (SQLiteCursor)this.db.rawQuery(sql, null);
     }

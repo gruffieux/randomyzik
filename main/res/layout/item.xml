@@ -42,6 +42,14 @@
                 app:layout_constraintStart_toEndOf="@+id/rescanBtn"
                 app:layout_constraintTop_toBottomOf="@+id/title"/>
 
+            <ImageView
+                android:id="@+id/mediaIcon"
+                android:visibility="invisible"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                app:layout_constraintStart_toEndOf="@+id/flagBtn"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <ImageButton
                 style="@style/Widget.AppCompat.Button.Borderless"
                 android:id="@+id/playlistBtn"

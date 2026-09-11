@@ -1,22 +1,36 @@
 package com.gbrfix.randomyzik;
 
+import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.MediaStore;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 11.08.2017.
@@ -38,11 +52,14 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         private final TextView subtitle;
 
+        private final ImageView mediaIcon;
+
         public ViewHolder(View view) {
             super(view);
 
             title = view.findViewById(R.id.title);
             subtitle = view.findViewById(R.id.subtitle);
+            mediaIcon = view.findViewById(R.id.mediaIcon);
         }
 
         public TextView getTitle() {
@@ -51,6 +68,57 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         public TextView getSubtitle() {
             return subtitle;
+        }
+
+        public ImageView getMediaIcon() {
+            return mediaIcon;
+        }
+
+        public void loadThumbnail(int mediaId, int rootId, MainActivity fragment) {
+            if (rootId == 0) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId
+                    );
+                    try {
+                        Bitmap thumbnail = fragment.getContentResolver().loadThumbnail(uri, new Size(48, 48), null);
+                        mediaIcon.setImageBitmap(thumbnail);
+                        mediaIcon.setVisibility(View.VISIBLE);
+                    } catch (IOException e) {
+                        mediaIcon.setVisibility(View.INVISIBLE);
+                    }
+                }
+            } else {
+                AmpSession ampSession = AmpSession.getInstance(fragment);
+                ExecutorService executor = Executors.newSingleThreadExecutor();
+                try {
+                    if (ampSession.hasValidAuth()) {
+                        String url = ampSession.get_art_url(mediaId);
+                        Glide.with(fragment).load(url).into(mediaIcon);
+                        mediaIcon.setVisibility(View.VISIBLE);
+                    } else {
+                        Handler handler = new Handler(Looper.getMainLooper());
+                        executor.execute(() -> {
+                            try {
+                                ampSession.connect();
+                            } catch (Exception e) {
+                                mediaIcon.setVisibility(View.INVISIBLE);
+                                return;
+                            }
+                            handler.post(() -> {
+                                try {
+                                    String url = ampSession.get_art_url(mediaId);
+                                    Glide.with(fragment).load(url).into(mediaIcon);
+                                    mediaIcon.setVisibility(View.VISIBLE);
+                                } catch (Exception e) {
+                                    mediaIcon.setVisibility(View.INVISIBLE);
+                                }
+                            });
+                        });
+                    }
+                } catch (ParseException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
@@ -158,6 +226,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     playBtn.setVisibility(View.VISIBLE);
                 }
                 rescanBtn.setVisibility(View.INVISIBLE);
+                holder.getMediaIcon().setVisibility(View.INVISIBLE);
                 break;
             case 2:
                 holder.getTitle().setText(media.getAlbum());
@@ -165,6 +234,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
+                holder.loadThumbnail(media.getMediaId(), rootId, activity);
                 break;
             case 1:
                 holder.getTitle().setText(media.getArtist());
@@ -172,6 +242,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
+                holder.loadThumbnail(media.getMediaId(), rootId, activity);
                 break;
             default:
                 holder.getTitle().setText(media.getTitle());
@@ -183,6 +254,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.VISIBLE);
                 rescanBtn.setVisibility(View.VISIBLE);
+                holder.getMediaIcon().setVisibility(View.INVISIBLE);
                 break;
         }
 
@@ -279,6 +351,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             Media media = new Media();
             media.setAlbum(cursor.getString(0));
             media.setAlbumKey(cursor.getString(1));
+            media.setMediaId(cursor.getInt(2));
             localDataSet.add(media);
         }
         dao.close();
@@ -295,6 +368,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         while (cursor.moveToNext()) {
             Media media = new Media();
             media.setArtist(cursor.getString(0));
+            media.setMediaId(cursor.getInt(1));
             localDataSet.add(media);
         }
         dao.close();
