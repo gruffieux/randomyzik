@@ -343,14 +343,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
         switch (item.getItemId()) {
             case R.id.action_settings:
                 Intent settingsIntent = new Intent(this, SettingsActivity.class);
                 startActivity(settingsIntent);
                 return true;
-            case R.id.action_rescan:
+            /*case R.id.action_rescan:
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
                 boolean amp = prefs.getBoolean("amp", false);
                 if (amp) {
                     RescanDialogFragment dialog = new RescanDialogFragment();
@@ -358,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 } else {
                     dbService.scan(false, "0");
                 }
-                return true;
+                return true;*/
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -524,7 +523,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // Sélection de la piste en cours
-        TextView trackInfo = findViewById(R.id.infoMsg);
+        // TODO: Rechercher depuis la liste des pistes et remonter à la racine de la liste
+        /*TextView trackInfo = findViewById(R.id.infoMsg);
         trackInfo.setOnClickListener(v -> {
             if (currentId > 0) {
                 TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
@@ -533,7 +533,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     listView.scrollToPosition(pos);
                 }
             }
-        });
+        });*/
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }

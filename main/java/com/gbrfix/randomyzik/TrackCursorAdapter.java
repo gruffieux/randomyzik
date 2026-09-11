@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 11.08.2017.
- * TODO: Rename class
+ * TODO: A renommer
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
@@ -234,15 +234,30 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             case 2:
                 holder.getTitle().setText(media.getAlbum());
                 holder.getSubtitle().setText(activity.getString(R.string.switch_mode_album));
-                holder.itemView.setAlpha(1f);
+                MediaDAO dao2 = new MediaDAO(activity, dbName);
+                dao2.open();
+                SQLiteCursor cursor2 = dao2.getFlagFromAlbum("unread", media.getAlbumKey());
+                if (cursor2.getCount() > 0) {
+                    holder.itemView.setAlpha(1f);
+                } else {
+                    holder.itemView.setAlpha(0.5f);
+                }
+                dao2.close();
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 holder.loadThumbnail(media.getMediaId(), rootId, activity);
                 break;
             case 1:
                 holder.getTitle().setText(media.getArtist());
-                holder.getSubtitle().setText("Artist");
-                holder.itemView.setAlpha(1f);
+                holder.getSubtitle().setText(activity.getString(R.string.item_artist));
+                MediaDAO dao1 = new MediaDAO(activity, dbName);
+                dao1.open();
+                SQLiteCursor cursor1 = dao1.getFlagFromArtist("unread", media.getArtist());
+                if (cursor1.getCount() > 0) {
+                    holder.itemView.setAlpha(1f);
+                } else {
+                    holder.itemView.setAlpha(0.5f);
+                }dao1.close();
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 holder.loadThumbnail(media.getMediaId(), rootId, activity);
@@ -252,7 +267,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 if (media.getId() == 0) {
                     holder.getSubtitle().setText(activity.getString(R.string.auto_item1));
                 } else {
-                    holder.getSubtitle().setText(activity.getString(R.string.amp_catalog));
+                    holder.getSubtitle().setText(activity.getString(R.string.item_catalog));
                 }
                 holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.VISIBLE);

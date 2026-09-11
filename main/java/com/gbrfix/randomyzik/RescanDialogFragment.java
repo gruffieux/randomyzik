@@ -10,6 +10,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+/**
+ * Created by gab on 14.10.2017.
+ * TODO: A supprimer (DEPRECATED)
+ */
+
 public class RescanDialogFragment extends DialogFragment {
     @NonNull
     @Override

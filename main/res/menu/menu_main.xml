@@ -8,9 +8,9 @@
         android:icon="@drawable/ic_action_settings"
         app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_rescan"
-        android:title="@string/action_rescan"
-        android:icon="@drawable/ic_action_rescan"
-        app:showAsAction="ifRoom" />
+<!--    <item-->
+<!--        android:id="@+id/action_rescan"-->
+<!--        android:title="@string/action_rescan"-->
+<!--        android:icon="@drawable/ic_action_rescan"-->
+<!--        app:showAsAction="ifRoom" />-->
 </menu>

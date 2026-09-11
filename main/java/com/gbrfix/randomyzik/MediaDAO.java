@@ -98,8 +98,12 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `media_id`=?;", new String[] {String.valueOf(media_id)});
     }
 
-    public SQLiteCursor getFromFlag(String flag) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=?;", new String[] {flag});
+    public SQLiteCursor getFlagFromAlbum(String flag, String albumKey) {
+        return (SQLiteCursor)this.db.rawQuery("SELECT flag FROM `medias` WHERE `flag`=? AND `album_key`=?;", new String[] {flag, albumKey});
+    }
+
+    public SQLiteCursor getFlagFromArtist(String flag, String artist) {
+        return (SQLiteCursor)this.db.rawQuery("SELECT flag FROM `medias` WHERE `flag`=? AND `artist`=?;", new String[] {flag, artist});
     }
 
     public SQLiteCursor getFromFlagAlbumGrouped(String flag) {
