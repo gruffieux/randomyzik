@@ -382,7 +382,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         // Scan database
         if (amp) {
-            String server = prefs.getString("amp_server", "");
+            //String server = prefs.getString("amp_server", "");
             String catalog = prefs.getString("amp_catalog", "0");
             boolean streaming = prefs.getBoolean("amp_streaming", false);
             if (catalog.equals("0")) {
@@ -401,6 +401,13 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         } else {
             //dbName = DAOBase.DEFAULT_NAME;
             dbService.check();
+        }
+
+        // Reload current playlist
+        RecyclerView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+        if (adapter != null) {
+            adapter.getCurrent();
         }
 
         if (mediaBrowser != null) {
