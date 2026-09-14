@@ -143,6 +143,9 @@ public class DbService implements Observer<WorkInfo> {
     }
 
     public void scanCatalog(String catId, String catName) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean test = prefs.getBoolean("test", false);
+
         AmpSession ampSession = AmpSession.getInstance(context);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         Handler handler = new Handler(Looper.getMainLooper());
@@ -159,7 +162,7 @@ public class DbService implements Observer<WorkInfo> {
                             .setInputData(
                                     new Data.Builder()
                                             .putBoolean("amp", true)
-                                            .putString("dbName", AmpSession.getInstance(context).dbName())
+                                            .putString("dbName", AmpSession.getInstance(context).dbName(catId, test))
                                             .putInt("catalogId", Integer.parseInt(catId))
                                             .putString("catalogName", catName)
                                             .build()

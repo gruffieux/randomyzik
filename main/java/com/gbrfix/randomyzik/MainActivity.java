@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     final static int NOTIFICATION_ID = 2;
     final static String NOTIFICATION_CHANNEL = "Information channel";
     DbService dbService = null;
-    private MediaBrowserCompat mediaBrowser = null;
+    MediaBrowserCompat mediaBrowser = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     private int currentId = 0;
     //private String dbName = DAOBase.DEFAULT_NAME;
@@ -293,14 +293,12 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (requestCode == MY_PERSMISSIONS_REQUEST_STORAGE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted, app can run
-                setContentView(R.layout.main_activity);
                 init(1);
                 if (mediaBrowser != null && !mediaBrowser.isConnected()) {
                     mediaBrowser.connect();
                 }
             } else {
                 // Permission denied, display info
-                setContentView(R.layout.main_activity);
                 init(0);
             }
         }
@@ -309,6 +307,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.main_activity);
+
+        // Cursor adapter pour la listeView
+        RecyclerView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = new TrackCursorAdapter(this);
+        adapter.getRoot();
+        listView.setLayoutManager(new LinearLayoutManager(this));
+        listView.setAdapter(adapter);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -329,8 +337,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             notificationManager.createNotificationChannel(channel);
         }
 
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.main_activity);
         init(1);
     }
 
@@ -382,25 +388,25 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         // Scan database
         if (amp) {
-            //String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "0");
             boolean streaming = prefs.getBoolean("amp_streaming", false);
+            /*String server = prefs.getString("amp_server", "");
+            String catalog = prefs.getString("amp_catalog", "0");
             if (catalog.equals("0")) {
                 infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
             } else {
-                /*try {
+                try {
                     dbName = AmpRepository.dbName(server, catalog);
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
-                }*/
+                }
                 dbService.check();
-            }
+            }*/
             if (!streaming) {
                 ignoreBatteryOptimization();
             }
         } else {
             //dbName = DAOBase.DEFAULT_NAME;
-            dbService.check();
+            //dbService.check();
         }
 
         // Reload current playlist
@@ -430,7 +436,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     protected void init(int perms) {
         // On récup les éléments de l'UI
-        RecyclerView listView = findViewById(R.id.playlist);
         ImageButton playBtn = findViewById(R.id.play);
         ImageButton rewBtn = findViewById(R.id.rew);
         ImageButton fwdBtn = findViewById(R.id.fwd);
@@ -448,8 +453,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
         boolean amp = prefs.getBoolean("amp", false);
-        String server = prefs.getString("amp_server", "");
-        String catalog = prefs.getString("amp_catalog", "0");
+        //String server = prefs.getString("amp_server", "");
+        //String catalog = prefs.getString("amp_catalog", "0");
 
         // Write test preference
         SharedPreferences.Editor editor = prefs.edit();
@@ -464,12 +469,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 dbService.register();
 
                 //dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-
-                // Cursor adapter pour la listeView
-                TrackCursorAdapter adapter = new TrackCursorAdapter(this);
-                adapter.getRoot();
-                listView.setLayoutManager(new LinearLayoutManager(this));
-                listView.setAdapter(adapter);
 
                 dbService.setDbSignalListener(new DbSignal() {
                     @Override
@@ -495,14 +494,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             }
                             playBtn.setEnabled(true);
                         });
-                        String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
+                        /*String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
                         if (catalogId != 0 && catalogId != Integer.parseInt(catalog1)) {
                             return;
-                        }
+                        }*/
                         if (!update) {
                             return;
                         }
-                        adapter.getCurrent();
+                        RecyclerView listView = findViewById(R.id.playlist);
+                        TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+                        if (adapter != null) {
+                            adapter.getCurrent();
+                        }
                     }
 
                     @Override
@@ -627,7 +630,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     protected void onDestroy() {
         super.onDestroy();
 
-        dbService.unregister();
+        if (dbService != null) {
+            dbService.unregister();
+        }
 
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
     }

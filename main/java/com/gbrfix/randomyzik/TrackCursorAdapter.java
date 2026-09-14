@@ -181,6 +181,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         // Bouton play de l'élément
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
+        playBtn.setEnabled(activity.mediaBrowser != null && activity.mediaBrowser.isConnected());
         playBtn.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
@@ -199,8 +200,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             }
         });
 
-        // Bouton rescan de l'élément
+        // Bouton scan de l'élément
         ImageButton rescanBtn = holder.itemView.findViewById(R.id.rescanBtn);
+        rescanBtn.setEnabled(activity.dbService != null);
         rescanBtn.setOnClickListener(view -> {
             if (media.getId() == 0) {
                 activity.dbService.scanCollection();
@@ -406,11 +408,13 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         String[] entries = prefs.getString("amp_catalog_entries", "").split(";");
         String[] values = prefs.getString("amp_catalog_values", "").split(";");
-        for (int i = 0; i < entries.length; i++) {
-            Media catalog = new Media();
-            catalog.setId(Integer.parseInt(values[i]));
-            catalog.setTitle(entries[i]);
-            localDataSet.add(catalog);
+        if (entries.length > 0 && !entries[0].isEmpty()) {
+            for (int i = 0; i < entries.length; i++) {
+                Media catalog = new Media();
+                catalog.setId(Integer.parseInt(values[i]));
+                catalog.setTitle(entries[i]);
+                localDataSet.add(catalog);
+            }
         }
 
         notifyDataSetChanged();

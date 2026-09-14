@@ -148,4 +148,13 @@ public class AmpSession extends AmpRepository {
         }
         return dbName;
     }
+
+    public String dbName(String catalog, boolean test) throws MalformedURLException {
+        String server = prefs.getString("amp_server", "");
+        String dbName = dbName(server, catalog);
+        if (test) {
+            return "test-" + dbName;
+        }
+        return dbName;
+    }
 }
