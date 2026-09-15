@@ -181,7 +181,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         // Bouton play de l'élément
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
-        playBtn.setEnabled(activity.mediaBrowser != null && activity.mediaBrowser.isConnected());
+        playBtn.setEnabled(activity.mediaBrowser != null);
         playBtn.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:

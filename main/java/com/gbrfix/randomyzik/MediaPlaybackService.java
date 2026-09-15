@@ -503,7 +503,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         args.putInt("code", 1);
         args.putString("message", msg);
         session.sendSessionEvent("onError", args);
-        
         session.getController().getTransportControls().skipToNext();
 
         return true;
@@ -675,14 +674,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         @Override
         public void onPlayFromMediaId(String mediaId, Bundle extras) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
-            SharedPreferences.Editor editor = prefs.edit();
             int id = provider.getCurrentId();
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
 
+            // Stop via onStop peut provoquer une erreur du mp
+            if (player.isPlaying()) {
+                player.stop();
+                progress.stop();
+            }
+
             // Change settings and reinit the service
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
+            SharedPreferences.Editor editor = prefs.edit();
             if (mediaId.equals("MUSIC_FOLDER")) {
                 editor.putBoolean("amp", false);
                 editor.putBoolean("amp_streaming", false);
@@ -692,7 +697,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 editor.putBoolean("amp_streaming", true);
                 editor.putString("amp_catalog", catId);
             }
-            editor.apply();
+            editor.commit(); // On bloque la thread volontairement avant l'initialisation
             init();
 
             // Selected track
@@ -701,8 +706,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 progress.stop();
                 provider.setSelectId(selectId);
                 provider.setPosition(0);
-            } else {
-                session.getController().getTransportControls().stop();
             }
 
             // Play collection, ampache catalog or selected track
@@ -744,6 +747,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onSkipToPrevious() {
             saveTrack(0, 0);
             progress.stop();
+            provider.setPosition(0);
             provider.setSelectId(provider.getCurrentId());
             session.getController().getTransportControls().play();
         }
@@ -752,6 +756,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         public void onSkipToNext() {
             saveTrack(0, 0);
             progress.stop();
+            provider.setPosition(0);
             provider.updateState("skip");
             session.getController().getTransportControls().play();
         }

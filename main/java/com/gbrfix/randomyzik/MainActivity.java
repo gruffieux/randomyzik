@@ -459,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         // Write test preference
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("test", false);
-        editor.apply();
+        editor.commit(); // On bloque la thread volontairement avant l'initialisation
 
         try {
             if (perms == 1) {
