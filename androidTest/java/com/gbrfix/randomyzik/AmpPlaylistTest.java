@@ -28,8 +28,6 @@ import java.util.Random;
 @RunWith(AndroidJUnit4.class)
 public class AmpPlaylistTest {
     private Context context;
-    private SharedPreferences prefs;
-    private SharedPreferences.Editor editor;
 
     @Rule
     public ActivityScenarioRule<TestActivity> rule = new ActivityScenarioRule<>(TestActivity.class);
@@ -37,20 +35,19 @@ public class AmpPlaylistTest {
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        editor = prefs.edit();
-        editor.putBoolean("test", true);
-        editor.putBoolean("amp", true);
-        editor.putBoolean("amp_api", true);
-        editor.putString("amp_server", AmpSessionTest.TEST_SERVER);
-        editor.putString("amp_api_key", AmpSessionTest.TEST_API_KEY);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("test", true)
+                .putBoolean("amp", true)
+                .putBoolean("amp_api", true)
+                .putString("amp_api_key", AmpSessionTest.TEST_API_KEY)
+                .putString("amp_server", AmpSessionTest.TEST_SERVER)
+                .commit();
     }
 
     @Test
     public void playStreaming() throws Exception {
-        editor.putBoolean("amp_streaming", true);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", true).commit();
 
         String dbName = AmpSession.getInstance(context).dbName();
         MediaDAO dao = new MediaDAO(context, dbName);
@@ -81,8 +78,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCanPlay() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
@@ -117,8 +114,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCannotPlay() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
@@ -148,8 +145,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCanPause() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
@@ -179,8 +176,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCannotPause() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
@@ -210,8 +207,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCanStop() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
@@ -241,8 +238,8 @@ public class AmpPlaylistTest {
 
     @Test
     public void localplayCannotStop() throws Exception {
-        editor.putBoolean("amp_streaming", false);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean("amp_streaming", false).commit();
 
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);

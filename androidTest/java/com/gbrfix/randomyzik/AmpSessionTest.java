@@ -26,23 +26,21 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class AmpSessionTest {
     private Context context;
-    private SharedPreferences prefs;
     public final static String TEST_SERVER = "http://raspberrypi/ampache";
-    //public final static String TEST_SERVER = "https://gbrfix.internet-box.ch/ampache";
-    public final static String TEST_API_KEY = "8c05c49211386831f09d701b7a29939d";
+    public final static String TEST_API_KEY = "6dc4d96e8470da10910d86747dd214f8";
 
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("amp_server", TEST_SERVER);
-        editor.putString("amp_api_key", TEST_API_KEY);
-        editor.commit();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putString("amp_api_key", AmpSessionTest.TEST_API_KEY)
+                .putString("amp_server", TEST_SERVER)
+                .commit();
     }
 
     @Test
     public void handshakeServerEmpty() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             AmpRepository.handshake("", apiKey);
@@ -55,6 +53,7 @@ public class AmpSessionTest {
 
     @Test
     public void handhsakeServerNull() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             AmpRepository.handshake(null, apiKey);
@@ -67,6 +66,7 @@ public class AmpSessionTest {
 
     @Test
     public void handhsakeServerWrong() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String apiKey = prefs.getString("amp_api_key", "");
         try {
             AmpRepository.handshake("http://raspberrypi/abc", apiKey);
@@ -79,6 +79,7 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeApiKeyEmpty() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "");
@@ -91,6 +92,7 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeApiKeyNull() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, null);
@@ -103,6 +105,7 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeApiKeyWrong() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "abc");
         try {
             Bundle data = AmpRepository.handshake(server, "");
@@ -115,6 +118,7 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeLoginBadUser() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "aaa", "1234");
@@ -127,6 +131,7 @@ public class AmpSessionTest {
 
     @Test
     public void handshakeLoginBadPwd() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, "admin", "1234");
@@ -139,6 +144,7 @@ public class AmpSessionTest {
 
     @Test
     public void pingInvalidToken() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.ping(server, "5bd8fda8a98db49473feb085d59d3a7e");
@@ -151,8 +157,9 @@ public class AmpSessionTest {
 
     @Test
     public void searchNoCatalog() {
-        String server = prefs.getString("amp_server", "");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String apiKey = prefs.getString("amp_api_key", "");
+        String server = prefs.getString("amp_server", "");
         try {
             Bundle data = AmpRepository.handshake(server, apiKey);
             String auth = data.getString("auth");

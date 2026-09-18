@@ -41,10 +41,20 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
+        private ExecutorService executor = Executors.newSingleThreadExecutor();
+        private void deconnect() {
+            executor.execute(() -> {
+                try {
+                    AmpSession ampSession = AmpSession.getInstance(getContext());
+                    ampSession.unconnect();
+                } catch (Exception e) {
+                    //throw new RuntimeException(e);
+                }
+            });
+        }
         private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref) {
             catalogsPref.setValue(prefs.getString("amp_catalog", "0"));
             catalogsPref.setEnabled(false);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
             Handler handler = new Handler(Looper.getMainLooper());
             executor.execute(() -> {
                 Map<String, String> cats;
@@ -71,6 +81,10 @@ public class SettingsActivity extends AppCompatActivity {
                     });
                 }
             });
+        }
+
+        private static String maskSecret(String value) {
+            return value.isEmpty() ? "" : "••••••••";
         }
 
         private void stopPlay() {
@@ -109,54 +123,54 @@ public class SettingsActivity extends AppCompatActivity {
                 apiKeyPref.setVisible(value);
                 userPref.setVisible(!value);
                 pwdPref.setVisible(!value);
-                loadCatalogs(prefs, catalogsPref);
                 stopPlay();
+                deconnect();
+                loadCatalogs(prefs, catalogsPref);
                 return true;
             });
 
             assert serverPref != null;
             serverPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 catalogsPref.setValue("0");
-                loadCatalogs(prefs, catalogsPref);
                 stopPlay();
+                deconnect();
+                loadCatalogs(prefs, catalogsPref);
                 return true;
             });
 
-            pwdPref.setSummaryProvider(preference -> {
-                String pwd = prefs.getString("amp_pwd", "");
-                StringBuilder sb = new StringBuilder();
-                for (int s = 0; s < pwd.length(); s++) {
-                    sb.append("*");
-                }
-                return sb.toString();
-            });
-
             userPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                loadCatalogs(prefs, catalogsPref);
                 stopPlay();
+                deconnect();
+                loadCatalogs(prefs, catalogsPref);
                 return true;
             });
 
             apiKeyPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                loadCatalogs(prefs, catalogsPref);
                 stopPlay();
+                deconnect();
+                loadCatalogs(prefs, catalogsPref);
                 return true;
             });
+            apiKeyPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
+            apiKeyPref.setSummaryProvider(preference -> maskSecret(prefs.getString("amp_api_key", "")));
 
             pwdPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                loadCatalogs(prefs, catalogsPref);
                 stopPlay();
+                deconnect();
+                loadCatalogs(prefs, catalogsPref);
                 return true;
             });
-
             pwdPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
+            pwdPref.setSummaryProvider(preference -> maskSecret(prefs.getString("amp_pwd", "")));
 
             assert ampSwitcher != null;
             ampSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
                 if ((boolean)newValue) {
                     loadCatalogs(prefs, catalogsPref);
+                } else {
+                    deconnect();
                 }
-                stopPlay();
                 return true;
             });
 

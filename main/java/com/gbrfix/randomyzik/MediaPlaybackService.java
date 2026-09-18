@@ -679,12 +679,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
             }
 
-            // Stop via onStop peut provoquer une erreur du mp
-            if (player.isPlaying()) {
-                player.stop();
-                progress.stop();
-            }
-
             // Change settings and reinit the service
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
             SharedPreferences.Editor editor = prefs.edit();
@@ -700,10 +694,15 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             editor.commit(); // On bloque la thread volontairement avant l'initialisation
             init();
 
+            // Stop current music
+            if (player.isPlaying()) {
+                session.getController().getTransportControls().stop();
+            }
+
             // Selected track
             int selectId = extras != null ? extras.getInt("selectId") : 0;
             if (selectId > 0) {
-                progress.stop();
+                //progress.stop();
                 provider.setSelectId(selectId);
                 provider.setPosition(0);
             }
@@ -775,20 +774,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             if (myNoisyAudioRegistred) {
                 unregisterReceiver(myNoisyAudioReceiver);
                 myNoisyAudioRegistred = false;
-            }
-
-            // Disconnect ampache session
-            if (session.isActive()) {
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                    try {
-                        ampSession.unconnect();
-                    } catch (Exception e) {
-                        Bundle args = new Bundle();
-                        args.putString("message", e.getMessage());
-                        session.sendSessionEvent("onError", args);
-                    }
-                });
             }
 
             // Upddate state

@@ -44,6 +44,8 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     private String album;
     private String dbName;
     private final ArrayList<Media> localDataSet;
+
+    private SharedPreferences prefs;
     private final MainActivity activity;
 
     /**
@@ -180,8 +182,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         });
 
         // Bouton play de l'élément
+        // On active le bouton seulement en streaming
+        // TODO: Trouver un moyen stable de lancer les listes en localplay
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
-        playBtn.setEnabled(activity.mediaBrowser != null);
+        playBtn.setEnabled(activity.mediaBrowser != null && prefs.getBoolean("amp_streaming", false));
         playBtn.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
