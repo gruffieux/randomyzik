@@ -244,14 +244,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             provider.setMode(extras.getInt("mode"));
         }
 
-        // DEPRACATED
-        /*if (action.equals("singleTrack")) {
-            progress.stop();
-            provider.setSelectId(extras.getInt("id"));
-            provider.setPosition(0);
-            session.getController().getTransportControls().play();
-        }*/
-
         if (action.equals("stop")) {
             session.getController().getTransportControls().stop();
         }
@@ -684,25 +676,20 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             SharedPreferences.Editor editor = prefs.edit();
             if (mediaId.equals("MUSIC_FOLDER")) {
                 editor.putBoolean("amp", false);
-                editor.putBoolean("amp_streaming", false);
             } else if (mediaId.startsWith("AMP_")) {
                 String catId = mediaId.substring(4);
                 editor.putBoolean("amp", true);
-                editor.putBoolean("amp_streaming", true);
                 editor.putString("amp_catalog", catId);
             }
             editor.commit(); // On bloque la thread volontairement avant l'initialisation
             init();
 
-            // Stop current music
-            if (player.isPlaying()) {
-                session.getController().getTransportControls().stop();
-            }
+            // Stop current music even in pause
+            session.getController().getTransportControls().stop();
 
             // Selected track
             int selectId = extras != null ? extras.getInt("selectId") : 0;
             if (selectId > 0) {
-                //progress.stop();
                 provider.setSelectId(selectId);
                 provider.setPosition(0);
             }

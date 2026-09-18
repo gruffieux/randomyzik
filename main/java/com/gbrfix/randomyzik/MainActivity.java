@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     MediaBrowserCompat mediaBrowser = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
     private int currentId = 0;
-    //private String dbName = DAOBase.DEFAULT_NAME;
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
@@ -389,24 +388,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         // Scan database
         if (amp) {
             boolean streaming = prefs.getBoolean("amp_streaming", false);
-            /*String server = prefs.getString("amp_server", "");
-            String catalog = prefs.getString("amp_catalog", "0");
-            if (catalog.equals("0")) {
-                infoNotification(0, getString(R.string.err_amp_cat_undefined), SettingsActivity.class);
-            } else {
-                try {
-                    dbName = AmpRepository.dbName(server, catalog);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                }
-                dbService.check();
-            }*/
             if (!streaming) {
                 ignoreBatteryOptimization();
             }
-        } else {
-            //dbName = DAOBase.DEFAULT_NAME;
-            //dbService.check();
         }
 
         // Reload current playlist
@@ -452,9 +436,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int mode = prefs.getInt("mode", MediaProvider.MODE_TRACK);
         modeBtn.setChecked(mode == MediaProvider.MODE_ALBUM);
-        boolean amp = prefs.getBoolean("amp", false);
-        //String server = prefs.getString("amp_server", "");
-        //String catalog = prefs.getString("amp_catalog", "0");
 
         // Write test preference
         SharedPreferences.Editor editor = prefs.edit();
@@ -467,8 +448,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
                 dbService = new DbService(this);
                 dbService.register();
-
-                //dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
 
                 dbService.setDbSignalListener(new DbSignal() {
                     @Override
@@ -494,10 +473,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             }
                             playBtn.setEnabled(true);
                         });
-                        /*String catalog1 = prefs.getString("amp_catalog", "0"); // Important! catalog doit devenir local
-                        if (catalogId != 0 && catalogId != Integer.parseInt(catalog1)) {
-                            return;
-                        }*/
                         if (!update) {
                             return;
                         }
