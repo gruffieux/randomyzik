@@ -14,25 +14,43 @@ public class MediaDAO extends DAOBase {
         super(context, name);
     }
 
-    public SQLiteCursor getAll() {
-        String sql = "SELECT `id`, `media_id`, `album_key`, `title`, `album`, `artist` FROM `medias`;";
+    public SQLiteCursor getAlbums(String artist) {
+        String query = "SELECT `album`, `album_key`, `media_id` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
 
-        return (SQLiteCursor)this.db.rawQuery(sql, null);
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {artist});
+    }
+
+    public SQLiteCursor getAll() {
+        String query = "SELECT `id`, `media_id`, `album_key`, `title`, `album`, `artist` FROM `medias`;";
+
+        return (SQLiteCursor)this.db.rawQuery(query, null);
     }
 
     public SQLiteCursor getAllOrdered() {
-        String sql = "SELECT `id` AS `_id`, `flag`, LTRIM(SUBSTR(`track_nb`, -3, 3), 0) AS `track_nb`, PRINTF(\"%03d\", `track_nb`) AS `track_sort`, `title`, `album`, `artist` FROM `medias` ORDER BY `artist`, `album_key`, `track_sort`;";
+        String query = "SELECT `id` AS `_id`, `flag`, LTRIM(SUBSTR(`track_nb`, -3, 3), 0) AS `track_nb`, PRINTF(\"%03d\", `track_nb`) AS `track_sort`, `title`, `album`, `artist` FROM `medias` ORDER BY `artist`, `album_key`, `track_sort`;";
 
-        return (SQLiteCursor)this.db.rawQuery(sql, null);
+        return (SQLiteCursor)this.db.rawQuery(query, null);
     }
 
-    public SQLiteCursor getAlbums(String artist) {
-        String sql = "SELECT `album`, `album_key`, `media_id` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
+    public SQLiteCursor getArtists() {
+        String query = "SELECT `artist`, `media_id` FROM `medias` GROUP BY `artist`;";
 
-        return (SQLiteCursor)this.db.rawQuery(sql, new String[] {artist});
+        return (SQLiteCursor)this.db.rawQuery(query, null);
     }
 
-    public SQLiteCursor getAlbumTracks(String album_key) {
+    public SQLiteCursor getFlagFromAlbum(String flag, String albumKey) {
+        String query = "SELECT flag FROM `medias` WHERE `flag`=? AND `album_key`=?;";
+
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag, albumKey});
+    }
+
+    public SQLiteCursor getFlagFromArtist(String flag, String artist) {
+        String query = "SELECT flag FROM `medias` WHERE `flag`=? AND `artist`=?;";
+
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag, artist});
+    }
+
+    public SQLiteCursor getFromAlbum(String album_key) {
         ArrayList<String> args = new ArrayList<>();
         String query = "SELECT `id`, `flag`, LTRIM(SUBSTR(`track_nb`, -3, 3), 0) AS `track_nb`, `title`, `album`, `artist`, PRINTF(\"%03d\", `track_nb`) AS `track_sort` FROM `medias` WHERE";
 
@@ -48,12 +66,6 @@ public class MediaDAO extends DAOBase {
         String[] arr = args.size() == 1 ? new String[] {args.get(0)} : null;
 
         return (SQLiteCursor) this.db.rawQuery(query, arr);
-    }
-
-    public SQLiteCursor getArtists() {
-        String sql = "SELECT `artist`, `media_id` FROM `medias` GROUP BY `artist`;";
-
-        return (SQLiteCursor)this.db.rawQuery(sql, null);
     }
 
     public SQLiteCursor getFromAlbum(String album_key, String flag) {
@@ -95,27 +107,27 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getFromMediaId(int media_id) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `media_id`=?;", new String[] {String.valueOf(media_id)});
-    }
+        String query = "SELECT * FROM `medias` WHERE `media_id`=?;";
 
-    public SQLiteCursor getFlagFromAlbum(String flag, String albumKey) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT flag FROM `medias` WHERE `flag`=? AND `album_key`=?;", new String[] {flag, albumKey});
-    }
-
-    public SQLiteCursor getFlagFromArtist(String flag, String artist) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT flag FROM `medias` WHERE `flag`=? AND `artist`=?;", new String[] {flag, artist});
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {String.valueOf(media_id)});
     }
 
     public SQLiteCursor getFromFlagAlbumGrouped(String flag) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album_key` ORDER BY `album_key`, `track_nb`, `artist`;", new String[] {flag});
+        String query = "SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album_key` ORDER BY `album_key`, `track_nb`, `artist`;";
+
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag});
     }
 
     public SQLiteCursor getFromId(int id) {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `id`=?;", new String[] {String.valueOf(id)});
+        String query = "SELECT * FROM `medias` WHERE `id`=?;";
+
+        return (SQLiteCursor)this.db.rawQuery(query, new String[] {String.valueOf(id)});
     }
 
     public SQLiteCursor getUnread() {
-        return (SQLiteCursor)this.db.rawQuery("SELECT * FROM `medias` WHERE `flag` != 'read';", null);
+        String query = "SELECT * FROM `medias` WHERE `flag` != 'read';";
+
+        return (SQLiteCursor)this.db.rawQuery(query, null);
     }
 
     public long insert(Media media) {
@@ -151,6 +163,12 @@ public class MediaDAO extends DAOBase {
         this.db.delete("medias", "`id`=?", new String[] {String.valueOf(id)});
     }
 
+    public void replaceFlag(String oldFlag, String newFlag) {
+        ContentValues values = new ContentValues();
+        values.put("flag", newFlag);
+        this.db.update("medias", values,  "`flag`=?", new String[] {oldFlag});
+    }
+
     public void updateFlag(int id, String flag) {
         ContentValues values = new ContentValues();
         values.put("flag", flag);
@@ -163,21 +181,15 @@ public class MediaDAO extends DAOBase {
         this.db.update("medias", values,  "`album_key`=?", new String[] {albumKey});
     }
 
-    public void updateFlagArtist(String artist, String flag) {
-        ContentValues values = new ContentValues();
-        values.put("flag", flag);
-        this.db.update("medias", values,  "`artist`=?", new String[] {artist});
-    }
-
     public void updateFlagAll(String flag) {
         ContentValues values = new ContentValues();
         values.put("flag", flag);
         this.db.update("medias", values, null, null);
     }
 
-    public void replaceFlag(String oldFlag, String newFlag) {
+    public void updateFlagArtist(String artist, String flag) {
         ContentValues values = new ContentValues();
-        values.put("flag", newFlag);
-        this.db.update("medias", values,  "`flag`=?", new String[] {oldFlag});
+        values.put("flag", flag);
+        this.db.update("medias", values,  "`artist`=?", new String[] {artist});
     }
 }

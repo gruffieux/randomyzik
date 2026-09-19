@@ -56,7 +56,7 @@
                 android:visibility="invisible"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                app:srcCompat="@drawable/ic_action_play"
+                app:srcCompat="@drawable/ic_action_playlist"
                 app:layout_constraintStart_toEndOf="@+id/flagBtn" />
 
             <ImageButton

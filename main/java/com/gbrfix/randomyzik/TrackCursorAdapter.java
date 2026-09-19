@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteCursor;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -34,7 +35,6 @@ import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 11.08.2017.
- * TODO: A renommer
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
@@ -186,7 +186,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // TODO: Trouver un moyen stable de lancer les listes en localplay
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
-        playBtn.setEnabled(activity.mediaBrowser != null && prefs.getBoolean("amp_streaming", false));
+        boolean enable = activity.mediaBrowser != null && prefs.getBoolean("amp_streaming", false);
+        playBtn.setEnabled(enable);
+        playBtn.setColorFilter(enable ? Color.WHITE : Color.GRAY);
         playBtn.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
@@ -207,7 +209,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         // Bouton scan de l'élément
         ImageButton rescanBtn = holder.itemView.findViewById(R.id.rescanBtn);
-        rescanBtn.setEnabled(activity.dbService != null);
+        enable = activity.dbService != null;
+        rescanBtn.setEnabled(enable);
+        rescanBtn.setColorFilter(enable ? Color.WHITE : Color.GRAY);
         rescanBtn.setOnClickListener(view -> {
             if (media.getId() == 0) {
                 activity.dbService.scanCollection();
@@ -348,7 +352,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         navBack.show();
         MediaDAO dao = new MediaDAO(activity, dbName);
         dao.open();
-        SQLiteCursor cursor = dao.getAlbumTracks(album);
+        SQLiteCursor cursor = dao.getFromAlbum(album);
         localDataSet.clear();
         while (cursor.moveToNext()) {
             Media media = new Media();
