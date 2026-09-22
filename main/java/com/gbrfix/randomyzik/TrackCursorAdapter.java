@@ -44,8 +44,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     private String album;
     private String dbName;
     private final ArrayList<Media> localDataSet;
-
-    private SharedPreferences prefs;
     private final MainActivity activity;
 
     /**
@@ -129,6 +127,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
     public TrackCursorAdapter(MainActivity activity) {
         listLevel = 0;
+        rootId = -1;
         localDataSet = new ArrayList<>();
         this.activity = activity;
     }
@@ -186,7 +185,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // TODO: Trouver un moyen stable de lancer les listes en localplay
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
-        boolean enable = activity.mediaBrowser != null && prefs.getBoolean("amp_streaming", false);
+        boolean enable = activity.mediaBrowser != null && ((rootId != 0 && media.getId() > 0) || prefs.getBoolean("amp_streaming", false));
         playBtn.setEnabled(enable);
         playBtn.setColorFilter(enable ? Color.WHITE : Color.GRAY);
         playBtn.setOnClickListener(view -> {
@@ -323,6 +322,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     break;
                 case 1:
                     listLevel = 0;
+                    rootId = -1;
                     getRoot();
                     break;
                 default:
