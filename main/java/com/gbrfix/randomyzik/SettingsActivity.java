@@ -41,7 +41,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
-        private ExecutorService executor = Executors.newSingleThreadExecutor();
+        private final ExecutorService executor = Executors.newSingleThreadExecutor();
         private void deconnect() {
             executor.execute(() -> {
                 try {
@@ -123,41 +123,41 @@ public class SettingsActivity extends AppCompatActivity {
                 apiKeyPref.setVisible(value);
                 userPref.setVisible(!value);
                 pwdPref.setVisible(!value);
+                stopPlay();
                 deconnect();
                 loadCatalogs(prefs, catalogsPref);
-                stopPlay();
                 return true;
             });
 
             assert serverPref != null;
             serverPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 catalogsPref.setValue("0");
+                stopPlay();
                 deconnect();
                 loadCatalogs(prefs, catalogsPref);
-                stopPlay();
                 return true;
             });
 
             userPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
                 deconnect();
                 loadCatalogs(prefs, catalogsPref);
-                stopPlay();
                 return true;
             });
 
             apiKeyPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
                 deconnect();
                 loadCatalogs(prefs, catalogsPref);
-                stopPlay();
                 return true;
             });
             apiKeyPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
             apiKeyPref.setSummaryProvider(preference -> maskSecret(prefs.getString("amp_api_key", "")));
 
             pwdPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
                 deconnect();
                 loadCatalogs(prefs, catalogsPref);
-                stopPlay();
                 return true;
             });
             pwdPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
@@ -165,12 +165,12 @@ public class SettingsActivity extends AppCompatActivity {
 
             assert ampSwitcher != null;
             ampSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
                 if ((boolean)newValue) {
                     loadCatalogs(prefs, catalogsPref);
                 } else {
                     deconnect();
                 }
-                stopPlay();
                 return true;
             });
 
