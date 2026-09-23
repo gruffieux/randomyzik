@@ -8,8 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -30,8 +28,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 11.08.2017.
@@ -92,22 +88,20 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 }
             } else {
                 AmpSession ampSession = AmpSession.getInstance(fragment);
-                ExecutorService executor = Executors.newSingleThreadExecutor();
                 try {
                     if (ampSession.hasValidAuth()) {
                         String url = ampSession.get_art_url(mediaId);
                         Glide.with(fragment).load(url).into(mediaIcon);
                         mediaIcon.setVisibility(View.VISIBLE);
                     } else {
-                        Handler handler = new Handler(Looper.getMainLooper());
-                        executor.execute(() -> {
+                        ampSession.getExecutor().execute(() -> {
                             try {
                                 ampSession.connect();
                             } catch (Exception e) {
                                 mediaIcon.setVisibility(View.INVISIBLE);
                                 return;
                             }
-                            handler.post(() -> {
+                            ampSession.getHandler().post(() -> {
                                 try {
                                     String url = ampSession.get_art_url(mediaId);
                                     Glide.with(fragment).load(url).into(mediaIcon);

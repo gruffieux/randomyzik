@@ -3,6 +3,8 @@ package com.gbrfix.randomyzik;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.preference.PreferenceManager;
 
@@ -16,17 +18,26 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class AmpSession extends AmpRepository {
     private String auth;
     private String expire;
     private final Context context;
     private final SharedPreferences prefs;
+    private final ExecutorService executor;
+    private final Handler handler;
+    private Future<?> task;
     private static AmpSession instance = null;
 
     private AmpSession(Context context) {
         this.context = context;
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        executor = Executors.newSingleThreadExecutor();
+        handler = new Handler(Looper.getMainLooper());
     }
 
     public static AmpSession getInstance(Context context) {
@@ -34,6 +45,29 @@ public class AmpSession extends AmpRepository {
             instance = new AmpSession(context);
         }
         return instance;
+    }
+
+    public ExecutorService getExecutor() {
+        return executor;
+    }
+
+    public Handler getHandler() {
+        return handler;
+    }
+
+    public void setTask(Future<?> task) {
+        this.task = task;
+    }
+
+    public void waitTaskComplete() {
+        if (task == null) {
+            return;
+        }
+        try {
+            task.get();
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean hasExpired() throws ParseException {

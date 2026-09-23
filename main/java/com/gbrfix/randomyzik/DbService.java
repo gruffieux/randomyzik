@@ -9,7 +9,6 @@ import android.database.ContentObserver;
 import android.database.sqlite.SQLiteCursor;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -23,8 +22,6 @@ import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 27.08.2017.
@@ -62,9 +59,7 @@ public class DbService implements Observer<WorkInfo> {
 
         if (amp && !onChange) {
             AmpSession ampSession = AmpSession.getInstance(context);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            Handler handler = new Handler(Looper.getMainLooper());
-            executor.execute(() -> {
+            ampSession.getExecutor().execute(() -> {
                 Map<String, String> cats;
                 try {
                     ampSession.connect();
@@ -74,7 +69,7 @@ public class DbService implements Observer<WorkInfo> {
                     return;
                 }
                 final Map<String, String> catalogs = cats;
-                handler.post(() -> {
+                ampSession.getHandler().post(() -> {
                     try {
                         catTotal = 0;
                         WorkContinuation workContinuation = null;
@@ -147,16 +142,14 @@ public class DbService implements Observer<WorkInfo> {
         boolean test = prefs.getBoolean("test", false);
 
         AmpSession ampSession = AmpSession.getInstance(context);
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Handler handler = new Handler(Looper.getMainLooper());
-        executor.execute(() -> {
+        ampSession.getExecutor().execute(() -> {
             try {
                 ampSession.connect();
             } catch (Exception e) {
                 dbSignalListener.onError(e.getMessage());
                 return;
             }
-            handler.post(() -> {
+            ampSession.getHandler().post(() -> {
                 try {
                     WorkRequest workRequest = new OneTimeWorkRequest.Builder(DbWorker.class)
                             .setInputData(

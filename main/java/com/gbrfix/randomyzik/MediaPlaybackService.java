@@ -27,8 +27,6 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import androidx.annotation.NonNull;
@@ -62,8 +60,6 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
@@ -85,9 +81,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private AudioFocusRequest focusRequest;
     private MediaSessionCallback mediaSessionCallback;
     private AmpSessionCallback ampSessionCallback;
-    private ExecutorService ampExecutor;
-    private Handler ampHandler;
-    private Future<?> ampTask;
     private boolean changeFocus = true;
     private boolean streaming = false;
 
@@ -188,10 +181,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         mediaSessionCallback = new MediaSessionCallback();
         ampSessionCallback = new AmpSessionCallback();
 
-        // Network tasks executor
-        ampExecutor = Executors.newSingleThreadExecutor();
-        ampHandler = new Handler(Looper.getMainLooper());
-
         init();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -265,7 +254,6 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
         session.release();
         player.release();
-        ampExecutor.shutdown();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -579,14 +567,12 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
                     // Prepare media player
                     if (streaming) {
-                        if (ampTask != null) {
-                            ampTask.get();
-                        }
                         AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                        ampSession.waitTaskComplete();
                         if (ampSession.hasValidAuth()) {
                             prepareMediaStreaming(media.getMediaId());
                         } else {
-                            ampExecutor.execute(() -> {
+                            ampSession.getExecutor().execute(() -> {
                                 try {
                                     ampSession.connect();
                                 } catch (Exception e) {
@@ -600,7 +586,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                                     session.sendSessionEvent("onError", args);
                                     return;
                                 }
-                                ampHandler.post(() -> {
+                                ampSession.getHandler().post(() -> {
                                     try {
                                         prepareMediaStreaming(media.getMediaId());
                                     } catch (IOException e) {
@@ -776,13 +762,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             }
 
             // Submit unconnection task
-            ampTask = ampExecutor.submit(() -> {
+            if (session.isActive()) {
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                try {
-                    ampSession.unconnect();
-                } catch (Exception e) {
-                }
-            });
+                Future<?> task = ampSession.getExecutor().submit(() -> {
+                    try {
+                        ampSession.unconnect();
+                    } catch (Exception e) {
+                    }
+                });
+                ampSession.setTask(task);
+            }
 
             // Upddate state
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
@@ -807,6 +796,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 startService(intent);
 
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
+                ampSession.waitTaskComplete();
 
                 if (!progress.isStarted()) {
                     final Media media = provider.selectTrack();
@@ -825,11 +815,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     session.setMetadata(metaDataBuilder.build());
 
                     // Start localplay
-                    ampExecutor.execute(() -> {
+                    ampSession.getExecutor().execute(() -> {
                         try {
-                            if (ampTask != null) {
-                                ampTask.get();
-                            }
                             if (!ampSession.hasValidAuth()) {
                                 ampSession.connect();
                             }
@@ -839,16 +826,16 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             loadMediaThumbnail(ampSession.get_art_url(media.getMediaId()));
                             ampSession.localplay_add(media.getMediaId());
                             ampSession.localplay_play();
-                            progress.start(duration, MediaPlaybackService.this);
-                            keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
                         }
-                        ampHandler.post(() -> {
+                        ampSession.getHandler().post(() -> {
                             session.setActive(true);
+                            progress.start(duration, MediaPlaybackService.this);
+                            keepAwake();
 
                             // Send session event
                             Bundle bundle = new Bundle();
@@ -870,22 +857,22 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     });
                 } else {
                     long position = session.getController().getPlaybackState().getPosition();
-                    ampExecutor.execute(() -> {
+                    ampSession.getExecutor().execute(() -> {
                         try {
                             if (!ampSession.hasValidAuth()) {
                                 ampSession.connect();
                             }
                             ampSession.checkAction("pause", mediaFromMetadata());
                             ampSession.localplay_play();
-                            progress.resume();
-                            keepAwake();
                         } catch (Exception e) {
                             Bundle args = new Bundle();
                             args.putString("message", e.getMessage());
                             session.sendSessionEvent("onError", args);
                             return;
                         }
-                        ampHandler.post(() -> {
+                        ampSession.getHandler().post(() -> {
+                            progress.resume();
+                            keepAwake();
                             stateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, position, 1.0f);
                             session.setPlaybackState(stateBuilder.build());
                             showNotification();
@@ -908,22 +895,22 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onPause() {
             AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-            ampExecutor.execute(() -> {
+            ampSession.getExecutor().execute(() -> {
                 try {
                     if (!ampSession.hasValidAuth()) {
                         ampSession.connect();
                     }
                     ampSession.checkAction("play", mediaFromMetadata());
                     ampSession.localplay_pause();
-                    progress.suspend();
-                    letSleep();
                 } catch (Exception e) {
                     Bundle args = new Bundle();
                     args.putString("message", e.getMessage());
                     session.sendSessionEvent("onError", args);
                     return;
                 }
-                ampHandler.post(() -> {
+                ampSession.getHandler().post(() -> {
+                    progress.suspend();
+                    letSleep();
                     int position = (int)session.getController().getPlaybackState().getPosition();
                     stateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, position, 0);
                     session.setPlaybackState(stateBuilder.build());
@@ -938,21 +925,24 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             progress.stop();
 
             // Submit unconnection task
-            ampTask = ampExecutor.submit(() -> {
+            if (session.isActive()) {
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                try {
-                    if (!ampSession.hasValidAuth()) {
-                        ampSession.connect();
+                Future<?> task = ampSession.getExecutor().submit(() -> {
+                    try {
+                        if (!ampSession.hasValidAuth()) {
+                            ampSession.connect();
+                        }
+                        ampSession.checkAction(null, mediaFromMetadata());
+                        ampSession.localplay_stop();
+                        ampSession.unconnect();
+                    } catch (Exception e) {
+                        Bundle args = new Bundle();
+                        args.putString("message", e.getMessage());
+                        session.sendSessionEvent("onError", args);
                     }
-                    ampSession.checkAction(null, mediaFromMetadata());
-                    ampSession.localplay_stop();
-                    ampSession.unconnect();
-                } catch (Exception e) {
-                    Bundle args = new Bundle();
-                    args.putString("message", e.getMessage());
-                    session.sendSessionEvent("onError", args);
-                }
-            });
+                });
+                ampSession.setTask(task);
+            }
 
             stateBuilder.setState(PlaybackStateCompat.STATE_STOPPED, 0, 0);
             session.setPlaybackState(stateBuilder.build());

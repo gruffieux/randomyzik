@@ -6,8 +6,6 @@ import android.database.sqlite.SQLiteCursor;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -22,8 +20,6 @@ import static junit.framework.Assert.fail;
 import org.junit.Assert;
 
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by gab on 16.03.2018.
@@ -322,16 +318,14 @@ public class TestActivity extends AppCompatActivity {
                                 break;
                             case "onTrackProgress":
                                 if (extras.getInt("position") == 1000) {
-                                    ExecutorService executor = Executors.newSingleThreadExecutor();
-                                    Handler handler = new Handler(Looper.getMainLooper());
                                     AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                                    executor.execute(() -> {
+                                    ampSession.getExecutor().execute(() -> {
                                         try {
                                             ampSession.localplay_pause();
                                         } catch (Exception e) {
                                             fail(e.getMessage());
                                         }
-                                        handler.post(() -> mediaController.getTransportControls().pause());
+                                        ampSession.getHandler().post(() -> mediaController.getTransportControls().pause());
                                     });
                                 }
                                 break;
@@ -412,10 +406,8 @@ public class TestActivity extends AppCompatActivity {
                                 break;
                             case "onTrackProgress":
                                 if (extras.getInt("position") == 1000) {
-                                    ExecutorService executor = Executors.newSingleThreadExecutor();
-                                    Handler handler = new Handler(Looper.getMainLooper());
                                     AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
-                                    executor.execute(() -> {
+                                    ampSession.getExecutor().execute(() -> {
                                         try {
                                             //ampSession.localplay_stop();
                                             String dbName = ampSession.dbName();
@@ -437,7 +429,7 @@ public class TestActivity extends AppCompatActivity {
                                         } catch (Exception e) {
                                             fail(e.getMessage());
                                         }
-                                        handler.post(() -> mediaController.getTransportControls().stop());
+                                        ampSession.getHandler().post(() -> mediaController.getTransportControls().stop());
                                     });
                                 }
                                 break;

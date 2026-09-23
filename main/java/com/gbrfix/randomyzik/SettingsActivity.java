@@ -3,8 +3,6 @@ package com.gbrfix.randomyzik;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 
 import androidx.activity.EdgeToEdge;
@@ -18,8 +16,6 @@ import androidx.preference.SwitchPreferenceCompat;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -41,25 +37,14 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
-        private final ExecutorService executor = Executors.newSingleThreadExecutor();
-        private void deconnect() {
-            executor.execute(() -> {
-                try {
-                    AmpSession ampSession = AmpSession.getInstance(getContext());
-                    ampSession.unconnect();
-                } catch (Exception e) {
-                    //throw new RuntimeException(e);
-                }
-            });
-        }
         private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref) {
             catalogsPref.setValue(prefs.getString("amp_catalog", "0"));
             catalogsPref.setEnabled(false);
-            Handler handler = new Handler(Looper.getMainLooper());
-            executor.execute(() -> {
+            AmpSession ampSession = AmpSession.getInstance(getContext());
+            ampSession.getExecutor().execute(() -> {
                 Map<String, String> cats;
                 try {
-                    AmpSession ampSession = AmpSession.getInstance(getContext());
+                    ampSession.waitTaskComplete();
                     ampSession.connect();
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
@@ -67,7 +52,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
                 final Map<String, String> catalogs = cats;
                 if (catalogs != null) {
-                    handler.post(() -> {
+                    ampSession.getHandler().post(() -> {
                         CharSequence[] entries = catalogs.keySet().toArray(new String[0]);
                         CharSequence[] values = catalogs.values().toArray(new String[0]);
                         catalogsPref.setEntries(entries);
@@ -124,7 +109,6 @@ public class SettingsActivity extends AppCompatActivity {
                 userPref.setVisible(!value);
                 pwdPref.setVisible(!value);
                 stopPlay();
-                deconnect();
                 loadCatalogs(prefs, catalogsPref);
                 return true;
             });
@@ -133,21 +117,18 @@ public class SettingsActivity extends AppCompatActivity {
             serverPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 catalogsPref.setValue("0");
                 stopPlay();
-                deconnect();
                 loadCatalogs(prefs, catalogsPref);
                 return true;
             });
 
             userPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                deconnect();
                 loadCatalogs(prefs, catalogsPref);
                 return true;
             });
 
             apiKeyPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                deconnect();
                 loadCatalogs(prefs, catalogsPref);
                 return true;
             });
@@ -156,12 +137,17 @@ public class SettingsActivity extends AppCompatActivity {
 
             pwdPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                deconnect();
                 loadCatalogs(prefs, catalogsPref);
                 return true;
             });
             pwdPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
             pwdPref.setSummaryProvider(preference -> maskSecret(prefs.getString("amp_pwd", "")));
+
+            assert modeSwitcher != null;
+            modeSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
+                stopPlay();
+                return true;
+            });
 
             assert ampSwitcher != null;
             ampSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -169,18 +155,12 @@ public class SettingsActivity extends AppCompatActivity {
                 if ((boolean)newValue) {
                     loadCatalogs(prefs, catalogsPref);
                 } else {
-                    deconnect();
+                    modeSwitcher.setChecked(true);
                 }
                 return true;
             });
 
             catalogsPref.setOnPreferenceChangeListener((preference, newValue) -> {
-                stopPlay();
-                return true;
-            });
-
-            assert modeSwitcher != null;
-            modeSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
                 return true;
             });
