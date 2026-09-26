@@ -5,12 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
@@ -67,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             ImageButton rewBtn = findViewById(R.id.rew);
             ImageButton fwdBtn = findViewById(R.id.fwd);
 
-            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+            int color = getColor(R.color.colorAccent);
             boolean enabled = state.getState() != PlaybackStateCompat.STATE_CONNECTING && state.getState() != PlaybackStateCompat.STATE_BUFFERING;
             playBtn.setEnabled(enabled);
             playBtn.setColorFilter(enabled ? color : Color.GRAY);
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 TextView durationLabel = findViewById(R.id.duration);
                 ProgressBar progressBar = findViewById(R.id.progressBar);
                 ColorStateList colors = infoMsg.getTextColors();
-                if (colors.getDefaultColor() == fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
+                if (colors.getDefaultColor() == getColor(R.color.colorPrimaryDark)) {
                     infoMsg.setText("");
                 }
                 positionLabel.setText("");
@@ -127,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     progressBar.setMax(duration);
                     String msg = MediaProvider.getTrackCounter(current, total);
                     msg += " " + MediaProvider.getTrackLabel(title, album, artist);
-                    infoMsg(msg, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
+                    infoMsg(msg, getColor(R.color.colorPrimaryDark));
                     if (adapter != null) {
                         adapter.setCurrentTrack(currentTrack);
                         adapter.getCurrentItems();
@@ -146,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         adapter.getCurrentItems();
                     }
                     if (last) {
-                        infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
+                        infoMsg(getString(R.string.info_play_end), getColor(R.color.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("close");
@@ -218,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             RecyclerView listView = findViewById(R.id.playlist);
 
             int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
-            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
+            int color = getColor(R.color.colorAccent);
 
             // Set media button state
             playBtn.setEnabled(true);
@@ -237,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             // Set controls info with current track
             if (state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED) {
                 int duration, position;
-                color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
+                color = getColor(R.color.colorPrimaryDark);
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
                 currentTrack.parseKeyMediaId(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 currentTrack.setArtist(metaData.getString(MediaMetadata.METADATA_KEY_ARTIST));
@@ -291,14 +289,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             });
         }
     };
-
-    public int fetchColor(Context c, int id) {
-        int[] attrs = {id};
-        TypedArray ta = c.obtainStyledAttributes(R.style.AppTheme, attrs);
-        int color = ta.getColor(0, Color.BLACK);
-        ta.recycle();
-        return color;
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -470,8 +460,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         runOnUiThread(() -> {
                             TextView infoMsg = findViewById(R.id.infoMsg);
                             ColorStateList colors = infoMsg.getTextColors();
-                            int color = fetchColor(MainActivity.this, R.attr.colorAccent);
-                            if (infoMsg.getText().equals("") || colors.getDefaultColor() != fetchColor(MainActivity.this, R.attr.colorPrimaryDark)) {
+                            int color = getColor(R.color.colorAccent);
+                            if (infoMsg.getText().equals("") || colors.getDefaultColor() != getColor(R.color.colorPrimaryDark)) {
                                 infoMsg(getString(R.string.info_scanning), color);
                             }
                         });
