@@ -39,7 +39,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
             RecyclerView listView = activity.findViewById(R.id.playlist);
             TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
             if (adapter != null) {
-                adapter.getCurrent();
+                adapter.getCurrentItems();
             }
         });
     }
@@ -60,13 +60,6 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(title)
             .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> resetFlag())
-            /*.setPositiveButton(R.string.dialog_yes_play, (dialog, which) -> {
-                resetFlag();
-                Bundle args = new Bundle();
-                args.putInt("id", id);
-                activity.currentId = id;
-                activity.mediaBrowser.sendCustomAction("singleTrack", args, null);
-            })*/
             .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
             });
 

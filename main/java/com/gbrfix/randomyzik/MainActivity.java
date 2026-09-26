@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     DbService dbService = null;
     MediaBrowserCompat mediaBrowser = null;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
-    private int currentId = 0;
+    private final Media currentTrack = new Media();
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
         @Override
@@ -99,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         public void onSessionEvent(String event, final Bundle extras) {
             TextView positionLabel;
             ProgressBar progressBar;
+            RecyclerView listView = findViewById(R.id.playlist);
+            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
 
             switch (event) {
                 case "onChangeMode":
@@ -106,11 +108,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     modeBtn.setChecked(extras.getInt("mode") == MediaProvider.MODE_ALBUM);
                     break;
                 case "onTrackSelect":
-                    currentId = extras.getInt("id");
+                    currentTrack.setId(extras.getInt("id"));
+                    currentTrack.setAlbumKey(extras.getString("dbName"));
                     int duration = extras.getInt("duration");
                     String title = extras.getString("title");
                     String album = extras.getString("album");
+                    currentTrack.setAlbum(album);
                     String artist = extras.getString("artist");
+                    currentTrack.setArtist(artist);
                     int current = extras.getInt("current");
                     int total = extras.getInt("total");
                     positionLabel = findViewById(R.id.position);
@@ -123,6 +128,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     String msg = MediaProvider.getTrackCounter(current, total);
                     msg += " " + MediaProvider.getTrackLabel(title, album, artist);
                     infoMsg(msg, fetchColor(MainActivity.this, R.attr.colorPrimaryDark));
+                    if (adapter != null) {
+                        adapter.setCurrentTrack(currentTrack);
+                        adapter.getCurrentItems();
+                    }
                     break;
                 case "onTrackProgress":
                     int position = extras.getInt("position");
@@ -133,10 +142,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     break;
                 case "onTrackRead":
                     boolean last = extras.getBoolean("last");
-                    RecyclerView listView = findViewById(R.id.playlist);
-                    TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
                     if (adapter != null) {
-                        adapter.getCurrent();
+                        adapter.getCurrentItems();
                     }
                     if (last) {
                         infoMsg(getString(R.string.info_play_end), fetchColor(MainActivity.this, R.attr.colorAccent));
@@ -208,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView positionLabel = findViewById(R.id.position);
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
+            RecyclerView listView = findViewById(R.id.playlist);
 
             int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = fetchColor(MainActivity.this, R.attr.colorAccent);
@@ -231,7 +239,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 int duration, position;
                 color = fetchColor(MainActivity.this, R.attr.colorPrimaryDark);
                 MediaMetadataCompat metaData = MediaControllerCompat.getMediaController(MainActivity.this).getMetadata();
-                currentId = Integer.parseInt(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+                currentTrack.parseKeyMediaId(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
+                currentTrack.setArtist(metaData.getString(MediaMetadata.METADATA_KEY_ARTIST));
+                currentTrack.setAlbum(metaData.getString(MediaMetadata.METADATA_KEY_ALBUM));
+                TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
+                if (adapter != null) {
+                    adapter.setCurrentTrack(currentTrack);
+                    adapter.getCurrentItems();
+                }
                 duration = (int) metaData.getLong(MediaMetadata.METADATA_KEY_DURATION);
                 Bundle extras = MediaControllerCompat.getMediaController(MainActivity.this).getExtras();
                 position = extras != null ? extras.getInt("position") : 0;
@@ -312,8 +327,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         // Cursor adapter pour la listeView
         RecyclerView listView = findViewById(R.id.playlist);
-        TrackCursorAdapter adapter = new TrackCursorAdapter(this);
-        adapter.getRoot();
+        TrackCursorAdapter adapter = new TrackCursorAdapter(this, currentTrack);
+        adapter.getRootItems();
         listView.setLayoutManager(new LinearLayoutManager(this));
         listView.setAdapter(adapter);
 
@@ -397,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         RecyclerView listView = findViewById(R.id.playlist);
         TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
         if (adapter != null) {
-            adapter.getCurrent();
+            adapter.getCurrentItems();
         }
 
         if (mediaBrowser != null) {
@@ -479,7 +494,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         RecyclerView listView = findViewById(R.id.playlist);
                         TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
                         if (adapter != null) {
-                            adapter.getCurrent();
+                            adapter.getCurrentItems();
                         }
                     }
 
@@ -508,17 +523,17 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // Sélection de la piste en cours
-        // TODO: Rechercher depuis la liste des pistes et remonter à la racine de la liste
-        /*TextView trackInfo = findViewById(R.id.infoMsg);
+        TextView trackInfo = findViewById(R.id.infoMsg);
+        RecyclerView listView = findViewById(R.id.playlist);
         trackInfo.setOnClickListener(v -> {
-            if (currentId > 0) {
+            if (currentTrack.getId() > 0) {
                 TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-                int pos = adapter.findView(currentId);
+                int pos = adapter.findView(currentTrack);
                 if (pos != -1) {
                     listView.scrollToPosition(pos);
                 }
             }
-        });*/
+        });
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
@@ -597,7 +612,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             adapter.setRootId(bundle.getInt("listRoot"));
             adapter.setArtist(bundle.getString("listArtist"));
             adapter.setAlbum(bundle.getString("listAlbum"));
-            adapter.getCurrent();
+            adapter.getCurrentItems();
         }
     }
 

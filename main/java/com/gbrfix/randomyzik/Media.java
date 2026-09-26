@@ -87,4 +87,10 @@ public class Media {
     public void setAlbumKey(String album_key) {
         this.album_key = album_key;
     }
+
+    public void parseKeyMediaId(String keyMediaId) {
+        String[] parts = keyMediaId.split("_", 2);
+        id = Integer.parseInt(parts[1]);
+        album_key = parts[0];
+    }
 }

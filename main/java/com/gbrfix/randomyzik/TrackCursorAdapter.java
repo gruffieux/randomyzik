@@ -39,6 +39,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
     private String artist;
     private String album;
     private String dbName;
+    private Media currentTrack;
     private final ArrayList<Media> localDataSet;
     private final MainActivity activity;
 
@@ -119,11 +120,12 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         }
     }
 
-    public TrackCursorAdapter(MainActivity activity) {
+    public TrackCursorAdapter(MainActivity activity, Media currentTrack) {
         listLevel = 0;
         rootId = -1;
         localDataSet = new ArrayList<>();
         this.activity = activity;
+        this.currentTrack = currentTrack;
     }
 
     @NonNull
@@ -165,7 +167,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     dialog1.show(activity.getSupportFragmentManager(), "artistTrackFlagEditor");
                     break;
                 default:
-                    changeDb(media.getId());
+                    dbName = media.getAlbum();
                     AllTracksDialogFragment dialog = new AllTracksDialogFragment();
                     dialog.setDbName(dbName);
                     dialog.setList(0, media.getTitle(), String.valueOf(media.getId()));
@@ -175,8 +177,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         });
 
         // Bouton play de l'élément
-        // On active le bouton seulement en streaming
-        // TODO: Trouver un moyen stable de lancer les listes en localplay
+        // On active le bouton seulement en streaming sur la liste 0
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
         boolean enable = activity.mediaBrowser != null && ((rootId != 0 && media.getId() > 0) || prefs.getBoolean("amp_streaming", false));
@@ -224,6 +225,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.getTitle().setText(title);
                 holder.getSubtitle().setText(MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist()));
                 holder.itemView.setId(media.getId());
+                if (currentTrack.getId() == media.getId()) {
+                    holder.itemView.setBackgroundColor(Color.RED);
+                } else {
+                    holder.itemView.setBackgroundColor(Color.GRAY);
+                }
                 if (media.getFlag().equals("read")) {
                     holder.itemView.setAlpha(0.5f);
                     playBtn.setVisibility(View.INVISIBLE);
@@ -247,6 +253,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     holder.itemView.setAlpha(0.5f);
                 }
                 dao2.close();
+                if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
+                    holder.itemView.setBackgroundColor(Color.RED);
+                } else {
+                    holder.itemView.setBackgroundColor(Color.GRAY);
+                }
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 holder.loadThumbnail(media.getMediaId(), rootId, activity);
@@ -261,13 +272,33 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     holder.itemView.setAlpha(1f);
                 } else {
                     holder.itemView.setAlpha(0.5f);
-                }dao1.close();
+                }
+                dao1.close();
+                if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
+                    holder.itemView.setBackgroundColor(Color.RED);
+                } else {
+                    holder.itemView.setBackgroundColor(Color.GRAY);
+                }
                 playBtn.setVisibility(View.INVISIBLE);
                 rescanBtn.setVisibility(View.INVISIBLE);
                 holder.loadThumbnail(media.getMediaId(), rootId, activity);
                 break;
             default:
                 holder.getTitle().setText(media.getTitle());
+                MediaDAO dao = new MediaDAO(activity, dbName);
+                dao.open();
+                SQLiteCursor cursor = dao.getUnread();
+                if (cursor.getCount() > 0) {
+                    holder.itemView.setAlpha(1f);
+                } else {
+                    holder.itemView.setAlpha(0.5f);
+                }
+                dao.close();
+                if (currentTrack.getAlbumKey().equals(media.getAlbum())) {
+                    holder.itemView.setBackgroundColor(Color.RED);
+                } else {
+                    holder.itemView.setBackgroundColor(Color.GRAY);
+                }
                 if (media.getId() == 0) {
                     holder.getSubtitle().setText(activity.getString(R.string.auto_item1));
                 } else {
@@ -287,17 +318,17 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     break;
                 case 2:
                     listLevel = 3;
-                    getAlbumTracks(media.getAlbumKey());
+                    getTrackItems(media.getAlbumKey());
                     break;
                 case 1:
                     listLevel = 2;
-                    getAlbums(media.getArtist());
+                    getAlbumItems(media.getArtist());
                     break;
                 default:
                     rootId = media.getId();
-                    changeDb(rootId);
+                    dbName = media.getAlbum();
                     listLevel = 1;
-                    getArtists();
+                    getArtistItems();
                     break;
             }
         });
@@ -308,16 +339,16 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             switch (listLevel) {
                 case 3:
                     listLevel = 2;
-                    getAlbums(artist);
+                    getAlbumItems(artist);
                     break;
                 case 2:
                     listLevel = 1;
-                    getArtists();
+                    getArtistItems();
                     break;
                 case 1:
                     listLevel = 0;
                     rootId = -1;
-                    getRoot();
+                    getRootItems();
                     break;
                 default:
                     break;
@@ -330,17 +361,42 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         return localDataSet.size();
     }
 
-    public int findView(int id) {
-        for (int i = 0; i < getItemCount(); i++) {
-            if (getItemId(i) == id) {
-                return i;
-            }
+    public int findView(Media media) {
+        switch (listLevel) {
+            case 3:
+                for (int i = 0; i < getItemCount(); i++) {
+                    if (localDataSet.get(i).getId() == media.getId()) {
+                        return i;
+                    }
+                }
+                break;
+            case 2:
+                for (int i = 0; i < getItemCount(); i++) {
+                    if (localDataSet.get(i).getAlbum().equals(media.getAlbum())) {
+                        return i;
+                    }
+                }
+                break;
+            case 1:
+                for (int i = 0; i < getItemCount(); i++) {
+                    if (localDataSet.get(i).getArtist().equals(media.getArtist())) {
+                        return i;
+                    }
+                }
+                break;
+            default:
+                for (int i = 0; i < getItemCount(); i++) {
+                    if (localDataSet.get(i).getAlbum().equals(media.getAlbum())) {
+                        return i;
+                    }
+                }
+                break;
         }
 
         return -1;
     }
 
-    public void getAlbumTracks(String album) {
+    public void getTrackItems(String album) {
         this.album = album;
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
@@ -362,7 +418,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         notifyDataSetChanged();
     }
 
-    public void getAlbums(String artist) {
+    public void getAlbumItems(String artist) {
         this.artist = artist;
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
@@ -381,7 +437,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         notifyDataSetChanged();
     }
 
-    public void getArtists() {
+    public void getArtistItems() {
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.show();
         MediaDAO dao = new MediaDAO(activity, dbName);
@@ -398,7 +454,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         notifyDataSetChanged();
     }
 
-    public void getRoot() {
+    public void getRootItems() {
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
         navBack.hide();
         localDataSet.clear();
@@ -406,9 +462,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         Media musicFolder = new Media();
         musicFolder.setId(0);
         musicFolder.setTitle(activity.getString(R.string.auto_item1_folder));
+        musicFolder.setAlbum(DAOBase.DEFAULT_NAME);
         localDataSet.add(musicFolder);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        String server = prefs.getString("amp_server", "");
         String[] entries = prefs.getString("amp_catalog_entries", "").split(";");
         String[] values = prefs.getString("amp_catalog_values", "").split(";");
         if (entries.length > 0 && !entries[0].isEmpty()) {
@@ -416,6 +474,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 Media catalog = new Media();
                 catalog.setId(Integer.parseInt(values[i]));
                 catalog.setTitle(entries[i]);
+                try {
+                    catalog.setAlbum(AmpRepository.dbName(server, values[i]));
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
                 localDataSet.add(catalog);
             }
         }
@@ -423,36 +486,23 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         notifyDataSetChanged();
     }
 
-    public void getCurrent() {
+    public void getCurrentItems() {
         switch (listLevel) {
             case 3:
-                getAlbumTracks(album);
+                getTrackItems(album);
                 break;
             case 2:
-                getAlbums(artist);
+                getAlbumItems(artist);
                 break;
             case 1:
-                getArtists();
+                getArtistItems();
                 break;
             default:
-                getRoot();
+                getRootItems();
                 break;
         }
     }
 
-    private void changeDb(int id) {
-        if (id == 0) {
-            dbName = DAOBase.DEFAULT_NAME;
-        } else {
-            try {
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-                String server = prefs.getString("amp_server", "");
-                dbName = AmpRepository.dbName(server, String.valueOf(id));
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
     public String getAlbum() {
         return album;
     }
@@ -479,6 +529,10 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
     public void setArtist(String artist) {
         this.artist = artist;
+    }
+
+    public void setCurrentTrack(Media currentTrack) {
+        this.currentTrack = currentTrack;
     }
 
     public void setDbName(String dbName) {

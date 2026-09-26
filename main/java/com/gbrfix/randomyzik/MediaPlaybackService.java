@@ -414,8 +414,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         Media media = new Media();
 
         MediaMetadataCompat metadata = session.getController().getMetadata();
-
-        media.setId(Integer.parseInt(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID)));
+        
+        media.parseKeyMediaId(metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
         media.setTitle(metadata.getString(MediaMetadata.METADATA_KEY_TITLE));
         media.setAlbum(metadata.getString(MediaMetadata.METADATA_KEY_ALBUM));
         media.setArtist(metadata.getString(MediaMetadata.METADATA_KEY_ARTIST));
@@ -616,7 +616,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
 
                     // Set session MediaMetadata
-                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
+                    String mediaId = provider.getDbName() + "_" + media.getId();
+                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
@@ -635,6 +636,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     bundle.putString("albumKey", media.getAlbumKey());
                     bundle.putInt("current", provider.getTotalRead()+1);
                     bundle.putInt("total", provider.getTotal());
+                    bundle.putString("dbName", provider.getDbName());
                     session.sendSessionEvent("onTrackSelect", bundle);
                 } else {
                     player.start();
@@ -805,7 +807,8 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     final int duration = test ? TEST_DURATION : media.getDuration() * 1000;
 
                     // Set session MediaMetadata
-                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, String.valueOf(media.getId()))
+                    String mediaId = provider.getDbName() + "_" + media.getId();
+                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
@@ -847,6 +850,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                             bundle.putString("albumKey", media.getAlbumKey());
                             bundle.putInt("current", provider.getTotalRead()+1);
                             bundle.putInt("total", provider.getTotal());
+                            bundle.putString("dbName", provider.getDbName());
                             session.sendSessionEvent("onTrackSelect", bundle);
 
                             // Update state and notif
