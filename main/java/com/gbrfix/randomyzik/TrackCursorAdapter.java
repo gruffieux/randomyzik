@@ -229,11 +229,13 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.itemView.setId(media.getId());
                 if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getId() == media.getId()) {
                     holder.itemView.setActivated(true);
-                    holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorAccent));
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTypeface(null, Typeface.BOLD);
                 } else {
                     holder.itemView.setActivated(false);
-                    holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    //holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTypeface(null, Typeface.NORMAL);
                 }
                 if (media.getFlag().equals("read")) {
@@ -261,11 +263,13 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 dao2.close();
                 if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
-                    holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTypeface(null, Typeface.BOLD);
                 } else {
                     holder.itemView.setActivated(false);
-                    holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    //holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTypeface(null, Typeface.NORMAL);
                 }
                 playBtn.setVisibility(View.INVISIBLE);
@@ -286,11 +290,13 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 dao1.close();
                 if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
                     holder.itemView.setActivated(true);
-                    holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTypeface(null, Typeface.BOLD);
                 } else {
                     holder.itemView.setActivated(false);
-                    holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    //holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTypeface(null, Typeface.NORMAL);
                 }
                 playBtn.setVisibility(View.INVISIBLE);
@@ -310,11 +316,13 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 dao.close();
                 if (currentTrack.getAlbumKey().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
-                    holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTypeface(null, Typeface.BOLD);
                 } else {
                     holder.itemView.setActivated(false);
-                    holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    //holder.itemView.setBackgroundColor(Color.TRANSPARENT);
+                    holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTypeface(null, Typeface.NORMAL);
                 }
                 if (media.getId() == 0) {
