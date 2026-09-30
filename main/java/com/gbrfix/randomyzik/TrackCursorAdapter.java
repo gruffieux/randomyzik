@@ -227,7 +227,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.getTitle().setText(title);
                 holder.getSubtitle().setText(MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist()));
                 holder.itemView.setId(media.getId());
-                if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getId() == media.getId()) {
+                if (currentTrack.getDbName().equals(dbName) && currentTrack.getId() == media.getId()) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -257,7 +257,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
+                if (currentTrack.getDbName().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -280,7 +280,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
+                if (currentTrack.getDbName().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -302,7 +302,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getAlbumKey().equals(media.getAlbum())) {
+                if (currentTrack.getDbName().equals(media.getDbName())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -339,7 +339,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     break;
                 default:
                     rootId = media.getId();
-                    dbName = media.getAlbum();
+                    dbName = media.getDbName();
                     listLevel = 1;
                     getArtistItems();
                     break;
@@ -481,7 +481,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         Media musicFolder = new Media();
         musicFolder.setId(0);
         musicFolder.setTitle(activity.getString(R.string.auto_item1_folder));
-        musicFolder.setAlbum(DAOBase.DEFAULT_NAME);
+        musicFolder.setDbName(DAOBase.DEFAULT_NAME);
         musicFolder.setFlag(cursor.getCount() > 0 ? "unread" : "read");
         localDataSet.add(musicFolder);
         cursor.close();
@@ -502,7 +502,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     Media catalog = new Media();
                     catalog.setId(Integer.parseInt(values[i]));
                     catalog.setTitle(entries[i]);
-                    catalog.setAlbum(dbName);
+                    catalog.setDbName(dbName);
                     catalog.setFlag(cursor.getCount() > 0 ? "unread" : "read");
                     localDataSet.add(catalog);
                     cursor.close();

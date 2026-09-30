@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     break;
                 case "onTrackSelect":
                     currentTrack.setId(extras.getInt("id"));
-                    currentTrack.setAlbumKey(extras.getString("dbName"));
+                    currentTrack.setDbName(extras.getString("dbName"));
                     int duration = extras.getInt("duration");
                     String title = extras.getString("title");
                     String album = extras.getString("album");
@@ -516,8 +516,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         TextView trackInfo = findViewById(R.id.infoMsg);
         RecyclerView listView = findViewById(R.id.playlist);
         trackInfo.setOnClickListener(v -> {
-            if (currentTrack.getId() > 0) {
-                TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+            if (adapter != null && currentTrack.getId() > 0) {
                 int pos = adapter.findView(currentTrack);
                 if (pos != -1) {
                     listView.scrollToPosition(pos);

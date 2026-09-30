@@ -14,10 +14,11 @@ public class Media {
     private String album;
     private String artist;
     private String album_key;
+    private String dbName;
 
     public Media() {
         id = media_id = duration = 0;
-        flag = track_nb = title = album = artist = album_key = "";
+        flag = track_nb = title = album = artist = album_key = dbName = "";
     }
 
     public int getId() {
@@ -88,9 +89,17 @@ public class Media {
         this.album_key = album_key;
     }
 
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
     public void parseKeyMediaId(String keyMediaId) {
         String[] parts = keyMediaId.split("_", 2);
         id = Integer.parseInt(parts[1]);
-        album_key = parts[0];
+        dbName = parts[0];
     }
 }
