@@ -220,7 +220,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         switch (listLevel) {
             case 3:
                 String nb = "";
-                if (media.getTrackNb() != null) {
+                if (media.getTrackNb() != null && !media.getTrackNb().isEmpty()) {
                     nb = media.getTrackNb() + ". ";
                 }
                 String title = nb + media.getTitle();
@@ -252,15 +252,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             case 2:
                 holder.getTitle().setText(media.getAlbum());
                 holder.getSubtitle().setText(activity.getString(R.string.switch_mode_album));
-                MediaDAO dao2 = new MediaDAO(activity, dbName);
-                dao2.open();
-                SQLiteCursor cursor2 = dao2.getFlagFromAlbum("unread", media.getAlbumKey());
-                if (cursor2.getCount() > 0) {
+                if (media.getFlag().equals("unread")) {
                     holder.itemView.setAlpha(1f);
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                dao2.close();
                 if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -279,15 +275,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             case 1:
                 holder.getTitle().setText(media.getArtist());
                 holder.getSubtitle().setText(activity.getString(R.string.item_artist));
-                MediaDAO dao1 = new MediaDAO(activity, dbName);
-                dao1.open();
-                SQLiteCursor cursor1 = dao1.getFlagFromArtist("unread", media.getArtist());
-                if (cursor1.getCount() > 0) {
+                if (media.getFlag().equals("unread")) {
                     holder.itemView.setAlpha(1f);
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                dao1.close();
                 if (currentTrack.getAlbumKey().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -305,15 +297,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 break;
             default:
                 holder.getTitle().setText(media.getTitle());
-                MediaDAO dao = new MediaDAO(activity, dbName);
-                dao.open();
-                SQLiteCursor cursor = dao.getUnread();
-                if (cursor.getCount() > 0) {
+                if (media.getFlag().equals("unread")) {
                     holder.itemView.setAlpha(1f);
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                dao.close();
                 if (currentTrack.getAlbumKey().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -330,7 +318,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.getSubtitle().setText(activity.getString(R.string.item_catalog));
                 }
-                holder.itemView.setAlpha(1f);
                 playBtn.setVisibility(View.VISIBLE);
                 rescanBtn.setVisibility(View.VISIBLE);
                 holder.getMediaIcon().setVisibility(View.INVISIBLE);
@@ -457,6 +444,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             media.setAlbum(cursor.getString(0));
             media.setAlbumKey(cursor.getString(1));
             media.setMediaId(cursor.getInt(2));
+            media.setFlag(cursor.getInt(3) > 0 ? "unread" : "read");
             localDataSet.add(media);
         }
         dao.close();
@@ -474,6 +462,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             Media media = new Media();
             media.setArtist(cursor.getString(0));
             media.setMediaId(cursor.getInt(1));
+            media.setFlag(cursor.getInt(2) > 0 ? "unread" : "read");
             localDataSet.add(media);
         }
         dao.close();
@@ -485,27 +474,42 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         navBack.hide();
         localDataSet.clear();
 
+        // Collection
+        MediaDAO dao = new MediaDAO(activity, DAOBase.DEFAULT_NAME);
+        dao.open();
+        SQLiteCursor cursor = dao.getUnread();
         Media musicFolder = new Media();
         musicFolder.setId(0);
         musicFolder.setTitle(activity.getString(R.string.auto_item1_folder));
         musicFolder.setAlbum(DAOBase.DEFAULT_NAME);
+        musicFolder.setFlag(cursor.getCount() > 0 ? "unread" : "read");
         localDataSet.add(musicFolder);
+        cursor.close();
+        dao.close();
 
+        // Ampache catalogs
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         String server = prefs.getString("amp_server", "");
         String[] entries = prefs.getString("amp_catalog_entries", "").split(";");
         String[] values = prefs.getString("amp_catalog_values", "").split(";");
         if (entries.length > 0 && !entries[0].isEmpty()) {
             for (int i = 0; i < entries.length; i++) {
-                Media catalog = new Media();
-                catalog.setId(Integer.parseInt(values[i]));
-                catalog.setTitle(entries[i]);
                 try {
-                    catalog.setAlbum(AmpRepository.dbName(server, values[i]));
+                    String dbName = AmpRepository.dbName(server, values[i]);
+                    dao = new MediaDAO(activity, dbName);
+                    dao.open();
+                    cursor = dao.getUnread();
+                    Media catalog = new Media();
+                    catalog.setId(Integer.parseInt(values[i]));
+                    catalog.setTitle(entries[i]);
+                    catalog.setAlbum(dbName);
+                    catalog.setFlag(cursor.getCount() > 0 ? "unread" : "read");
+                    localDataSet.add(catalog);
+                    cursor.close();
+                    dao.close();
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
-                localDataSet.add(catalog);
             }
         }
 

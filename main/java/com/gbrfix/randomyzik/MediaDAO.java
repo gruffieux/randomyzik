@@ -15,7 +15,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getAlbums(String artist) {
-        String query = "SELECT `album`, `album_key`, `media_id` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
+        String query = "SELECT `album`, `album_key`, `media_id`, COUNT(CASE WHEN flag != 'read' THEN 1 END) AS `unread` FROM `medias` WHERE `artist`=? GROUP BY `album`;";
 
         return (SQLiteCursor)this.db.rawQuery(query, new String[] {artist});
     }
@@ -33,7 +33,7 @@ public class MediaDAO extends DAOBase {
     }
 
     public SQLiteCursor getArtists() {
-        String query = "SELECT `artist`, `media_id` FROM `medias` GROUP BY `artist`;";
+        String query = "SELECT `artist`, `media_id`, COUNT(CASE WHEN flag != 'read' THEN 1 END) AS `unread` FROM `medias` GROUP BY `artist`;";
 
         return (SQLiteCursor)this.db.rawQuery(query, null);
     }
