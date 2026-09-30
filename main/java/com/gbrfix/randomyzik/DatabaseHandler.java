@@ -22,6 +22,10 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             "`album_key` TEXT, `flag` TEXT, " +
             "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT, " +
             "`media_id` INTEGER, `duration` INTEGER);";
+    public static final String MEDIA_CREATE_INDEX_ALBUM = "CREATE INDEX `idx_album` ON `medias` (`album_key`);";
+    public static final String MEDIA_CREATE_INDEX_ARTIST = "CREATE INDEX `idx_artist` ON `medias` (`artist`);";
+    public static final String MEDIA_DROP_INDEX_ALBUM = "DROP INDEX `idx_album` ON `medias`;";
+    public static final String MEDIA_DROP_INDEX_ARTIST = "DROP INDEX `idx_artist` ON `medias`;";
     public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
 
     private final Context context;
@@ -35,6 +39,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(MEDIAS_TABLE_CREATE);
+        db.execSQL(MEDIA_CREATE_INDEX_ALBUM);
+        db.execSQL(MEDIA_CREATE_INDEX_ARTIST);
     }
 
     @Override
@@ -44,75 +50,44 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(MEDIAS_TABLE_CREATE);
         }
         if (oldVersion == 2 && newVersion >= 3) {
-            try {
-                db.execSQL("ALTER TABLE `medias` ADD `track_nb` TEXT;");
-            }
-            catch (SQLiteException e) {
-                Log.v("SQLiteException", Objects.requireNonNull(e.getMessage()));
-            }
+            db.execSQL("ALTER TABLE `medias` ADD `track_nb` TEXT;");
         }
         if (oldVersion <= 3 && newVersion >= 4) {
-            try {
-                db.execSQL("ALTER TABLE `medias` ADD `title` TEXT;");
-                db.execSQL("ALTER TABLE `medias` ADD `album` TEXT;");
-                db.execSQL("ALTER TABLE `medias` ADD `artist` TEXT;");
+            db.execSQL("ALTER TABLE `medias` ADD `title` TEXT;");
+            db.execSQL("ALTER TABLE `medias` ADD `album` TEXT;");
+            db.execSQL("ALTER TABLE `medias` ADD `artist` TEXT;");
 
-                // On corrige tous les meta tags
-                fixMediaTags(db, true, true, true, true);
-            }
-            catch (Exception e) {
-                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
-            }
+            // On corrige tous les meta tags
+            fixMediaTags(db, true, true, true, true);
         }
         if (oldVersion <= 4 && newVersion >= 5) {
-            try {
-                // On corrige les titres
-                fixMediaTags(db, false, true, false, false);
-            }
-            catch (Exception e) {
-                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
-            }
+            // On corrige les titres
+            fixMediaTags(db, false, true, false, false);
         }
         if (oldVersion <= 5 && newVersion >= 6) {
-            try {
-                // On corrige les artistes
-                fixMediaTags(db, false, false, false, true);
-            }
-            catch (Exception e) {
-                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
-            }
+            // On corrige les artistes
+            fixMediaTags(db, false, false, false, true);
         }
         if (oldVersion <= 6 && newVersion >= 7) {
-            try {
-                db.execSQL("ALTER TABLE `medias` ADD `media_id` INTEGER;");
-                fixMediaTags(db, true, true, true, true);
-            }
-            catch (Exception e) {
-                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
-            }
+            db.execSQL("ALTER TABLE `medias` ADD `media_id` INTEGER;");
+            fixMediaTags(db, true, true, true, true);
         }
         if (oldVersion <= 7 && newVersion >= 8) {
-            try {
-                db.execSQL("ALTER TABLE `medias` RENAME TO `temp_medias`;");
-                db.execSQL(MEDIAS_TABLE_CREATE);
-                db.execSQL("INSERT INTO `medias` SELECT * FROM `temp_medias`");
-                db.execSQL("DROP TABLE `temp_medias`");
-                fixMediaTags(db, false, false, true, false);
-            }
-            catch (Exception e) {
-                Log.v("Exception", Objects.requireNonNull(e.getMessage()));
-            }
+            db.execSQL("ALTER TABLE `medias` RENAME TO `temp_medias`;");
+            db.execSQL(MEDIAS_TABLE_CREATE);
+            db.execSQL("INSERT INTO `medias` SELECT * FROM `temp_medias`");
+            db.execSQL("DROP TABLE `temp_medias`");
+            fixMediaTags(db, false, false, true, false);
         }
         if (oldVersion <= 8 && newVersion >= 9) {
-            try {
-                db.execSQL("ALTER TABLE `medias` ADD `duration` INTEGER;");
-            }
-            catch (SQLiteException e) {
-                Log.v("SQLiteException", Objects.requireNonNull(e.getMessage()));
-            }
+            db.execSQL("ALTER TABLE `medias` ADD `duration` INTEGER;");
         }
         if (oldVersion <= 9 && newVersion >= 10) {
             fixMediaTags(db, false, false, false, false);
+        }
+        if (oldVersion <= 10 && newVersion >= 11) {
+            db.execSQL(MEDIA_CREATE_INDEX_ALBUM);
+            db.execSQL(MEDIA_CREATE_INDEX_ARTIST);
         }
     }
 
