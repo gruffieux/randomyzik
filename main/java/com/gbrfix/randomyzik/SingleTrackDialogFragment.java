@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     protected int id;
-    protected MediaDAO dao;
     protected String dbName;
     protected MainActivity activity;
 
@@ -25,13 +24,6 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
     public void setDbName(String dbName) {
         this.dbName = dbName;
-    }
-
-    private void resetFlag() {
-        dao.open();
-        dao.updateFlag(id, "unread");
-        dao.close();
-        updateUi();
     }
 
     protected void updateUi() {
@@ -49,7 +41,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        dao = new MediaDAO(getContext(), dbName);
+        MediaDAO dao = new MediaDAO(getContext(), dbName);
 
         dao.open();
         SQLiteCursor cursor = dao.getFromId(id);
@@ -59,7 +51,12 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
         builder.setMessage(getText(R.string.edit_single_track_msg))
             .setTitle(title)
-            .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> resetFlag())
+            .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> {
+                dao.open();
+                dao.updateFlag(id, "unread");
+                dao.close();
+                updateUi();
+            })
             .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
             });
 

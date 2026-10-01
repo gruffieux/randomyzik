@@ -169,7 +169,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     dialog1.show(activity.getSupportFragmentManager(), "artistTrackFlagEditor");
                     break;
                 default:
-                    dbName = media.getAlbum();
+                    dbName = media.getDbName();
                     AllTracksDialogFragment dialog = new AllTracksDialogFragment();
                     dialog.setDbName(dbName);
                     dialog.setList(0, media.getTitle(), String.valueOf(media.getId()));
