@@ -779,11 +779,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
             session.setPlaybackState(stateBuilder.build());
             session.setActive(false);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_REMOVE);
-            } else {
-                stopForeground(true);
-            }
+            stopForeground(true);
 
             stopSelf();
         }

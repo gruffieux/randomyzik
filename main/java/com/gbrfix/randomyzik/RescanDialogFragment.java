@@ -14,7 +14,7 @@ import androidx.fragment.app.DialogFragment;
  * Created by gab on 14.10.2017.
  * TODO: A supprimer (DEPRECATED)
  */
-
+/*
 public class RescanDialogFragment extends DialogFragment {
     @NonNull
     @Override
@@ -37,3 +37,4 @@ public class RescanDialogFragment extends DialogFragment {
         return builder.create();
     }
 }
+*/

@@ -3,9 +3,7 @@
     <string name="app_name">RandoMyZik</string>
     <string name="app_name_test">RandoMyZik Teste</string>
 
-    <string name="edit_single_track_title">Single track flag editor</string>
     <string name="edit_single_track_msg">Indiquer cette piste comme non lue?</string>
-    <string name="edit_all_tracks_title">%1$d pistes</string>
     <string name="edit_all_tracks_msg">Indiquer %1$d pistes comme non lues?</string>
     <string name="dialog_yes">Oui</string>
     <string name="dialog_no">Non</string>
@@ -14,7 +12,7 @@
     <string name="switch_mode_track">Piste</string>
     <string name="switch_mode_album">Album</string>
     <string name="action_settings">Paramètres</string>
-    <string name="action_rescan">Rescan</string>
+<!--    <string name="action_rescan">Rescan</string>-->
     <string name="title_activity_settings">Settings</string>
     <string name="item_artist">Artiste</string>
     <string name="item_catalog">Catalogue Ampache</string>
@@ -36,20 +34,20 @@
     <string name="amp_catalog">Catalogue</string>
     <string name="amp_streaming">Mode de lecture</string>
 
-    <!-- Rescan dialog -->
-    <string name="rescan_title">Options de scanning Ampache</string>
-    <string name="rescan_msg">Quel catalogue voulez-vous recharger?</string>
-    <string name="rescan_current">Le courant</string>
-    <string name="rescan_all">Tous</string>
+    <!-- Rescan dialog (DEPRACATED) -->
+<!--    <string name="rescan_title">Options de scanning Ampache</string>-->
+<!--    <string name="rescan_msg">Quel catalogue voulez-vous recharger?</string>-->
+<!--    <string name="rescan_current">Le courant</string>-->
+<!--    <string name="rescan_all">Tous</string>-->
 
     <!-- Info -->
     <string name="info">Info</string>
     <string name="info_play_end">Liste de lecture terminée</string>
-    <string name="info_scanning">Scan des fichiers audio, veuillez patienter...</string>
+    <string name="info_scanning">Scan des fichiers audio, veuillez patienter…</string>
     <string name="info_searching">Recherche dans le dossier audio interne: %1$s</string>
     <string name="info_cat_searching">Recherche dans le catalogue: %1$s</string>
-    <string name="info_inserting">Ajout des pistes...</string>
-    <string name="info_updating">Mise à jour des pistes...</string>
+    <string name="info_inserting">Ajout des pistes…</string>
+    <string name="info_updating">Mise à jour des pistes…</string>
 
     <!-- Error -->
     <string name="error">Erreur</string>
@@ -61,7 +59,6 @@
     <string name="err_amp_state_unexcepted">L\'état en cours de localplay (%1$s) est inattendu</string>
     <string name="err_amp_excepted_state">L\'état en cours de localplay (%1$s) est inattendu (%2$s)</string>
     <string name="err_amp_track_unexcepted">La piste en cours de localplay est inattendue</string>
-    <string name="err_amp_cat_undefined">Aucun catalogue définit, Veuillez vérifier les paramètres...</string>
 
     <!-- Android Auto -->
     <string name="auto_warning">Soyez vigilant au volant, n\'utilisez votre téléphone que si votre véhicule est à l\'arrêt.</string>
