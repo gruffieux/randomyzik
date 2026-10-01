@@ -3,15 +3,11 @@ package com.gbrfix.randomyzik;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.content.Context;
 import android.os.Build;
 import android.provider.MediaStore;
-import android.util.Log;
-
-import java.util.Objects;
 
 /**
  * Created by gab on 16.07.2017.
@@ -22,11 +18,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             "`album_key` TEXT, `flag` TEXT, " +
             "`track_nb` TEXT, `title` TEXT, `album` TEXT, `artist` TEXT, " +
             "`media_id` INTEGER, `duration` INTEGER);";
-    public static final String MEDIA_CREATE_INDEX_ALBUM = "CREATE INDEX `idx_album` ON `medias` (`album_key`);";
-    public static final String MEDIA_CREATE_INDEX_ARTIST = "CREATE INDEX `idx_artist` ON `medias` (`artist`);";
-    public static final String MEDIA_DROP_INDEX_ALBUM = "DROP INDEX `idx_album` ON `medias`;";
-    public static final String MEDIA_DROP_INDEX_ARTIST = "DROP INDEX `idx_artist` ON `medias`;";
-    public static final String MEDIA_TABLE_DROP = "DROP TABLE `medias`;";
+    public static final String MEDIAS_CREATE_INDEX_ALBUM = "CREATE INDEX `idx_album` ON `medias` (`album_key`);";
+    public static final String MEDIAS_CREATE_INDEX_ARTIST = "CREATE INDEX `idx_artist` ON `medias` (`artist`);";
+    public static final String MEDIAS_DROP_INDEX_ALBUM = "DROP INDEX `idx_album` ON `medias`;";
+    public static final String MEDIAS_DROP_INDEX_ARTIST = "DROP INDEX `idx_artist` ON `medias`;";
+    public static final String MEDIAS_TABLE_DROP = "DROP TABLE `medias`;";
 
     private final Context context;
 
@@ -39,14 +35,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(MEDIAS_TABLE_CREATE);
-        db.execSQL(MEDIA_CREATE_INDEX_ALBUM);
-        db.execSQL(MEDIA_CREATE_INDEX_ARTIST);
+        db.execSQL(MEDIAS_CREATE_INDEX_ALBUM);
+        db.execSQL(MEDIAS_CREATE_INDEX_ARTIST);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion == 1 && newVersion == 2) {
-            db.execSQL(MEDIA_TABLE_DROP);
+            db.execSQL(MEDIAS_TABLE_DROP);
             db.execSQL(MEDIAS_TABLE_CREATE);
         }
         if (oldVersion == 2 && newVersion >= 3) {
@@ -86,8 +82,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             fixMediaTags(db, false, false, false, false);
         }
         if (oldVersion <= 10 && newVersion >= 11) {
-            db.execSQL(MEDIA_CREATE_INDEX_ALBUM);
-            db.execSQL(MEDIA_CREATE_INDEX_ARTIST);
+            db.execSQL(MEDIAS_CREATE_INDEX_ALBUM);
+            db.execSQL(MEDIAS_CREATE_INDEX_ARTIST);
         }
     }
 
