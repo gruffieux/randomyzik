@@ -97,6 +97,10 @@ public class Media {
         this.dbName = dbName;
     }
 
+    public String keyMediaId() {
+        return dbName + "_" + id;
+    }
+
     public void parseKeyMediaId(String keyMediaId) {
         String[] parts = keyMediaId.split("_", 2);
         id = Integer.parseInt(parts[1]);

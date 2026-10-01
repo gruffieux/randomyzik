@@ -616,8 +616,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     int duration = streaming ? media.getDuration() * 1000 : player.getDuration();
 
                     // Set session MediaMetadata
-                    String mediaId = provider.getDbName() + "_" + media.getId();
-                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
+                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, media.keyMediaId())
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())
@@ -807,8 +806,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     final int duration = test ? TEST_DURATION : media.getDuration() * 1000;
 
                     // Set session MediaMetadata
-                    String mediaId = provider.getDbName() + "_" + media.getId();
-                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
+                    metaDataBuilder.putString(MediaMetadata.METADATA_KEY_MEDIA_ID, media.keyMediaId())
                             .putString(MediaMetadata.METADATA_KEY_TITLE, media.getTitle())
                             .putString(MediaMetadata.METADATA_KEY_ALBUM, media.getAlbum())
                             .putString(MediaMetadata.METADATA_KEY_ARTIST, media.getArtist())

@@ -138,6 +138,7 @@ public class MediaProvider {
 
         Media media = new Media();
         media.setId(currentId);
+        media.setDbName(dbName);
         media.setAlbumKey(cursor.getString(cursor.getColumnIndex("album_key")));
         media.setTitle(cursor.getString(cursor.getColumnIndex("title")));
         media.setAlbum(cursor.getString(cursor.getColumnIndex("album")));
