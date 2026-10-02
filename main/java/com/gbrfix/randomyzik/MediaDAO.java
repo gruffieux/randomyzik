@@ -70,38 +70,6 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
-    /*public SQLiteCursor getFromAlbum(String album_key, String flag) {
-        ArrayList<String> args = new ArrayList<>();
-        String query = "SELECT `id`, `flag`, PRINTF(\"%03d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist`, `media_id`, `album_key`, `duration` FROM `medias` WHERE";
-
-        if (album_key != null && !album_key.isEmpty()) {
-            query += " `album_key`=?";
-            args.add(album_key);
-        }
-        else {
-            query += " `album_key` IS NULL";
-        }
-
-        if (flag != null && !flag.isEmpty()) {
-            query += " AND `flag`=?";
-            args.add(flag);
-        }
-
-        query += " ORDER BY `album_key`, `track_nb`, `artist`;";
-        String[] arr = null;
-
-        switch (args.size()) {
-            case 1:
-                arr = new String[] {args.get(0)};
-                break;
-            case 2:
-                arr = new String[] {args.get(0), args.get(1)};
-                break;
-        }
-
-        return (SQLiteCursor) this.db.rawQuery(query, arr);
-    }*/
-
     public SQLiteCursor getFromArtist(String artist) {
         String query = "SELECT `id` FROM `medias` WHERE `artist`=?";
 
