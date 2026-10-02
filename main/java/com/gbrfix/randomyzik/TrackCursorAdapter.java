@@ -415,7 +415,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         navBack.show();
         MediaDAO dao = new MediaDAO(activity, dbName);
         dao.open();
-        SQLiteCursor cursor = dao.getFromAlbum(album);
+        SQLiteCursor cursor = dao.getFromAlbum(album, null);
         localDataSet.clear();
         while (cursor.moveToNext()) {
             Media media = new Media();

@@ -38,21 +38,9 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery(query, null);
     }
 
-    public SQLiteCursor getFlagFromAlbum(String flag, String albumKey) {
-        String query = "SELECT flag FROM `medias` WHERE `flag`=? AND `album_key`=?;";
-
-        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag, albumKey});
-    }
-
-    public SQLiteCursor getFlagFromArtist(String flag, String artist) {
-        String query = "SELECT flag FROM `medias` WHERE `flag`=? AND `artist`=?;";
-
-        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag, artist});
-    }
-
-    public SQLiteCursor getFromAlbum(String album_key) {
+    public SQLiteCursor getFromAlbum(String album_key, String flag) {
         ArrayList<String> args = new ArrayList<>();
-        String query = "SELECT `id`, `flag`, LTRIM(SUBSTR(`track_nb`, -3, 3), 0) AS `track_nb`, `title`, `album`, `artist`, PRINTF(\"%03d\", `track_nb`) AS `track_sort` FROM `medias` WHERE";
+        String query = "SELECT `id`, `flag`, LTRIM(SUBSTR(`track_nb`, -3, 3), 0) AS `track_nb`, `title`, `album`, `artist`, `media_id`, `album_key`, `duration`, PRINTF(\"%03d\", `track_nb`) AS `track_sort` FROM `medias` WHERE";
 
         if (album_key != null && !album_key.isEmpty()) {
             query += " `album_key`=?";
@@ -62,13 +50,27 @@ public class MediaDAO extends DAOBase {
             query += " `album_key` IS NULL";
         }
 
-        query += " ORDER BY `track_sort`;";
-        String[] arr = args.size() == 1 ? new String[] {args.get(0)} : null;
+        if (flag != null && !flag.isEmpty()) {
+            query += " AND `flag`=?";
+            args.add(flag);
+        }
+
+        query += " ORDER BY `album_key`, `track_sort`, `artist`;";
+        String[] arr = null;
+
+        switch (args.size()) {
+            case 1:
+                arr = new String[] {args.get(0)};
+                break;
+            case 2:
+                arr = new String[] {args.get(0), args.get(1)};
+                break;
+        }
 
         return (SQLiteCursor) this.db.rawQuery(query, arr);
     }
 
-    public SQLiteCursor getFromAlbum(String album_key, String flag) {
+    /*public SQLiteCursor getFromAlbum(String album_key, String flag) {
         ArrayList<String> args = new ArrayList<>();
         String query = "SELECT `id`, `flag`, PRINTF(\"%03d\", `track_nb`) AS `track_nb`, `title`, `album`, `artist`, `media_id`, `album_key`, `duration` FROM `medias` WHERE";
 
@@ -98,7 +100,7 @@ public class MediaDAO extends DAOBase {
         }
 
         return (SQLiteCursor) this.db.rawQuery(query, arr);
-    }
+    }*/
 
     public SQLiteCursor getFromArtist(String artist) {
         String query = "SELECT `id` FROM `medias` WHERE `artist`=?";

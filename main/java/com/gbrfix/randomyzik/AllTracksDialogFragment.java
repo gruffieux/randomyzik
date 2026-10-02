@@ -33,7 +33,7 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
         SQLiteCursor cursor;
         switch (listLevel) {
             case 2:
-                cursor = dao.getFromAlbum(listValue);
+                cursor = dao.getFromAlbum(listValue, null);
                 break;
             case 1:
                 cursor = dao.getFromArtist(listValue);
