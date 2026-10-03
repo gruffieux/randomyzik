@@ -19,6 +19,7 @@ import static junit.framework.Assert.fail;
 
 import org.junit.Assert;
 
+import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -73,7 +74,7 @@ public class TestActivity extends AppCompatActivity {
                     int count = cursor.getCount();
                     dao.close();
                     if (count != total) {
-                        Assert.fail(String.format("Expected %2$d but was %1$d in catalog %3$d", count, total, catalogId));
+                        Assert.fail(String.format(Locale.US, "Expected %2$d but was %1$d in catalog %3$d", count, total, catalogId));
                     }
                 } catch (Exception e) {
                     Assert.fail(e.getMessage());
@@ -144,9 +145,10 @@ public class TestActivity extends AppCompatActivity {
                             case "onTrackSelect":
                                 if (mode == MediaProvider.MODE_ALBUM) {
                                     String albumKey = extras.getString("albumKey");
+                                    assert albumKey != null;
                                     if (!albumKey.equals(currentAlbum) || currentAlbum.isEmpty()) {
                                         if (trackTotal > 0 && trackTotal != trackCount) {
-                                            fail(String.format("Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
+                                            fail(String.format(Locale.US, "Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
                                         }
                                         currentAlbum = albumKey;
                                         MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);

@@ -2,6 +2,8 @@ package com.gbrfix.randomyzik;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteCursor;
+
+import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -176,7 +178,7 @@ public class MediaProvider {
     }
 
     public static String getTrackCounter(int current, int total) {
-        return String.format("[%1$d/%2$d]", current, total);
+        return String.format(Locale.US, "[%1$d/%2$d]", current, total);
     }
 
     public void updateState(String flag) {

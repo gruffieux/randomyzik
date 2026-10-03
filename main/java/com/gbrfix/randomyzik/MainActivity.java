@@ -47,6 +47,7 @@ import android.util.Log;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     final static String NOTIFICATION_CHANNEL = "Information channel";
     DbService dbService = null;
     MediaBrowserCompat mediaBrowser = null;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss");
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss", Locale.US);
     private final Media currentTrack = new Media();
 
     private final MediaControllerCompat.Callback controllerCallback = new MediaControllerCompat.Callback() {
@@ -353,24 +354,25 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                Intent settingsIntent = new Intent(this, SettingsActivity.class);
-                startActivity(settingsIntent);
-                return true;
-            /*case R.id.action_rescan:
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                boolean amp = prefs.getBoolean("amp", false);
-                if (amp) {
-                    RescanDialogFragment dialog = new RescanDialogFragment();
-                    dialog.show(getSupportFragmentManager(), "rescan");
-                } else {
-                    dbService.scan(false, "0");
-                }
-                return true;*/
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.action_settings) {
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
         }
+
+        /*if (item.getItemId() == R.id.action_rescan) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean amp = prefs.getBoolean("amp", false);
+            if (amp) {
+                RescanDialogFragment dialog = new RescanDialogFragment();
+                dialog.show(getSupportFragmentManager(), "rescan");
+            } else {
+                dbService.scan(false, "0");
+            }
+            return true;
+        }*/
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
