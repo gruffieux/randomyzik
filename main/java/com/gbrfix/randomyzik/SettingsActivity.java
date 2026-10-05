@@ -37,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {
-        private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref) {
+        private void loadCatalogs(SharedPreferences prefs, ListPreference catalogsPref, boolean reconnect) {
             catalogsPref.setValue(prefs.getString("amp_catalog", "0"));
             catalogsPref.setEnabled(false);
             AmpSession ampSession = AmpSession.getInstance(getContext());
@@ -45,6 +45,9 @@ public class SettingsActivity extends AppCompatActivity {
                 Map<String, String> cats;
                 try {
                     ampSession.waitTaskComplete();
+                    if (reconnect && ampSession.hasValidAuth()) {
+                        ampSession.unconnect();
+                    }
                     ampSession.connect();
                     cats = ampSession.catalogs();
                 } catch (Exception e) {
@@ -109,7 +112,7 @@ public class SettingsActivity extends AppCompatActivity {
                 userPref.setVisible(!value);
                 pwdPref.setVisible(!value);
                 stopPlay();
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, true);
                 return true;
             });
 
@@ -117,19 +120,19 @@ public class SettingsActivity extends AppCompatActivity {
             serverPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 catalogsPref.setValue("0");
                 stopPlay();
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, true);
                 return true;
             });
 
             userPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, true);
                 return true;
             });
 
             apiKeyPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, true);
                 return true;
             });
             apiKeyPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
@@ -137,7 +140,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             pwdPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, true);
                 return true;
             });
             pwdPref.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD));
@@ -153,7 +156,7 @@ public class SettingsActivity extends AppCompatActivity {
             ampSwitcher.setOnPreferenceChangeListener((preference, newValue) -> {
                 stopPlay();
                 if ((boolean)newValue) {
-                    loadCatalogs(prefs, catalogsPref);
+                    loadCatalogs(prefs, catalogsPref, true);
                 } else {
                     modeSwitcher.setChecked(true);
                 }
@@ -167,7 +170,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             // Chargement de la liste des catalogues par le serveur
             if (prefs.getBoolean("amp", false)) {
-                loadCatalogs(prefs, catalogsPref);
+                loadCatalogs(prefs, catalogsPref, false);
             }
         }
     }
