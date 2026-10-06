@@ -227,7 +227,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 holder.getTitle().setText(title);
                 holder.getSubtitle().setText(MediaProvider.getTrackLabel("", media.getAlbum(), media.getArtist()));
                 holder.itemView.setId(media.getId());
-                if (currentTrack.getDbName().equals(dbName) && currentTrack.getId() == media.getId()) {
+                if (currentTrack != null && currentTrack.getDbName().equals(dbName) && currentTrack.getId() == media.getId()) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorAccent));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -257,7 +257,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getDbName().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
+                if (currentTrack != null && currentTrack.getDbName().equals(dbName) && currentTrack.getAlbum().equals(media.getAlbum())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -280,7 +280,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getDbName().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
+                if (currentTrack != null && currentTrack.getDbName().equals(dbName) && currentTrack.getArtist().equals(media.getArtist())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));
@@ -302,7 +302,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 } else {
                     holder.itemView.setAlpha(0.5f);
                 }
-                if (currentTrack.getDbName().equals(media.getDbName())) {
+                if (currentTrack != null && currentTrack.getDbName().equals(media.getDbName())) {
                     holder.itemView.setActivated(true);
                     //holder.itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorPrimary));
                     holder.getTitle().setTextColor(ContextCompat.getColor(activity, R.color.colorPrimary));

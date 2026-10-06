@@ -141,16 +141,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     break;
                 case "onTrackRead":
                     boolean last = extras.getBoolean("last");
-                    if (adapter != null) {
-                        adapter.getCurrentItems();
-                    }
                     if (last) {
+                        if (adapter != null) {
+                            adapter.setCurrentTrack(null);
+                        }
                         infoMsg(getString(R.string.info_play_end), getColor(R.color.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
-                        Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
+                        /*Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("close");
                         startService(intent);
-                        finish();
+                        finish();*/
+                    }
+                    if (adapter != null) {
+                        adapter.getCurrentItems();
                     }
                     break;
                 case "onError":
@@ -215,6 +218,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             TextView durationLabel = findViewById(R.id.duration);
             ProgressBar progressBar = findViewById(R.id.progressBar);
             RecyclerView listView = findViewById(R.id.playlist);
+            TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
 
             int state = MediaControllerCompat.getMediaController(MainActivity.this).getPlaybackState().getState();
             int color = getColor(R.color.colorAccent);
@@ -241,7 +245,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 currentTrack.parseKeyMediaId(metaData.getString(MediaMetadata.METADATA_KEY_MEDIA_ID));
                 currentTrack.setArtist(metaData.getString(MediaMetadata.METADATA_KEY_ARTIST));
                 currentTrack.setAlbum(metaData.getString(MediaMetadata.METADATA_KEY_ALBUM));
-                TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
                 if (adapter != null) {
                     adapter.setCurrentTrack(currentTrack);
                     adapter.getCurrentItems();
@@ -256,6 +259,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 progressBar.setProgress(position);
                 durationLabel.setText(dateFormat.format(new Date(duration)));
                 positionLabel.setText(dateFormat.format(new Date(position)));
+            } else if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_NONE) {
+                infoMsg("", color);
+                progressBar.setMax(0);
+                progressBar.setProgress(0);
+                durationLabel.setText("");
+                positionLabel.setText("");
+                if (adapter != null) {
+                    adapter.setCurrentTrack(null);
+                    adapter.getCurrentItems();
+                }
             }
 
             // Handle play button
