@@ -147,10 +147,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         }
                         infoMsg(getString(R.string.info_play_end), getColor(R.color.colorAccent));
                         infoNotification(0, getString(R.string.info_play_end), MainActivity.class);
-                        /*Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
+                        Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("close");
                         startService(intent);
-                        finish();*/
+                        //finish();
                     }
                     if (adapter != null) {
                         adapter.getCurrentItems();
@@ -170,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                             intent.setAction("stop");
                             startService(intent);
-                            finish();
+                            //finish();
                     }
                     break;
             }
