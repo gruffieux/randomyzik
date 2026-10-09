@@ -79,14 +79,10 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             fwdBtn.setColorFilter(enabled ? color : Color.GRAY);
 
             if (state.getState() == PlaybackStateCompat.STATE_STOPPED) {
-                TextView infoMsg = findViewById(R.id.infoMsg);
                 TextView positionLabel = findViewById(R.id.position);
                 TextView durationLabel = findViewById(R.id.duration);
                 ProgressBar progressBar = findViewById(R.id.progressBar);
-                ColorStateList colors = infoMsg.getTextColors();
-                if (colors.getDefaultColor() == getColor(R.color.colorPrimaryDark)) {
-                    infoMsg.setText("");
-                }
+                clearTrackInfoMsg();
                 positionLabel.setText("");
                 durationLabel.setText("");
                 progressBar.setProgress(0);
@@ -260,11 +256,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 durationLabel.setText(dateFormat.format(new Date(duration)));
                 positionLabel.setText(dateFormat.format(new Date(position)));
             } else if (state == PlaybackStateCompat.STATE_STOPPED || state == PlaybackStateCompat.STATE_NONE) {
-                infoMsg("", color);
-                progressBar.setMax(0);
-                progressBar.setProgress(0);
+                clearTrackInfoMsg();
                 durationLabel.setText("");
                 positionLabel.setText("");
+                progressBar.setMax(0);
+                progressBar.setProgress(0);
                 if (adapter != null) {
                     adapter.setCurrentTrack(null);
                     adapter.getCurrentItems();
@@ -541,6 +537,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         });
 
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+    }
+
+    public void clearTrackInfoMsg() {
+        TextView infoMsg = findViewById(R.id.infoMsg);
+        ColorStateList colors = infoMsg.getTextColors();
+        if (colors.getDefaultColor() == getColor(R.color.colorPrimaryDark)) {
+            infoMsg.setText("");
+        }
     }
 
     public void infoMsg(String msg, int color) {
