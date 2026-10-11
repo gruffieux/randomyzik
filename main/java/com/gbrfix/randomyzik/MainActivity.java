@@ -605,6 +605,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             bundle.putInt("listRoot", adapter.getRootId());
             bundle.putString("listArtist", adapter.getArtist());
             bundle.putString("listAlbum", adapter.getAlbum());
+            bundle.putIntegerArrayList("parentPos", adapter.getParentPos());
         }
     }
 
@@ -621,6 +622,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             adapter.setRootId(bundle.getInt("listRoot"));
             adapter.setArtist(bundle.getString("listArtist"));
             adapter.setAlbum(bundle.getString("listAlbum"));
+            adapter.setParentPos(bundle.getIntegerArrayList("parentPos"));
             adapter.getCurrentItems();
         }
     }

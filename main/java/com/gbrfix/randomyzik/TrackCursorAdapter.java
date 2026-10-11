@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by gab on 11.08.2017.
@@ -37,9 +38,9 @@ import java.util.ArrayList;
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
     private int listLevel, rootId;
-    private int[] parentPos = {0, 0, 0};
     private String artist, album, dbName;
     private Media currentTrack;
+    private ArrayList<Integer> parentPos;
     private final ArrayList<Media> localDataSet;
     private final MainActivity activity;
 
@@ -124,6 +125,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         listLevel = 0;
         rootId = -1;
         localDataSet = new ArrayList<>();
+        parentPos = new ArrayList<>(List.of(0, 0, 0));
         this.activity = activity;
         this.currentTrack = currentTrack;
     }
@@ -329,19 +331,19 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     break;
                 case 2:
                     listLevel = 3;
-                    parentPos[2] = holder.getBindingAdapterPosition();
+                    parentPos.set(2, holder.getBindingAdapterPosition());
                     getTrackItems(media.getAlbumKey());
                     break;
                 case 1:
                     listLevel = 2;
-                    parentPos[1] = holder.getBindingAdapterPosition();
+                    parentPos.set(1, holder.getBindingAdapterPosition());
                     getAlbumItems(media.getArtist());
                     break;
                 default:
                     rootId = media.getId();
                     dbName = media.getDbName();
                     listLevel = 1;
-                    parentPos[0] = holder.getBindingAdapterPosition();
+                    parentPos.set(0, holder.getBindingAdapterPosition());
                     getArtistItems();
                     break;
             }
@@ -355,21 +357,21 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                 case 3:
                     listLevel = 2;
                     getAlbumItems(artist);
-                    listView.scrollToPosition(parentPos[2]);
-                    parentPos[2] = 0;
+                    listView.scrollToPosition(parentPos.get(2));
+                    parentPos.set(2, 0);
                     break;
                 case 2:
                     listLevel = 1;
                     getArtistItems();
-                    listView.scrollToPosition(parentPos[1]);
-                    parentPos[1] = 0;
+                    listView.scrollToPosition(parentPos.get(1));
+                    parentPos.set(1, 0);
                     break;
                 case 1:
                     listLevel = 0;
                     rootId = -1;
                     getRootItems();
-                    listView.scrollToPosition(parentPos[0]);
-                    parentPos[0] = 0;
+                    listView.scrollToPosition(parentPos.get(0));
+                    parentPos.set(0, 0);
                     break;
                 default:
                     break;
@@ -557,6 +559,10 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         return listLevel;
     }
 
+    public ArrayList<Integer> getParentPos() {
+        return parentPos;
+    }
+
     public int getRootId() {
         return rootId;
     }
@@ -583,5 +589,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
     public void setRootId(int rootId) {
         this.rootId = rootId;
+    }
+
+    public void setParentPos(ArrayList<Integer> parentPos) {
+        this.parentPos = parentPos;
     }
 }
