@@ -96,7 +96,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                         String url = ampSession.get_art_url(mediaId);
                         Glide.with(fragment)
                                 .load(url)
-                                .downsample(DownsampleStrategy.DEFAULT)
+                                .downsample(DownsampleStrategy.AT_MOST)
                                 .into(mediaIcon);
                         mediaIcon.setVisibility(View.VISIBLE);
                     } else {
@@ -112,7 +112,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                                     String url = ampSession.get_art_url(mediaId);
                                     Glide.with(fragment)
                                             .load(url)
-                                            .downsample(DownsampleStrategy.DEFAULT)
+                                            .downsample(DownsampleStrategy.AT_MOST)
                                             .into(mediaIcon);
                                     mediaIcon.setVisibility(View.VISIBLE);
                                 } catch (Exception e) {
