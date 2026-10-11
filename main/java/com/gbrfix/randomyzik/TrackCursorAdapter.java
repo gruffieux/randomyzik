@@ -36,11 +36,9 @@ import java.util.ArrayList;
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
-    private int listLevel;
-    private int rootId;
-    private String artist;
-    private String album;
-    private String dbName;
+    private int listLevel, rootId;
+    private int[] parentPos = {0, 0, 0};
+    private String artist, album, dbName;
     private Media currentTrack;
     private final ArrayList<Media> localDataSet;
     private final MainActivity activity;
@@ -331,16 +329,19 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     break;
                 case 2:
                     listLevel = 3;
+                    parentPos[2] = holder.getBindingAdapterPosition();
                     getTrackItems(media.getAlbumKey());
                     break;
                 case 1:
                     listLevel = 2;
+                    parentPos[1] = holder.getBindingAdapterPosition();
                     getAlbumItems(media.getArtist());
                     break;
                 default:
                     rootId = media.getId();
                     dbName = media.getDbName();
                     listLevel = 1;
+                    parentPos[0] = holder.getBindingAdapterPosition();
                     getArtistItems();
                     break;
             }
@@ -348,20 +349,27 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         // Bouton de navigation de retour
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
+        RecyclerView listView = activity.findViewById(R.id.playlist);
         navBack.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
                     listLevel = 2;
                     getAlbumItems(artist);
+                    listView.scrollToPosition(parentPos[2]);
+                    parentPos[2] = 0;
                     break;
                 case 2:
                     listLevel = 1;
                     getArtistItems();
+                    listView.scrollToPosition(parentPos[1]);
+                    parentPos[1] = 0;
                     break;
                 case 1:
                     listLevel = 0;
                     rootId = -1;
                     getRootItems();
+                    listView.scrollToPosition(parentPos[0]);
+                    parentPos[0] = 0;
                     break;
                 default:
                     break;
