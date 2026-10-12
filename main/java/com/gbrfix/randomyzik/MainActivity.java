@@ -388,11 +388,16 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     protected void onStart() {
         super.onStart();
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        // Set the right permission for SDK version (cf manifest file)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // A52s
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-        } else {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { // S20
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        } else { // S8
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
