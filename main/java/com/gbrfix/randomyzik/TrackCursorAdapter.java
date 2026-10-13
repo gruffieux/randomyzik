@@ -483,6 +483,11 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
             localDataSet.add(media);
         }
         dao.close();
+        if (localDataSet.isEmpty()) {
+            RescanDialogFragment dialog = new RescanDialogFragment();
+            dialog.setId(rootId);
+            dialog.show(activity.getSupportFragmentManager(), "RescanDialog");
+        }
         notifyDataSetChanged();
     }
 

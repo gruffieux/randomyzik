@@ -34,9 +34,9 @@
     <string name="amp_catalog">Catalog</string>
     <string name="amp_streaming">Play mode</string>
 
-    <!-- Rescan dialog (DEPRACATED) -->
-<!--    <string name="rescan_title">Ampache scanning options</string>-->
-<!--    <string name="rescan_msg">Which catalog would you like to refresh?</string>-->
+    <!-- Rescan dialog -->
+<!--    <string name="rescan_title">Scanning options</string>-->
+    <string name="rescan_msg">This list is empty, let\'s scan it?</string>
 <!--    <string name="rescan_current">Current</string>-->
 <!--    <string name="rescan_all">All</string>-->
 

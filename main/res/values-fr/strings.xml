@@ -34,9 +34,9 @@
     <string name="amp_catalog">Catalogue</string>
     <string name="amp_streaming">Mode de lecture</string>
 
-    <!-- Rescan dialog (DEPRACATED) -->
-<!--    <string name="rescan_title">Options de scanning Ampache</string>-->
-<!--    <string name="rescan_msg">Quel catalogue voulez-vous recharger?</string>-->
+    <!-- Rescan dialog -->
+<!--    <string name="rescan_title">Options de scanning</string>-->
+    <string name="rescan_msg">Cette list est vide, on lance un scan?</string>
 <!--    <string name="rescan_current">Le courant</string>-->
 <!--    <string name="rescan_all">Tous</string>-->
 
