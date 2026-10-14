@@ -109,6 +109,9 @@ public class DbWorker extends Worker {
             }
         }
 
+        // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
+        // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
+        // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
         if (cursor.getCount() == 0) {
             contentTitle = context.getString(R.string.info_inserting);
             contentText = list.size() + " elements";

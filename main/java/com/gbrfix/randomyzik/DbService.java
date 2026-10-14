@@ -6,7 +6,6 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
-import android.database.sqlite.SQLiteCursor;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -46,10 +45,7 @@ public class DbService implements Observer<WorkInfo> {
         dbSignalListener = listener;
     }
 
-    // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
-    // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
-    // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-    public void scan(boolean onChange, String catalog) {
+    public void scanAll() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         boolean amp = prefs.getBoolean("amp", false);
         String server = prefs.getString("amp_server", "");
@@ -57,7 +53,7 @@ public class DbService implements Observer<WorkInfo> {
 
         WorkManager.getInstance(context).cancelAllWorkByTag("db");
 
-        if (amp && !onChange) {
+        if (amp) {
             AmpSession ampSession = AmpSession.getInstance(context);
             ampSession.getExecutor().execute(() -> {
                 Map<String, String> cats;
@@ -80,9 +76,9 @@ public class DbService implements Observer<WorkInfo> {
                             if (test) {
                                 dbName = "test-" + dbName;
                             }
-                            if (!catalog.equals("0") && !catalog.equals(value)) {
+                            /*if (!catalog.equals("0") && !catalog.equals(value)) {
                                 continue;
-                            }
+                            }*/
                             catTotal++;
                             if (test && catTotal > TEST_MAX_CATALOGS) {
                                 catTotal = TEST_MAX_CATALOGS;
@@ -220,7 +216,7 @@ public class DbService implements Observer<WorkInfo> {
             @Override
             public void onChange(boolean selfChange) {
                 super.onChange(selfChange);
-                scan(true, "");
+                scanCollection();
             }
         };
 
@@ -242,38 +238,5 @@ public class DbService implements Observer<WorkInfo> {
             NotificationManager manager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
             manager.deleteNotificationChannel(NOTIFICATION_CHANNEL);
         }*/
-    }
-
-    public void check() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean amp = prefs.getBoolean("amp", false);
-        String server = prefs.getString("amp_server", "");
-        String catalog = prefs.getString("amp_catalog", "0");
-        boolean test = prefs.getBoolean("test", false);
-
-        if (amp && catalog.equals("0")) {
-            return;
-        }
-
-        try {
-            String dbName = amp ? AmpRepository.dbName(server, catalog) : DAOBase.DEFAULT_NAME;
-            if (test) {
-                dbName = "test-" + dbName;
-            }
-            MediaDAO dao = new MediaDAO(context, dbName);
-            dao.open();
-            SQLiteCursor cursor = dao.getAll();
-            int total = cursor.getCount();
-            dao.close();
-            if (total == 0) {
-                scan(false, catalog);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void checkAll() {
-        scan(false, "0");
     }
 }

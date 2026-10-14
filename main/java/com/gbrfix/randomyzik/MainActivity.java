@@ -515,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     }
                 });
 
-                dbService.check();
+                dbService.scanCollection();
             } else {
                 throw new Exception(getString(R.string.err_no_perms));
             }

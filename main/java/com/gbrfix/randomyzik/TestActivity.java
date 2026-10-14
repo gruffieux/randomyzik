@@ -91,7 +91,7 @@ public class TestActivity extends AppCompatActivity {
             }
         });
 
-        dbService.checkAll();
+        dbService.scanAll();
     }
 
     public void createList() {
@@ -120,7 +120,7 @@ public class TestActivity extends AppCompatActivity {
             }
         });
 
-        dbService.checkAll();
+        dbService.scanAll();
     }
 
     public void playAllTracks(int total, int mode) {
