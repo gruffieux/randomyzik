@@ -148,9 +148,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         startService(intent);
                         //finish();
                     }
-                    if (adapter != null) {
-                        adapter.getCurrentItems();
-                    }
+                    reloadList();
                     break;
                 case "onError":
                     int code = extras.getInt("code");
@@ -415,11 +413,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
 
         // Reload current playlist
-        RecyclerView listView = findViewById(R.id.playlist);
-        TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
-        if (adapter != null) {
-            adapter.getCurrentItems();
-        }
+        reloadList();
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -497,11 +491,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         if (!update) {
                             return;
                         }
-                        RecyclerView listView = findViewById(R.id.playlist);
-                        TrackCursorAdapter adapter = (TrackCursorAdapter)listView.getAdapter();
-                        if (adapter != null) {
-                            adapter.getCurrentItems();
-                        }
+                        reloadList();
                     }
 
                     @Override
@@ -659,6 +649,14 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
             intent.setData(Uri.parse("package:" + packageName));
             startActivity(intent);
+        }
+    }
+
+    public void reloadList() {
+        RecyclerView listView = findViewById(R.id.playlist);
+        TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
+        if (adapter != null) {
+            adapter.getCurrentItems();
         }
     }
 }

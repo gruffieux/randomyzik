@@ -61,7 +61,7 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
                             break;
                     }
                     dao.close();
-                    updateUi();
+                    activity.reloadList();
                 })
                 .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
                 });

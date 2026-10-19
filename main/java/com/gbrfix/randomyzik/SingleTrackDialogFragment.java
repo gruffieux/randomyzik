@@ -7,7 +7,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDialogFragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * Created by gab on 14.10.2017.
@@ -24,16 +23,6 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
 
     public void setDbName(String dbName) {
         this.dbName = dbName;
-    }
-
-    protected void updateUi() {
-        activity.runOnUiThread(() -> {
-            RecyclerView listView = activity.findViewById(R.id.playlist);
-            TrackCursorAdapter adapter = (TrackCursorAdapter) listView.getAdapter();
-            if (adapter != null) {
-                adapter.getCurrentItems();
-            }
-        });
     }
 
     @NonNull
@@ -55,7 +44,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
                 dao.open();
                 dao.updateFlag(id, "unread");
                 dao.close();
-                updateUi();
+                activity.reloadList();
             })
             .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
             });
