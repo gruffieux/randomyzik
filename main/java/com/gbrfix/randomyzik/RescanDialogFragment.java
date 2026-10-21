@@ -25,6 +25,7 @@ public class RescanDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
         MainActivity activity = (MainActivity)getActivity();
+        assert activity != null;
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);

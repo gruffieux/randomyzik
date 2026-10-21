@@ -29,6 +29,7 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
+        assert activity != null;
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         MediaDAO dao = new MediaDAO(getContext(), dbName);
 

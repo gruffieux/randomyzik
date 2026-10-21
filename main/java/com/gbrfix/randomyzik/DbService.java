@@ -8,7 +8,7 @@ import android.content.SharedPreferences;
 import android.database.ContentObserver;
 import android.os.Build;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 
@@ -103,7 +103,9 @@ public class DbService implements Observer<WorkInfo> {
                             }
                             WorkManager.getInstance(context).getWorkInfoByIdLiveData(workRequest.getId()).observeForever(this);
                         }
-                        workContinuation.enqueue();
+                        if (workContinuation != null) {
+                            workContinuation.enqueue();
+                        }
                     } catch (Exception e) {
                         dbSignalListener.onError(e.getMessage());
                     }

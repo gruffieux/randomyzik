@@ -92,7 +92,7 @@ public class DbWorker extends Worker {
                     Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? MediaStore.Audio.Media.ALBUM_ID : MediaStore.Audio.Media.ALBUM_KEY // ALBUM_KEY depracated in api 30
             }, selection, null, null);
             int counter = 0;
-            while (c.moveToNext()) {
+            while (c != null && c.moveToNext()) {
                 Media media = new Media();
                 media.setMediaId(c.getInt(0));
                 media.setFlag("unread");

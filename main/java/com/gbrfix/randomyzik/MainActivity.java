@@ -299,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     };
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == MY_PERSMISSIONS_REQUEST_STORAGE) {
@@ -366,18 +366,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             startActivity(settingsIntent);
             return true;
         }
-
-        /*if (item.getItemId() == R.id.action_rescan) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean amp = prefs.getBoolean("amp", false);
-            if (amp) {
-                RescanDialogFragment dialog = new RescanDialogFragment();
-                dialog.show(getSupportFragmentManager(), "rescan");
-            } else {
-                dbService.scan(false, "0");
-            }
-            return true;
-        }*/
 
         return super.onOptionsItemSelected(item);
     }
@@ -588,7 +576,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     @Override
-    public void onSaveInstanceState(Bundle bundle) {
+    public void onSaveInstanceState(@NonNull Bundle bundle) {
         super.onSaveInstanceState(bundle);
 
         RecyclerView listView = findViewById(R.id.playlist);
@@ -605,7 +593,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     @Override
-    public void onRestoreInstanceState(Bundle bundle) {
+    public void onRestoreInstanceState(@NonNull Bundle bundle) {
         super.onRestoreInstanceState(bundle);
 
         RecyclerView listView = findViewById(R.id.playlist);

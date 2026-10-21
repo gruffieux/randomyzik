@@ -32,10 +32,10 @@ public class AmpSession extends AmpRepository {
     private final ExecutorService executor;
     private final Handler handler;
     private Future<?> task;
-    private static AmpSession instance = null;
+    private static volatile AmpSession instance = null;
 
     private AmpSession(Context context) {
-        this.context = context;
+        this.context = context.getApplicationContext();
         prefs = PreferenceManager.getDefaultSharedPreferences(context);
         executor = Executors.newSingleThreadExecutor();
         handler = new Handler(Looper.getMainLooper());
@@ -43,7 +43,11 @@ public class AmpSession extends AmpRepository {
 
     public static AmpSession getInstance(Context context) {
         if (instance == null) {
-            instance = new AmpSession(context);
+            synchronized (AmpSession.class) {
+                if (instance == null) {
+                    instance = new AmpSession(context);
+                }
+            }
         }
         return instance;
     }
