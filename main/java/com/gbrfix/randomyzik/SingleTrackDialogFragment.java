@@ -30,26 +30,28 @@ public class SingleTrackDialogFragment extends AppCompatDialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
         assert activity != null;
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        MediaDAO dao = new MediaDAO(getContext(), dbName);
 
-        dao.open();
-        SQLiteCursor cursor = dao.getFromId(id);
-        cursor.moveToFirst();
-        String title = cursor.getString(4);
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(getContext(), dbName)) {
+            SQLiteCursor cursor = dao.getFromId(id);
+            cursor.moveToFirst();
+            String title = cursor.getString(4);
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setMessage(getText(R.string.edit_single_track_msg))
+                    .setTitle(title)
+                    .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> {
+                        try (MediaDAO dao2 = new MediaDAO(getContext(), dbName)) {
+                            dao2.updateFlag(id, "unread");
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        activity.reloadList();
+                    })
+                    .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
+                    });
 
-        builder.setMessage(getText(R.string.edit_single_track_msg))
-            .setTitle(title)
-            .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> {
-                dao.open();
-                dao.updateFlag(id, "unread");
-                dao.close();
-                activity.reloadList();
-            })
-            .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
-            });
-
-        return builder.create();
+            return builder.create();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

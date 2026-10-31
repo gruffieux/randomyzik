@@ -68,13 +68,12 @@ public class TestActivity extends AppCompatActivity {
                 }
                 try {
                     String dbName = AmpRepository.dbName(server, String.valueOf(catalogId));
-                    MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + dbName);
-                    dao.open();
-                    SQLiteCursor cursor = dao.getAll();
-                    int count = cursor.getCount();
-                    dao.close();
-                    if (count != total) {
-                        Assert.fail(String.format(Locale.US, "Expected %2$d but was %1$d in catalog %3$d", count, total, catalogId));
+                    try (MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + dbName)) {
+                        SQLiteCursor cursor = dao.getAll();
+                        int count = cursor.getCount();
+                        if (count != total) {
+                            Assert.fail(String.format(Locale.US, "Expected %2$d but was %1$d in catalog %3$d", count, total, catalogId));
+                        }
                     }
                 } catch (Exception e) {
                     Assert.fail(e.getMessage());
@@ -105,12 +104,14 @@ public class TestActivity extends AppCompatActivity {
 
             @Override
             public void onScanCompleted(int catalogId, int total, boolean update, boolean all) {
-                MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
-                dao.open();
-                SQLiteCursor cursor = dao.getAll();
-                int count = cursor.getCount();
-                dao.close();
-                Assert.assertEquals(total, count);
+                try (MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME)) {
+                    SQLiteCursor cursor = dao.getAll();
+                    int count = cursor.getCount();
+                    Assert.assertEquals(total, count);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
                 finish();
             }
 
@@ -151,11 +152,12 @@ public class TestActivity extends AppCompatActivity {
                                             fail(String.format(Locale.US, "Expected %1$d tracks but was %2$d in album '%3$s'", trackTotal, trackCount, currentAlbum));
                                         }
                                         currentAlbum = albumKey;
-                                        MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
-                                        dao.open();
-                                        SQLiteCursor cursor = dao.getFromAlbum(currentAlbum, "");
-                                        trackTotal = cursor.getCount();
-                                        dao.close();
+                                        try (MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME)) {
+                                            SQLiteCursor cursor = dao.getFromAlbum(currentAlbum, "");
+                                            trackTotal = cursor.getCount();
+                                        } catch (Exception e) {
+                                            throw new RuntimeException(e);
+                                        }
                                         albumCount++;
                                         trackCount = 0;
                                     }
@@ -413,20 +415,20 @@ public class TestActivity extends AppCompatActivity {
                                         try {
                                             //ampSession.localplay_stop();
                                             String dbName = ampSession.dbName();
-                                            MediaDAO dao = new MediaDAO(getApplicationContext(), dbName);
-                                            dao.open();
-                                            SQLiteCursor cursor = dao.getAll();
-                                            int count = cursor.getCount();
-                                            Random random = new Random();
-                                            int pos = random.nextInt(count);
-                                            cursor.moveToPosition(pos);
-                                            int randomId = cursor.getInt(cursor.getColumnIndex("id"));
-                                            if (randomId != id) {
-                                                int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
-                                                ampSession.localplay_add(oid);
-                                                ampSession.localplay_play();
-                                            } else {
-                                                fail("Random track is same as previous session");
+                                            try (MediaDAO dao = new MediaDAO(getApplicationContext(), dbName)) {
+                                                SQLiteCursor cursor = dao.getAll();
+                                                int count = cursor.getCount();
+                                                Random random = new Random();
+                                                int pos = random.nextInt(count);
+                                                cursor.moveToPosition(pos);
+                                                int randomId = cursor.getInt(cursor.getColumnIndex("id"));
+                                                if (randomId != id) {
+                                                    int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
+                                                    ampSession.localplay_add(oid);
+                                                    ampSession.localplay_play();
+                                                } else {
+                                                    fail("Random track is same as previous session");
+                                                }
                                             }
                                         } catch (Exception e) {
                                             fail(e.getMessage());
@@ -451,10 +453,11 @@ public class TestActivity extends AppCompatActivity {
     }
 
     public void playEndedList() {
-        MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME);
-        dao.open();
-        dao.updateFlagAll("read");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(TestActivity.this, "test-" + DAOBase.DEFAULT_NAME)) {
+            dao.updateFlagAll("read");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         mediaBrowser.connect();
         testSignalListener = new TestSignal() {
             @Override

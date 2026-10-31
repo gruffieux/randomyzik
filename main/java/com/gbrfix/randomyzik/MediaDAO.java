@@ -162,4 +162,11 @@ public class MediaDAO extends DAOBase {
         values.put("flag", flag);
         this.db.update("medias", values,  "`artist`=?", new String[] {artist});
     }
+
+    @Override
+    public void close() throws Exception {
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
+    }
 }

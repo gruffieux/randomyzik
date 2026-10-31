@@ -26,46 +26,41 @@ public class AllTracksDialogFragment extends SingleTrackDialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (MainActivity)getActivity();
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        MediaDAO dao = new MediaDAO(getContext(), dbName);
+        assert activity != null;
 
-        dao.open();
-        SQLiteCursor cursor;
-        switch (listLevel) {
-            case 2:
-                cursor = dao.getFromAlbum(listValue, null);
-                break;
-            case 1:
-                cursor = dao.getFromArtist(listValue);
-                break;
-            default:
-                cursor = dao.getAll();
-                break;
-        }
-        int total = cursor.getCount();
-        dao.close();
-
-        builder.setMessage(String.format(getString(R.string.edit_all_tracks_msg), total))
+        try (MediaDAO dao = new MediaDAO(getContext(), dbName)) {
+            SQLiteCursor cursor = switch (listLevel) {
+                case 2 -> dao.getFromAlbum(listValue, null);
+                case 1 -> dao.getFromArtist(listValue);
+                default -> dao.getAll();
+            };
+            int total = cursor.getCount();
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            builder.setMessage(String.format(getString(R.string.edit_all_tracks_msg), total))
                 .setTitle(listName)
                 .setPositiveButton(getText(R.string.dialog_yes), (dialog, which) -> {
-                    dao.open();
-                    switch (listLevel) {
-                        case 2:
-                            dao.updateFlagAlbum(listValue, "unread");
-                            break;
-                        case 1:
-                            dao.updateFlagArtist(listValue, "unread");
-                            break;
-                        default:
-                            dao.updateFlagAll("unread");
-                            break;
+                    try (MediaDAO dao2 = new MediaDAO(getContext(), dbName)) {
+                        switch (listLevel) {
+                            case 2:
+                                dao2.updateFlagAlbum(listValue, "unread");
+                                break;
+                            case 1:
+                                dao2.updateFlagArtist(listValue, "unread");
+                                break;
+                            default:
+                                dao2.updateFlagAll("unread");
+                                break;
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                    dao.close();
                     activity.reloadList();
                 })
                 .setNegativeButton(getText(R.string.dialog_no), (dialog, which) -> {
                 });
-
-        return builder.create();
+            return builder.create();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

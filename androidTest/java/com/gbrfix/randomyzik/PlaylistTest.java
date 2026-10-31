@@ -40,30 +40,28 @@ public class PlaylistTest {
 
     @Test
     public void playAllTracks() throws Exception {
-        MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME);
-        dao.open();
-        dao.updateFlagAll("unread");
-        SQLiteCursor cursor = dao.getUnread();
-        int total = cursor.getCount();
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME)) {
+            dao.updateFlagAll("unread");
+            SQLiteCursor cursor = dao.getUnread();
+            int total = cursor.getCount();
 
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
-        int res = scenario.getResult().getResultCode();
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
     public void playAllAlbums() throws Exception {
-        MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME);
-        dao.open();
-        dao.updateFlagAll("unread");
-        SQLiteCursor cursor = dao.getFromFlagAlbumGrouped("unread");
-        int total = cursor.getCount();
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME)) {
+            dao.updateFlagAll("unread");
+            SQLiteCursor cursor = dao.getFromFlagAlbumGrouped("unread");
+            int total = cursor.getCount();
 
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_ALBUM));
-        int res = scenario.getResult().getResultCode();
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_ALBUM));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test

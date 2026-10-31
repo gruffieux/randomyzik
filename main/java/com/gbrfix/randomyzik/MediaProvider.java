@@ -68,89 +68,92 @@ public class MediaProvider {
     }
 
     public Media selectTrack() throws Exception {
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            SQLiteCursor cursor = dao.getAll();
+            total = cursor.getCount();
 
-        SQLiteCursor cursor = dao.getAll();
-        total = cursor.getCount();
-
-        SQLiteCursor cursorUnread = dao.getUnread();
-        int totalUnread = cursorUnread.getCount();
-        totalRead = total - totalUnread;
-
-        SQLiteCursor cursorSel = null;
-        if (selectId > 0) {
-            cursorSel  = dao.getFromId(selectId);
-            currentId = selectId;
-            selectId = 0;
-            lastOfAlbum = false;
-        }
-
-        if (mode == MODE_ALBUM) {
-            if (currentId == 0 || lastOfAlbum) {
-                dao.replaceFlag("skip", "unread");
-                cursor = dao.getFromFlagAlbumGrouped("unread");
-            }
-            else {
-                cursor = dao.getFromId(currentId);
-            }
-            int totalAlbum = cursor.getCount();
-            if (totalAlbum == 0) {
+            SQLiteCursor cursorUnread = dao.getUnread();
+            int totalUnread = cursorUnread.getCount();
+            if (totalUnread == 0) {
                 currentId = 0;
                 throw new PlayEndException(context.getString(R.string.err_all_read));
             }
-            if (totalAlbum > 1) {
-                Random random = new Random();
-                int pos = random.nextInt(totalAlbum);
-                cursor.moveToPosition(pos);
+            totalRead = total - totalUnread;
+
+            SQLiteCursor cursorSel = null;
+            if (selectId > 0) {
+                cursorSel = dao.getFromId(selectId);
+                cursorSel.moveToFirst();
+                if (!cursorSel.getString(cursorSel.getColumnIndex("flag")).equals("read")) {
+                    currentId = selectId;
+                } else {
+                    currentId = 0;
+                    cursorSel = null;
+                }
+                selectId = 0;
+                lastOfAlbum = false;
             }
-            else {
-                cursor.moveToFirst();
-            }
-            String albumKey = cursor.getString(cursor.getColumnIndex("album_key"));
-            cursor = dao.getFromAlbum(albumKey, "unread");
-            lastOfAlbum = cursor.getCount() <= 1;
-            if (cursorSel != null) {
-                cursor = cursorSel;
-            }
-            cursor.moveToFirst();
-        }
-        else {
-            if (cursorSel != null) {
-                cursor = cursorSel;
-                cursor.moveToFirst();
-            }
-            else {
-                if (totalUnread == 0) {
+
+            if (mode == MODE_ALBUM) {
+                if (currentId == 0 || lastOfAlbum) {
+                    dao.replaceFlag("skip", "unread");
+                    cursor = dao.getFromFlagAlbumGrouped("unread");
+                } else {
+                    cursor = dao.getFromId(currentId);
+                }
+                int totalAlbum = cursor.getCount();
+                /*if (totalAlbum == 0) {
                     currentId = 0;
                     throw new PlayEndException(context.getString(R.string.err_all_read));
-                }
-                cursor = cursorUnread;
-                if (totalUnread > 1) {
+                }*/
+                if (totalAlbum > 1) {
                     Random random = new Random();
-                    int pos = random.nextInt(totalUnread);
+                    int pos = random.nextInt(totalAlbum);
                     cursor.moveToPosition(pos);
                 } else {
                     cursor.moveToFirst();
                 }
+                String albumKey = cursor.getString(cursor.getColumnIndex("album_key"));
+                cursor = dao.getFromAlbum(albumKey, "unread");
+                lastOfAlbum = cursor.getCount() <= 1;
+                if (cursorSel != null) {
+                    cursor = cursorSel;
+                }
+                cursor.moveToFirst();
+            } else {
+                if (cursorSel != null) {
+                    cursor = cursorSel;
+                    cursor.moveToFirst();
+                } else {
+                    /*if (totalUnread == 0) {
+                        currentId = 0;
+                        throw new PlayEndException(context.getString(R.string.err_all_read));
+                    }*/
+                    cursor = cursorUnread;
+                    if (totalUnread > 1) {
+                        Random random = new Random();
+                        int pos = random.nextInt(totalUnread);
+                        cursor.moveToPosition(pos);
+                    } else {
+                        cursor.moveToFirst();
+                    }
+                }
             }
+
+            currentId = cursor.getInt(cursor.getColumnIndex("id"));
+            Media media = new Media();
+
+            media.setId(currentId);
+            media.setDbName(dbName);
+            media.setAlbumKey(cursor.getString(cursor.getColumnIndex("album_key")));
+            media.setTitle(cursor.getString(cursor.getColumnIndex("title")));
+            media.setAlbum(cursor.getString(cursor.getColumnIndex("album")));
+            media.setArtist(cursor.getString(cursor.getColumnIndex("artist")));
+            media.setMediaId(cursor.getInt(cursor.getColumnIndex("media_id")));
+            media.setDuration(cursor.getInt(cursor.getColumnIndex("duration")));
+
+            return media;
         }
-
-        currentId = cursor.getInt(cursor.getColumnIndex("id"));
-
-        Media media = new Media();
-        media.setId(currentId);
-        media.setDbName(dbName);
-        media.setAlbumKey(cursor.getString(cursor.getColumnIndex("album_key")));
-        media.setTitle(cursor.getString(cursor.getColumnIndex("title")));
-        media.setAlbum(cursor.getString(cursor.getColumnIndex("album")));
-        media.setArtist(cursor.getString(cursor.getColumnIndex("artist")));
-        media.setMediaId(cursor.getInt(cursor.getColumnIndex("media_id")));
-        media.setDuration(cursor.getInt(cursor.getColumnIndex("duration")));
-
-        dao.close();
-
-        return media;
     }
 
     public int getMode() {
@@ -182,14 +185,13 @@ public class MediaProvider {
     }
 
     public void updateState(String flag) {
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-
-        if (!dao.getDb().isReadOnly()) {
-            dao.updateFlag(currentId, flag);
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            if (!dao.getDb().isReadOnly()) {
+                dao.updateFlag(currentId, flag);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        dao.close();
     }
 
     public boolean checkMediaId(int id) {
@@ -197,12 +199,11 @@ public class MediaProvider {
             return false;
         }
 
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        SQLiteCursor cursor = dao.getFromId(id);
-        boolean res = cursor.moveToFirst();
-        dao.close();
-
-        return res;
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            SQLiteCursor cursor = dao.getFromId(id);
+            return cursor.moveToFirst();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

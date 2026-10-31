@@ -50,30 +50,29 @@ public class AmpPlaylistTest {
         prefs.edit().putBoolean("amp_streaming", true).commit();
 
         String dbName = AmpSession.getInstance(context).dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        final int total = DbService.TEST_MAX_TRACKS / 10;
-        if (count >= total) {
-            int pos = 0;
-            while (pos < total) {
-                cursor.moveToPosition(pos);
-                int id = cursor.getInt(cursor.getColumnIndex("id"));
-                dao.updateFlag(id, "unread");
-                pos++;
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            final int total = DbService.TEST_MAX_TRACKS / 10;
+            if (count >= total) {
+                int pos = 0;
+                while (pos < total) {
+                    cursor.moveToPosition(pos);
+                    int id = cursor.getInt(cursor.getColumnIndex("id"));
+                    dao.updateFlag(id, "unread");
+                    pos++;
+                }
             }
-        }
-        dao.close();
 
-        if (count < total) {
-            fail();
-        }
+            if (count < total) {
+                fail();
+            }
 
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
-        int res = scenario.getResult().getResultCode();
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.playAllTracks(total, MediaProvider.MODE_TRACK));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
@@ -84,32 +83,31 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-        dao.updateFlag(id, "unread");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int id = cursor.getInt(cursor.getColumnIndex("id"));
+            dao.updateFlag(id, "unread");
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_stop();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_stop();
 
-        // Lauch activity
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
-            @Override
-            public void perform(TestActivity activity) {
-                activity.localplayCanPlay(id);
-            }
-        });
-        int res = scenario.getResult().getResultCode();
+            // Lauch activity
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(new ActivityScenario.ActivityAction<TestActivity>() {
+                @Override
+                public void perform(TestActivity activity) {
+                    activity.localplayCanPlay(id);
+                }
+            });
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
@@ -120,22 +118,21 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("unread");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("unread");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int oid = cursor.getInt(cursor.getColumnIndex("media_id"));
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_add(oid);
-        ampSession.localplay_play();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_add(oid);
+            ampSession.localplay_play();
+        }
 
         // Lauch activity
         ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
@@ -151,27 +148,26 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-        dao.updateFlag(id, "unread");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int id = cursor.getInt(cursor.getColumnIndex("id"));
+            dao.updateFlag(id, "unread");
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_stop();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_stop();
 
-        // Lauch activity
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.localplayCanPause(id));
-        int res = scenario.getResult().getResultCode();
+            // Lauch activity
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.localplayCanPause(id));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
@@ -182,27 +178,26 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-        dao.updateFlag(id, "unread");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int id = cursor.getInt(cursor.getColumnIndex("id"));
+            dao.updateFlag(id, "unread");
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_stop();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_stop();
 
-        // Lauch activity
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.localplayCannotPause(id));
-        int res = scenario.getResult().getResultCode();
+            // Lauch activity
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.localplayCannotPause(id));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
@@ -213,27 +208,26 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-        dao.updateFlag(id, "unread");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int id = cursor.getInt(cursor.getColumnIndex("id"));
+            dao.updateFlag(id, "unread");
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_stop();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_stop();
 
-        // Lauch activity
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.localplayCanStop(id));
-        int res = scenario.getResult().getResultCode();
+            // Lauch activity
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.localplayCanStop(id));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @Test
@@ -244,27 +238,26 @@ public class AmpPlaylistTest {
         // Read db
         AmpSession ampSession = AmpSession.getInstance(context);
         String dbName = ampSession.dbName();
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
-        dao.updateFlagAll("read");
-        SQLiteCursor cursor = dao.getAll();
-        int count = cursor.getCount();
-        Random random = new Random();
-        int pos = random.nextInt(count);
-        cursor.moveToPosition(pos);
-        int id = cursor.getInt(cursor.getColumnIndex("id"));
-        dao.updateFlag(id, "unread");
-        dao.close();
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            dao.updateFlagAll("read");
+            SQLiteCursor cursor = dao.getAll();
+            int count = cursor.getCount();
+            Random random = new Random();
+            int pos = random.nextInt(count);
+            cursor.moveToPosition(pos);
+            int id = cursor.getInt(cursor.getColumnIndex("id"));
+            dao.updateFlag(id, "unread");
 
-        // Connect server
-        ampSession.unconnect();
-        ampSession.connect();
-        ampSession.localplay_stop();
+            // Connect server
+            ampSession.unconnect();
+            ampSession.connect();
+            ampSession.localplay_stop();
 
-        // Lauch activity
-        ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
-        scenario.onActivity(activity -> activity.localplayCannotStop(id));
-        int res = scenario.getResult().getResultCode();
+            // Lauch activity
+            ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
+            scenario.onActivity(activity -> activity.localplayCannotStop(id));
+            int res = scenario.getResult().getResultCode();
+        }
     }
 
     @After

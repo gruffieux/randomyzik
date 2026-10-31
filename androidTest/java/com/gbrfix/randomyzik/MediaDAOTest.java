@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 public class MediaDAOTest {
     public static String TEST_DBNAME = "test-" + DAOBase.DEFAULT_NAME;
     private int mediaTotalExcepted;
-    private MediaDAO dao;
 
     @Before
     public void setUp() throws Exception {
@@ -33,14 +32,15 @@ public class MediaDAOTest {
         if (mediaTotalExcepted > DbService.TEST_MAX_TRACKS) {
             mediaTotalExcepted = DbService.TEST_MAX_TRACKS;
         }
-        dao = new MediaDAO(c, TEST_DBNAME);
-        dao.open();
     }
 
     @Test
     public void selectAlbumEmpty() {
         try {
-            dao.getFromAlbum("", "unread");
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                dao.getFromAlbum("", "unread");
+            }
             assertTrue(true);
         }
         catch (Exception e) {
@@ -51,7 +51,10 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumNull() {
         try {
-            dao.getFromAlbum(null, "");
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                dao.getFromAlbum(null, "");
+            }
             assertTrue(true);
         }
         catch (Exception e) {
@@ -62,7 +65,10 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumAllEmpty() {
         try {
-            dao.getFromAlbum("", "");
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                dao.getFromAlbum("", "");
+            }
             assertTrue(true);
         }
         catch (Exception e) {
@@ -73,7 +79,10 @@ public class MediaDAOTest {
     @Test
     public void selectAlbumAllNull() {
         try {
-            dao.getFromAlbum(null, "unread");
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                dao.getFromAlbum(null, "unread");
+            }
             assertTrue(true);
         }
         catch (Exception e) {
@@ -84,14 +93,17 @@ public class MediaDAOTest {
     @Test
     public void selectAllMediaId() {
         try {
-            SQLiteCursor cursor = dao.getAll();
-            int count = 0;
-            while (cursor.moveToNext()) {
-                if (cursor.getInt(cursor.getColumnIndex("media_id")) != 0) {
-                    count++;
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                SQLiteCursor cursor = dao.getAll();
+                int count = 0;
+                while (cursor.moveToNext()) {
+                    if (cursor.getInt(cursor.getColumnIndex("media_id")) != 0) {
+                        count++;
+                    }
                 }
+                assertEquals(mediaTotalExcepted, count);
             }
-            assertEquals(mediaTotalExcepted, count);
         }
         catch (Exception e) {
             fail();
@@ -101,14 +113,17 @@ public class MediaDAOTest {
     @Test
     public void selectAllAlbumKey() {
         try {
-            SQLiteCursor cursor = dao.getAll();
-            int count = 0;
-            while (cursor.moveToNext()) {
-                if (!cursor.getString(cursor.getColumnIndex("album_key")).isEmpty()) {
-                    count++;
+            Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            try (MediaDAO dao = new MediaDAO(c, TEST_DBNAME)) {
+                SQLiteCursor cursor = dao.getAll();
+                int count = 0;
+                while (cursor.moveToNext()) {
+                    if (!cursor.getString(cursor.getColumnIndex("album_key")).isEmpty()) {
+                        count++;
+                    }
                 }
+                assertEquals(mediaTotalExcepted, count);
             }
-            assertEquals(mediaTotalExcepted, count);
         }
         catch (Exception e) {
             fail();
@@ -117,6 +132,5 @@ public class MediaDAOTest {
 
     @After
     public void destroy() {
-        dao.close();
     }
 }

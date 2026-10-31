@@ -39,17 +39,16 @@ public class DbWorker extends Worker {
         int catalogId = getInputData().getInt("catalogId", 0);
         String contentTitle = context.getString(R.string.info_scanning);
         String contentText, subText;
-        MediaDAO dao = new MediaDAO(context, dbName);
-        dao.open();
         ArrayList<Media> list = new ArrayList<>();
-        SQLiteCursor cursor = dao.getAll();
 
-        if (amp) {
-            contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
-            subText = "Ampache playlist";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            AmpSession ampSession = AmpSession.getInstance(context);
-            try {
+        try (MediaDAO dao = new MediaDAO(context, dbName)) {
+            SQLiteCursor cursor = dao.getAll();
+
+            if (amp) {
+                contentText = String.format(context.getString(R.string.info_cat_searching), catalogName);
+                subText = "Ampache playlist";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                AmpSession ampSession = AmpSession.getInstance(context);
                 ampSession.connect();
                 if (catalogId == 0) {
                     throw new Exception("No catalog found");
@@ -65,89 +64,50 @@ public class DbWorker extends Worker {
                     offset += AmpRepository.MAX_ELEMENTS_PER_REQUEST;
                     total = elements.size();
                 } while (total >= AmpRepository.MAX_ELEMENTS_PER_REQUEST);
-            } catch (Exception e) {
-                Data output = new Data.Builder()
-                        .putString("msg", e.getMessage())
-                        .build();
-                return Result.failure(output);
-            }
-        } else {
-            Uri collection;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
             } else {
-                collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-            }
-            contentText = String.format(context.getString(R.string.info_searching), collection.getPath());
-            subText = "Playlist";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            ContentResolver contentResolver = context.getContentResolver();
-            String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-            Cursor c = contentResolver.query(collection, new String[]{
-                    MediaStore.Audio.Media._ID,
-                    MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Media.TITLE,
-                    MediaStore.Audio.Media.ALBUM,
-                    MediaStore.Audio.Media.ARTIST,
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? MediaStore.Audio.Media.ALBUM_ID : MediaStore.Audio.Media.ALBUM_KEY // ALBUM_KEY depracated in api 30
-            }, selection, null, null);
-            int counter = 0;
-            while (c != null && c.moveToNext()) {
-                Media media = new Media();
-                media.setMediaId(c.getInt(0));
-                media.setFlag("unread");
-                media.setTrackNb(c.getString(1));
-                media.setTitle(c.getString(2));
-                media.setAlbum(c.getString(3));
-                media.setArtist(c.getString(4));
-                media.setAlbumKey(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? Integer.toString(c.getInt(5)) : c.getString(5)); // ALBUM_KEY depracated in api 30
-                list.add(media);
-                counter++;
-                if (test && counter >= DbService.TEST_MAX_TRACKS) {
-                    break;
+                Uri collection;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+                } else {
+                    collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                 }
-            }
-        }
-
-        // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
-        // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
-        // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
-        if (cursor.getCount() == 0) {
-            contentTitle = context.getString(R.string.info_inserting);
-            contentText = list.size() + " elements";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            for (int i = 0; i < list.size(); i++) {
-                dao.insert(list.get(i));
-                updated = true;
-            }
-        } else {
-            contentTitle = context.getString(R.string.info_updating);
-            contentText = list.size() + " elements";
-            setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
-            while (cursor.moveToNext()) {
-                int id = cursor.getInt(cursor.getColumnIndex("id"));
-                int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
-                String title = cursor.getString(cursor.getColumnIndex("title"));
-                String album = cursor.getString(cursor.getColumnIndex("album"));
-                String artist = cursor.getString(cursor.getColumnIndex("artist"));
-                int i;
-                for (i = 0; i < list.size(); i++) {
-                    Media media = list.get(i);
-                    if (media.getMediaId() == media_id || (media.getTitle().equals(title) && media.getAlbum().equals(album) && media.getArtist().equals(artist))) {
-                        dao.update(list.get(i), id);
-                        updated = true;
+                contentText = String.format(context.getString(R.string.info_searching), collection.getPath());
+                subText = "Playlist";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                ContentResolver contentResolver = context.getContentResolver();
+                String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+                Cursor c = contentResolver.query(collection, new String[]{
+                        MediaStore.Audio.Media._ID,
+                        MediaStore.Audio.Media.TRACK,
+                        MediaStore.Audio.Media.TITLE,
+                        MediaStore.Audio.Media.ALBUM,
+                        MediaStore.Audio.Media.ARTIST,
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? MediaStore.Audio.Media.ALBUM_ID : MediaStore.Audio.Media.ALBUM_KEY // ALBUM_KEY depracated in api 30
+                }, selection, null, null);
+                int counter = 0;
+                assert c != null;
+                while (c.moveToNext()) {
+                    Media media = new Media();
+                    media.setMediaId(c.getInt(0));
+                    media.setFlag("unread");
+                    media.setTrackNb(c.getString(1));
+                    media.setTitle(c.getString(2));
+                    media.setAlbum(c.getString(3));
+                    media.setArtist(c.getString(4));
+                    media.setAlbumKey(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ? Integer.toString(c.getInt(5)) : c.getString(5)); // ALBUM_KEY depracated in api 30
+                    list.add(media);
+                    counter++;
+                    if (test && counter >= DbService.TEST_MAX_TRACKS) {
                         break;
                     }
                 }
-                if (i >= list.size()) {
-                    dao.remove(id);
-                    updated = true;
-                }
-                else {
-                    list.remove(i);
-                }
+                c.close();
             }
-            if (!list.isEmpty()) {
+
+            // Création de la liste de lecture sous forme de base de données SQLite avec une table medias contenant un flag read/unread.
+            // Si la liste n'existe pas, la créer en y ajoutant tous les médias du dossier audio.
+            // Sinon vérifier que chaque média de la liste est toujours présent dans le dossier audio, le supprimer si ce n'est pas le cas, puis ajouter les médias pas encore présents dans la liste.
+            if (cursor.getCount() == 0) {
                 contentTitle = context.getString(R.string.info_inserting);
                 contentText = list.size() + " elements";
                 setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
@@ -155,16 +115,54 @@ public class DbWorker extends Worker {
                     dao.insert(list.get(i));
                     updated = true;
                 }
+            } else {
+                contentTitle = context.getString(R.string.info_updating);
+                contentText = list.size() + " elements";
+                setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                while (cursor.moveToNext()) {
+                    int id = cursor.getInt(cursor.getColumnIndex("id"));
+                    int media_id = cursor.getInt(cursor.getColumnIndex("media_id"));
+                    String title = cursor.getString(cursor.getColumnIndex("title"));
+                    String album = cursor.getString(cursor.getColumnIndex("album"));
+                    String artist = cursor.getString(cursor.getColumnIndex("artist"));
+                    int i;
+                    for (i = 0; i < list.size(); i++) {
+                        Media media = list.get(i);
+                        if (media.getMediaId() == media_id || (media.getTitle().equals(title) && media.getAlbum().equals(album) && media.getArtist().equals(artist))) {
+                            dao.update(list.get(i), id);
+                            updated = true;
+                            break;
+                        }
+                    }
+                    if (i >= list.size()) {
+                        dao.remove(id);
+                        updated = true;
+                    } else {
+                        list.remove(i);
+                    }
+                }
+                if (!list.isEmpty()) {
+                    contentTitle = context.getString(R.string.info_inserting);
+                    contentText = list.size() + " elements";
+                    setForegroundAsync(createForegroundInfo(contentTitle, contentText, subText));
+                    for (int i = 0; i < list.size(); i++) {
+                        dao.insert(list.get(i));
+                        updated = true;
+                    }
+                }
             }
+        } catch (Exception e) {
+            Data output = new Data.Builder()
+                .putString("msg", e.getMessage())
+                .build();
+            return Result.failure(output);
         }
 
-        dao.close();
-
         Data output = new Data.Builder()
-                .putInt("catId", catalogId)
-                .putInt("total", list.size())
-                .putBoolean("updated", updated)
-                .build();
+            .putInt("catId", catalogId)
+            .putInt("total", list.size())
+            .putBoolean("updated", updated)
+            .build();
         return Result.success(output);
     }
 
