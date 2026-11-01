@@ -486,7 +486,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        if (localDataSet.isEmpty()) {
+        if (activity.dbService != null && localDataSet.isEmpty()) {
             RescanDialogFragment dialog = new RescanDialogFragment();
             dialog.setId(rootId);
             dialog.show(activity.getSupportFragmentManager(), "RescanDialog");
