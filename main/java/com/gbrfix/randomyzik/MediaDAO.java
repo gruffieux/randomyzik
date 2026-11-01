@@ -82,12 +82,6 @@ public class MediaDAO extends DAOBase {
         return (SQLiteCursor)this.db.rawQuery(query, new String[] {String.valueOf(media_id)});
     }
 
-    public SQLiteCursor getFromFlagAlbumGrouped(String flag) {
-        String query = "SELECT * FROM `medias` WHERE `flag`=? GROUP BY `album_key` ORDER BY `album_key`, `track_nb`, `artist`;";
-
-        return (SQLiteCursor)this.db.rawQuery(query, new String[] {flag});
-    }
-
     public SQLiteCursor getFromId(int id) {
         String query = "SELECT * FROM `medias` WHERE `id`=?;";
 
@@ -96,6 +90,12 @@ public class MediaDAO extends DAOBase {
 
     public SQLiteCursor getUnread() {
         String query = "SELECT * FROM `medias` WHERE `flag` != 'read';";
+
+        return (SQLiteCursor)this.db.rawQuery(query, null);
+    }
+
+    public SQLiteCursor getUnreadAlbums() {
+        String query = "SELECT * FROM `medias` WHERE `flag` != 'read' GROUP BY `album_key` ORDER BY `album_key`, `track_nb`, `artist`;";
 
         return (SQLiteCursor)this.db.rawQuery(query, null);
     }

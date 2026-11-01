@@ -55,7 +55,7 @@ public class PlaylistTest {
     public void playAllAlbums() throws Exception {
         try (MediaDAO dao = new MediaDAO(context, MediaDAOTest.TEST_DBNAME)) {
             dao.updateFlagAll("unread");
-            SQLiteCursor cursor = dao.getFromFlagAlbumGrouped("unread");
+            SQLiteCursor cursor = dao.getUnreadAlbums();
             int total = cursor.getCount();
 
             ActivityScenario<TestActivity> scenario = ActivityScenario.launchActivityForResult(TestActivity.class);
