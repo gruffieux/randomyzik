@@ -102,16 +102,15 @@ public class MediaProvider {
                     cursor = dao.getFromId(currentId);
                 }
                 int totalAlbum = cursor.getCount();
-                /*if (totalAlbum == 0) {
-                    currentId = 0;
-                    throw new PlayEndException(context.getString(R.string.err_all_read));
-                }*/
                 if (totalAlbum > 1) {
                     Random random = new Random();
                     int pos = random.nextInt(totalAlbum);
                     cursor.moveToPosition(pos);
-                } else {
+                } else if (totalAlbum == 1) {
                     cursor.moveToFirst();
+                } else {
+                    currentId = 0;
+                    throw new PlayEndException(context.getString(R.string.err_all_read));
                 }
                 String albumKey = cursor.getString(cursor.getColumnIndex("album_key"));
                 cursor = dao.getFromAlbum(albumKey, "unread");
@@ -125,10 +124,6 @@ public class MediaProvider {
                     cursor = cursorSel;
                     cursor.moveToFirst();
                 } else {
-                    /*if (totalUnread == 0) {
-                        currentId = 0;
-                        throw new PlayEndException(context.getString(R.string.err_all_read));
-                    }*/
                     cursor = cursorUnread;
                     if (totalUnread > 1) {
                         Random random = new Random();
@@ -186,9 +181,7 @@ public class MediaProvider {
 
     public void updateState(String flag) {
         try (MediaDAO dao = new MediaDAO(context, dbName)) {
-            if (!dao.getDb().isReadOnly()) {
-                dao.updateFlag(currentId, flag);
-            }
+            dao.updateFlag(currentId, flag);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

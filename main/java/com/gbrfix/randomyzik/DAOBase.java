@@ -16,8 +16,4 @@ public abstract class DAOBase implements AutoCloseable {
         dbHandler = new DatabaseHandler(context, name, null, VERSION);
         db = dbHandler.getWritableDatabase();
     }
-
-    public SQLiteDatabase getDb() {
-        return db;
-    }
 }
