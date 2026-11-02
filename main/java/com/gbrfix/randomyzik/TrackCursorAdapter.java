@@ -335,7 +335,9 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         }
 
         // Création de liste dynamique
+        RecyclerView listView = activity.findViewById(R.id.playlist);
         holder.itemView.setOnClickListener(view -> {
+            listView.scrollToPosition(0);
             switch (listLevel) {
                 case 3:
                     break;
@@ -361,7 +363,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
 
         // Bouton de navigation de retour
         FloatingActionButton navBack = activity.findViewById(R.id.navBack);
-        RecyclerView listView = activity.findViewById(R.id.playlist);
         navBack.setOnClickListener(view -> {
             switch (listLevel) {
                 case 3:
