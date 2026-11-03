@@ -329,7 +329,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 .asBitmap()
                 .load(uri)
                 .override(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
-                .listener(new RequestListener<Bitmap>() {
+                .listener(new RequestListener<>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, @Nullable Object model, @NonNull Target<Bitmap> target, boolean isFirstResource) {
                         session.setMetadata(metaDataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null).build());
@@ -769,6 +769,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                     try {
                         ampSession.unconnect();
                     } catch (Exception e) {
+                        Bundle args = new Bundle();
+                        args.putString("message", e.getMessage());
+                        session.sendSessionEvent("onError", args);
                     }
                 });
                 ampSession.setTask(task);
