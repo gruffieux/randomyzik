@@ -792,9 +792,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         @Override
         public void onPlay() {
             try {
-                Intent intent = new Intent(MediaPlaybackService.this, MediaPlaybackService.class);
-                startService(intent);
-
+                startService(new Intent(MediaPlaybackService.this, MediaPlaybackService.class));
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 ampSession.waitTaskComplete();
 
