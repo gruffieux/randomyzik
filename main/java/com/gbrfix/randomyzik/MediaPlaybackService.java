@@ -204,8 +204,10 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        String action = intent != null ? intent.getAction() : "";
+
         // Lecture d'une playlist
-        if (Objects.equals(intent.getAction(), "play")) {
+        if (Objects.equals(action, "play")) {
             Bundle extras = intent.getExtras();
             int id = extras != null ? extras.getInt("mediaId", 0) : 0;
             String mediaId = "MUSIC_FOLDER";
@@ -216,7 +218,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Arrêt forcé, on sauve la piste en cours
-        if (Objects.equals(intent.getAction(), "stop")) {
+        if (Objects.equals(action, "stop")) {
             int id = provider.getCurrentId();
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
@@ -225,7 +227,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Arrêt intentionnel, on annule la sauvegarde
-        if (Objects.equals(intent.getAction(), "close")) {
+        if (Objects.equals(action, "close")) {
             saveTrack(0, 0);
             session.getController().getTransportControls().stop();
         }
