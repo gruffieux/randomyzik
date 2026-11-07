@@ -769,7 +769,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 Future<?> task = ampSession.getExecutor().submit(() -> {
                     try {
-                        ampSession.unconnect();
+                        if (ampSession.hasValidAuth()) {
+                            ampSession.unconnect();
+                        }
                     } catch (Exception e) {
                         Bundle args = new Bundle();
                         args.putString("message", e.getMessage());
