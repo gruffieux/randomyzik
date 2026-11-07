@@ -203,11 +203,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent != null ? intent.getAction() : "";
-
+    public int onStartCommand(@NonNull Intent intent, int flags, int startId) {
         // Lecture d'une playlist
-        if (Objects.equals(action, "play")) {
+        if ("play".equals(intent.getAction())) {
             Bundle extras = intent.getExtras();
             int id = extras != null ? extras.getInt("mediaId", 0) : 0;
             String mediaId = "MUSIC_FOLDER";
@@ -218,7 +216,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Arrêt forcé, on sauve la piste en cours
-        if (Objects.equals(action, "stop")) {
+        if ("stop".equals(intent.getAction())) {
             int id = provider.getCurrentId();
             if (id > 0) {
                 saveTrack(id, (int)session.getController().getPlaybackState().getPosition());
@@ -227,7 +225,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         // Arrêt intentionnel, on annule la sauvegarde
-        if (Objects.equals(action, "close")) {
+        if ("close".equals(intent.getAction())) {
             saveTrack(0, 0);
             session.getController().getTransportControls().stop();
         }
@@ -427,7 +425,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) {
+    public void onPrepared(@NonNull MediaPlayer mp) {
         mp.setOnSeekCompleteListener(this);
         mp.setOnCompletionListener(this);
 
@@ -456,7 +454,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     }
 
     @Override
-    public void onSeekComplete(MediaPlayer mp) {
+    public void onSeekComplete(@NonNull MediaPlayer mp) {
         progress.start(mp);
         mp.start();
 
@@ -504,7 +502,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         private final IntentFilter intentFilter = new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         private boolean myNoisyAudioRegistred = false;
         @Override
-        public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+        public boolean onMediaButtonEvent(@NonNull Intent mediaButtonEvent) {
             KeyEvent ke = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
 
             // Handle custom event
@@ -769,7 +767,9 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 AmpSession ampSession = AmpSession.getInstance(getApplicationContext());
                 Future<?> task = ampSession.getExecutor().submit(() -> {
                     try {
-                        ampSession.unconnect();
+                        if (ampSession.hasValidAuth()) {
+                            ampSession.unconnect();
+                        }
                     } catch (Exception e) {
                         Bundle args = new Bundle();
                         args.putString("message", e.getMessage());
