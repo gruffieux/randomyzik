@@ -683,7 +683,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
                 editor.putBoolean("amp", true);
                 editor.putString("amp_catalog", catId);
             }
-            editor.commit(); // Block current thread
+            editor.apply();
 
             // Reinit objects
             init();

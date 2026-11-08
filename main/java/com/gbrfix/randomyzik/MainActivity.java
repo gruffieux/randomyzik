@@ -48,6 +48,7 @@ import android.util.Log;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -392,16 +393,15 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean amp = prefs.getBoolean("amp", false);
 
-        // Scan database
         if (amp) {
+            updateCatalogs();
             boolean streaming = prefs.getBoolean("amp_streaming", false);
             if (!streaming) {
                 ignoreBatteryOptimization();
             }
+        } else {
+            reloadList();
         }
-
-        // Reload current playlist
-        reloadList();
 
         if (mediaBrowser != null) {
             mediaBrowser.connect();
@@ -443,7 +443,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         // Write test preference
         SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean("test", false);
-        editor.commit(); // On bloque la thread volontairement avant l'initialisation
+        editor.apply();
 
         try {
             if (perms == 1) {
@@ -646,5 +646,32 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         if (adapter != null) {
             adapter.getCurrentItems();
         }
+    }
+
+    public void updateCatalogs() {
+        AmpSession ampSession = AmpSession.getInstance(this);
+        ampSession.getExecutor().execute(() -> {
+            Map<String, String> cats;
+            try {
+                if (!ampSession.hasValidAuth()) {
+                    ampSession.connect();
+                }
+                cats = ampSession.catalogs();
+            } catch (Exception e) {
+                cats = null;
+            }
+            final Map<String, String> catalogs = cats;
+            if (catalogs != null) {
+                ampSession.getHandler().post(() -> {
+                    CharSequence[] entries = catalogs.keySet().toArray(new String[0]);
+                    CharSequence[] values = catalogs.values().toArray(new String[0]);
+                    SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
+                    editor.putString("amp_catalog_entries", String.join(";", entries));
+                    editor.putString("amp_catalog_values", String.join(";", values));
+                    editor.apply();
+                    reloadList();
+                });
+            }
+        });
     }
 }
