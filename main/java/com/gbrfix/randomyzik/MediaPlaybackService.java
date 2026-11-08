@@ -239,11 +239,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
 
     @Override
     public void onCustomAction(@NonNull String action, Bundle extras, @NonNull Result<Bundle> result) {
-        if (action.equals("changeMode")) {
+        if ("changeMode".equals(action)) {
             provider.setMode(extras.getInt("mode"));
         }
 
-        if (action.equals("stop")) {
+        if ("stop".equals(action)) {
             session.getController().getTransportControls().stop();
         }
 
@@ -529,8 +529,11 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
         }
 
         public void onCustomAction(@NonNull String action, Bundle extras) {
-            if (action.equals("modeByTrack") || action.equals("modeByAlbum")) {
-                int mode = action.equals("modeByAlbum") ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
+            boolean byTrack = "modeByTrack".equals(action);
+            boolean byAlbum = "modeByAlbum".equals(action);
+
+            if (byTrack || byAlbum) {
+                int mode = byAlbum ? MediaProvider.MODE_ALBUM : MediaProvider.MODE_TRACK;
 
                 // Save mode as preferences
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MediaPlaybackService.this);
@@ -1025,7 +1028,7 @@ public class MediaPlaybackService extends MediaBrowserServiceCompat implements M
     private class BecomingNoisyReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
+            if (intent != null && AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(intent.getAction())) {
                 session.getController().getTransportControls().pause();
             }
         }
