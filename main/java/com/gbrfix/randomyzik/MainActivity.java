@@ -147,7 +147,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                         Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                         intent.setAction("close");
                         startService(intent);
-                        //finish();
                     }
                     reloadList();
                     break;
@@ -165,7 +164,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                             Intent intent = new Intent(MainActivity.this, MediaPlaybackService.class);
                             intent.setAction("stop");
                             startService(intent);
-                            //finish();
                     }
                     break;
             }
@@ -300,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     };
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == MY_PERSMISSIONS_REQUEST_STORAGE) {
@@ -394,7 +392,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         boolean amp = prefs.getBoolean("amp", false);
 
         if (amp) {
-            updateCatalogs();
+            updateCatalogs(true);
             boolean streaming = prefs.getBoolean("amp_streaming", false);
             if (!streaming) {
                 ignoreBatteryOptimization();
@@ -623,9 +621,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        /*if (key.equals("amp_streaming")) {
-            currentId = 0;
-        }*/
     }
 
     public void ignoreBatteryOptimization(){
@@ -648,7 +643,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    public void updateCatalogs() {
+    public void updateCatalogs(boolean reloadList) {
         AmpSession ampSession = AmpSession.getInstance(this);
         ampSession.getExecutor().execute(() -> {
             Map<String, String> cats;
@@ -669,7 +664,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     editor.putString("amp_catalog_entries", String.join(";", entries));
                     editor.putString("amp_catalog_values", String.join(";", values));
                     editor.apply();
-                    reloadList();
+                    if (reloadList) {
+                        reloadList();
+                    }
                 });
             }
         });
