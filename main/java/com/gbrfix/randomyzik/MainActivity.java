@@ -329,6 +329,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         listView.setLayoutManager(new LinearLayoutManager(this));
         listView.setAdapter(adapter);
 
+        // Important to verify the 3 cases to avoid MediaBrowser connection conflicts
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS}, MY_PERSMISSIONS_REQUEST_STORAGE);
@@ -379,6 +380,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         super.onStart();
 
         // Set the right permission for SDK version (cf manifest file)
+        // Important to verify the 3 cases to avoid MediaBrowser connection conflicts
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) { // Android 13+
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 return;
