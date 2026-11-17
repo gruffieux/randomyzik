@@ -24,7 +24,6 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -98,7 +97,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                         Glide.with(fragment)
                                 .load(url)
                                 .downsample(DownsampleStrategy.AT_MOST)
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                                 .into(mediaIcon);
                         mediaIcon.setVisibility(View.VISIBLE);
                     } else {
@@ -115,7 +113,6 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                                     Glide.with(fragment)
                                             .load(url)
                                             .downsample(DownsampleStrategy.AT_MOST)
-                                            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                                             .into(mediaIcon);
                                     mediaIcon.setVisibility(View.VISIBLE);
                                 } catch (Exception e) {
