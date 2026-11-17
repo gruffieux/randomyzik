@@ -38,6 +38,7 @@ import java.util.List;
  */
 
 public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.ViewHolder> {
+    public static int THUMBNAIL_SIZE = 48;
     private int listLevel, rootId;
     private String artist, album, dbName;
     private Media currentTrack;
@@ -82,7 +83,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                     Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaId
                     );
                     try {
-                        Bitmap thumbnail = fragment.getContentResolver().loadThumbnail(uri, new Size(48, 48), null);
+                        Bitmap thumbnail = fragment.getContentResolver().loadThumbnail(uri, new Size(THUMBNAIL_SIZE, THUMBNAIL_SIZE), null);
                         mediaIcon.setImageBitmap(thumbnail);
                         mediaIcon.setVisibility(View.VISIBLE);
                     } catch (IOException e) {
@@ -96,6 +97,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                         String url = ampSession.get_art_url(mediaId);
                         Glide.with(fragment)
                                 .load(url)
+                                .override(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
                                 .downsample(DownsampleStrategy.AT_MOST)
                                 .into(mediaIcon);
                         mediaIcon.setVisibility(View.VISIBLE);
@@ -112,6 +114,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
                                     String url = ampSession.get_art_url(mediaId);
                                     Glide.with(fragment)
                                             .load(url)
+                                            .override(THUMBNAIL_SIZE, THUMBNAIL_SIZE)
                                             .downsample(DownsampleStrategy.AT_MOST)
                                             .into(mediaIcon);
                                     mediaIcon.setVisibility(View.VISIBLE);
