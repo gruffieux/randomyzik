@@ -192,7 +192,7 @@ public class TrackCursorAdapter extends RecyclerView.Adapter<TrackCursorAdapter.
         // On active le bouton seulement en streaming sur la liste 0
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
         ImageButton playBtn = holder.itemView.findViewById(R.id.playlistBtn);
-        boolean enable = activity.mediaBrowser != null && ((rootId != 0 && media.getId() > 0) || prefs.getBoolean("amp_streaming", false));
+        boolean enable = activity.mediaBrowser != null && ((rootId != 0 && media.getId() > 0) || prefs.getBoolean("amp_streaming", false) || !prefs.getBoolean("amp", false));
         playBtn.setEnabled(enable);
         playBtn.setColorFilter(enable ? Color.WHITE : Color.GRAY);
         playBtn.setOnClickListener(view -> {
