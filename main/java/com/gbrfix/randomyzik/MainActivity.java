@@ -18,6 +18,7 @@ import android.os.Build;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatToggleButton;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -32,6 +33,9 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,6 +44,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -317,13 +322,38 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
         EdgeToEdge.enable(this);
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        // Cursor adapter pour la listeView
+        View mainView = findViewById(R.id.mainView);
         RecyclerView listView = findViewById(R.id.playlist);
+        View navBack = findViewById(R.id.navBack);
+        View infoMsg = findViewById(R.id.infoMsg);
+
+        // Appliquer l'écouteur pour gérer les barres système d'Android 15
+        ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+            // Récupérer la taille des barres système (Barre de statut en haut, navigation en bas)
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+            // A. Sécurité pour le haut de l'écran (Barre de statut)
+            listView.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+
+            // On pousse également le bouton flottant vers le bas pour éviter la barre de statut
+            ConstraintLayout.LayoutParams navParams = (ConstraintLayout.LayoutParams) navBack.getLayoutParams();
+            navParams.topMargin = systemBars.top;
+            navBack.setLayoutParams(navParams);
+
+            // B. Sécurité pour le bas de l'écran (Barre de navigation)
+            // On applique une marge basse au message d'info pour qu'il reste visible et cliquable
+            ConstraintLayout.LayoutParams infoParams = (ConstraintLayout.LayoutParams) infoMsg.getLayoutParams();
+            infoParams.bottomMargin = systemBars.bottom;
+            infoMsg.setLayoutParams(infoParams);
+
+            return insets;
+        });
+
+        // Cursor adapter pour la listeView
         TrackCursorAdapter adapter = new TrackCursorAdapter(this, currentTrack);
         adapter.getRootItems();
         listView.setLayoutManager(new LinearLayoutManager(this));
