@@ -32,13 +32,11 @@ public class SettingsActivity extends AppCompatActivity {
         View mainView = findViewById(R.id.mainView);
         View settingsContainer = findViewById(R.id.settings);
 
-        // Appliquer l'écouteur pour gérer les barres système d'Android 15
+        // Handle insets to display correctly on Android 15+
         ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
-            // Récupérer les dimensions de la barre de statut (haut) et de navigation (bas)
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
-            // Appliquer ces dimensions sous forme de Padding sur le FrameLayout.
-            // Ainsi, les listes de paramètres défileront parfaitement sans être masquées.
+            // Settings list padding
             settingsContainer.setPadding(
                     systemBars.left,
                     systemBars.top,

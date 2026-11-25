@@ -331,21 +331,19 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         View navBack = findViewById(R.id.navBack);
         View infoMsg = findViewById(R.id.infoMsg);
 
-        // Appliquer l'écouteur pour gérer les barres système d'Android 15
+        // Handle insets to display correctly on Android 15+
         ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
-            // Récupérer la taille des barres système (Barre de statut en haut, navigation en bas)
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 
-            // A. Sécurité pour le haut de l'écran (Barre de statut)
+            // Playlist padding
             listView.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
 
-            // On pousse également le bouton flottant vers le bas pour éviter la barre de statut
+            // Top floating navigation button
             ConstraintLayout.LayoutParams navParams = (ConstraintLayout.LayoutParams) navBack.getLayoutParams();
             navParams.topMargin = systemBars.top;
             navBack.setLayoutParams(navParams);
 
-            // B. Sécurité pour le bas de l'écran (Barre de navigation)
-            // On applique une marge basse au message d'info pour qu'il reste visible et cliquable
+            // Bottom info bar
             ConstraintLayout.LayoutParams infoParams = (ConstraintLayout.LayoutParams) infoMsg.getLayoutParams();
             infoParams.bottomMargin = systemBars.bottom;
             infoMsg.setLayoutParams(infoParams);
